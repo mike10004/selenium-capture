@@ -13,26 +13,20 @@ import org.openqa.selenium.firefox.FirefoxBinary;
 import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.firefox.FirefoxProfile;
 
+import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-public class FirefoxWebDriverFactory implements WebDriverFactory {
-
-    private final Supplier<String> displayProvider;
+public class FirefoxWebDriverFactory extends OptionalDisplayWebDriverFactory {
 
     public FirefoxWebDriverFactory() {
-        this(Suppliers.ofInstance((String)null));
     }
 
     public FirefoxWebDriverFactory(String display) {
-        this(Suppliers.ofInstance(checkNotNull(display, "display")));
-    }
-
-    public FirefoxWebDriverFactory(Supplier<String> displayProvider) {
-        this.displayProvider = checkNotNull(displayProvider);
+        super(display);
     }
 
     @Override
@@ -69,19 +63,6 @@ public class FirefoxWebDriverFactory implements WebDriverFactory {
 
     protected FirefoxBinary createFirefoxBinary() {
         return new FirefoxBinary();
-    }
-
-    protected ImmutableMap<String, String> buildEnvironment() {
-        String display = getDisplay();
-        if (display == null) {
-            return ImmutableMap.of();
-        } else {
-            return ImmutableMap.of("DISPLAY", display);
-        }
-    }
-
-    protected String getDisplay() {
-        return displayProvider.get();
     }
 
     private static class CertificateSupplementingFirefoxProfile extends SupplementingFirefoxProfile {
