@@ -1,80 +1,88 @@
 package com.github.mike10004.seleniumhelp;
 
-import com.github.tomakehurst.wiremock.client.WireMock;
-import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
-import com.github.tomakehurst.wiremock.junit.WireMockRule;
-import com.google.common.base.Function;
-import com.google.common.base.Functions;
-import com.google.common.base.Predicate;
+import com.google.common.base.CharMatcher;
+import com.google.common.base.Optional;
+import com.google.common.base.Strings;
+import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.io.Resources;
-import com.google.common.net.HttpHeaders;
-import com.google.common.net.MediaType;
+import com.google.common.net.HostAndPort;
 import com.google.gson.Gson;
-import io.netty.handler.codec.http.DefaultHttpResponse;
-import io.netty.handler.codec.http.HttpObject;
-import io.netty.handler.codec.http.HttpRequest;
-import io.netty.handler.codec.http.HttpResponse;
-import io.netty.handler.codec.http.HttpResponseStatus;
-import io.netty.handler.codec.http.HttpVersion;
-import net.lightbody.bmp.BrowserMobProxy;
 import net.lightbody.bmp.core.har.Har;
 import net.lightbody.bmp.core.har.HarContent;
 import net.lightbody.bmp.core.har.HarEntry;
 import net.lightbody.bmp.mitm.CertificateAndKeySource;
-import net.lightbody.bmp.mitm.TrustSource;
-import net.lightbody.bmp.mitm.exception.CertificateSourceException;
-import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang3.StringEscapeUtils;
-import org.apache.http.HttpStatus;
 import org.junit.Assert;
 import org.junit.BeforeClass;
-import org.junit.Rule;
-import org.littleshoot.proxy.HttpFilters;
-import org.littleshoot.proxy.HttpFiltersAdapter;
-import org.littleshoot.proxy.HttpFiltersSourceAdapter;
 import org.openqa.selenium.WebDriver;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
-import java.net.URI;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.URL;
-import java.security.KeyStore;
-import java.util.Arrays;
+import java.net.UnknownHostException;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 public class CollectionTestBase {
 
+    public static final String SYSPROP_TEST_PROXY = "selenium-help.test.proxy.http";
+
+    private static HostAndPort upstreamProxyHostAndPort_ = null;
+
+    private final @Nullable HostAndPort upstreamProxyHostAndPort;
     protected final String protocol;
 
     @BeforeClass
-    public static void configureLogging() {
-        System.setProperty("org.slf4j.simpleLogger.defaultLogLevel", "debug");
+    public static void setUpstreamProxy() {
+        String proxyValue = System.getProperty(SYSPROP_TEST_PROXY);
+        if (!Strings.isNullOrEmpty(proxyValue)) {
+            upstreamProxyHostAndPort_ = HostAndPort.fromString(proxyValue);
+        } else {
+            LoggerFactory.getLogger(CollectionTestBase.class).info("this test is much more valuable if you set system or maven property " + SYSPROP_TEST_PROXY + " to an available HTTP proxy that does not have the same external IP address as the JVM's network interface");
+        }
     }
 
     protected CollectionTestBase(String protocol) {
         this.protocol = protocol;
+        this.upstreamProxyHostAndPort = upstreamProxyHostAndPort_;
         checkArgument("http".equals(protocol) || "https".equals(protocol), "protocol must be  http or https: %s", protocol);
     }
 
+    /**
+     * Gets the port used to build the URL to send a request to. Return -1
+     * if you want to use the default port for the protocol.
+     * @return the port to use for the URL
+     */
     protected int getPort() {
-        return "http".equals(protocol) ? 80 : 443;
+        return -1;
     }
 
     public static class HttpBinGetResponseData {
+        public String url;
         public Map<String, String[]> args = ImmutableMap.of();
         public Map<String, String> headers = ImmutableMap.of();
         public String origin;
-        public String url;
+
+        @Override
+        public String toString() {
+            return "HttpBinGetResponseData{" +
+                    "url='" + url + '\'' +
+                    ", args=" + args +
+                    ", headers=" + headers +
+                    ", origin='" + origin + '\'' +
+                    '}';
+        }
     }
 
     protected HarContent testTrafficCollector(WebDriverFactory webDriverFactory) throws IOException {
@@ -85,18 +93,41 @@ public class CollectionTestBase {
         String json = content.getText();
         Gson gson = new Gson();
         HttpBinGetResponseData responseData = gson.fromJson(json, HttpBinGetResponseData.class);
-        assertEquals("url", url.toString(), responseData.url);
+        checkResponseData(url, responseData);
         return content;
     }
 
-    protected void checkResponseData(HttpBinGetResponseData responseData) {
-
+    protected void checkResponseData(URL url, HttpBinGetResponseData responseData) throws UnknownHostException {
+        System.out.format("checking %s%n", responseData);
+        assertEquals("url", url.toString(), responseData.url);
+        if (upstreamProxyHostAndPort != null) {
+            String expectedOrigin = upstreamProxyHostAndPort.getHost();
+            if (CharMatcher.javaLetter().matchesAnyOf(expectedOrigin)) {
+                InetAddress ipAddress = InetAddress.getByName(expectedOrigin);
+                expectedOrigin = ipAddress.getHostAddress();
+            }
+            System.out.format("checking origin against proxy %s (%s)%n", upstreamProxyHostAndPort, expectedOrigin);
+            assertEquals("origin", expectedOrigin, responseData.origin);
+        }
     }
 
-    @SuppressWarnings("Duplicates")
+    private class TestProxySupplier implements Supplier<Optional<InetSocketAddress>> {
+
+        @Override
+        public Optional<InetSocketAddress> get() {
+            if (upstreamProxyHostAndPort != null) {
+                InetSocketAddress address = new InetSocketAddress(upstreamProxyHostAndPort.getHost(), upstreamProxyHostAndPort.getPort());
+                return Optional.of(address);
+            } else {
+                return Optional.absent();
+            }
+        }
+    }
+
     protected HarContent testTrafficCollector(WebDriverFactory webDriverFactory, final URL url) throws IOException {
         CertificateAndKeySource certificateAndKeySource = new TestCertificateAndKeySource();
-        TrafficCollector collector = new TrafficCollector(webDriverFactory, certificateAndKeySource, AnonymizingFiltersSource.getInstance());
+        TrafficCollector collector = new TrafficCollector(webDriverFactory, certificateAndKeySource,
+                AnonymizingFiltersSource.getInstance(), new TestProxySupplier());
         final AtomicReference<String> pageSourceRef = new AtomicReference<>();
         Har har = collector.collect(new TrafficGenerator() {
             @Override
@@ -109,15 +140,17 @@ public class CollectionTestBase {
         });
         List<HarEntry> entries = ImmutableList.copyOf(har.getLog().getEntries());
         System.out.format("%d request URLs recorded in HAR:%n", entries.size());
+        HarContent content = null;
         for (int i = 0; i < entries.size(); i++) {
             HarEntry harEntry = entries.get(i);
             String requestUrl = harEntry.getRequest().getUrl();
             System.out.format("  %2d %s%n", i + 1, requestUrl);
             if (url.toString().equals(requestUrl)) {
-                return harEntry.getResponse().getContent();
+                checkState(content == null, "content already found matching %s: %s (not sure what to do if two HAR entries match the URL)", url, content);
+                content = harEntry.getResponse().getContent();
             }
         }
-        Assert.fail("no request for " + url + " in HAR");
-        throw new IllegalStateException();
+        assertNotNull("no request for " + url + " in HAR", content);
+        return content;
     }
 }
