@@ -7,7 +7,7 @@
     <artifactId>selenium-help</artifactId>
     <version>0.1-SNAPSHOT</version>
     <properties>
-	    <xvfb-manager.version>0.3-SNAPSHOT</xvfb-manager.version>
+	    <xvfb-manager.version>0.3</xvfb-manager.version>
         <test.log.level>info</test.log.level>
         <selenium-help.test.proxy.http></selenium-help.test.proxy.http>
     </properties>
