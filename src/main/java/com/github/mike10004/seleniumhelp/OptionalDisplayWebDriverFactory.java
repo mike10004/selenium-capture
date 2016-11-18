@@ -18,11 +18,11 @@ public abstract class OptionalDisplayWebDriverFactory implements WebDriverFactor
     protected final Supplier<String> displayProvider;
 
     public OptionalDisplayWebDriverFactory() {
-        this(Suppliers.ofInstance((String)null));
+        this(Suppliers.ofInstance(null));
     }
 
     public OptionalDisplayWebDriverFactory(String display) {
-        this(Suppliers.ofInstance(checkNotNull(display, "display")));
+        this(Suppliers.ofInstance(checkNotNull(display, "display must be non-null (use no-args constructor if the display is not known)")));
     }
 
     public OptionalDisplayWebDriverFactory(Supplier<String> displayProvider) {

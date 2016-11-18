@@ -19,7 +19,13 @@ public class FirefoxWebDriverFactoryHttpCollectionTest extends CollectionTestBas
 
     @Test
     public void testTrafficCollectorWithFirefoxFactory_http() throws Exception {
-        WebDriverFactory webDriverFactory = new FirefoxWebDriverFactory(xvfb.getController().getDisplay());
+        String display = xvfb.getController().getDisplay();
+        WebDriverFactory webDriverFactory;
+        if (display == null) {
+            webDriverFactory = new FirefoxWebDriverFactory();
+        } else {
+            webDriverFactory = new FirefoxWebDriverFactory(display);
+        }
         testTrafficCollector(webDriverFactory);
     }
 
