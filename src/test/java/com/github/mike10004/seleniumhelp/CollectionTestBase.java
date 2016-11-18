@@ -1,5 +1,6 @@
 package com.github.mike10004.seleniumhelp;
 
+import com.github.mike10004.xvfbtesting.XvfbRule;
 import com.google.common.base.CharMatcher;
 import com.google.common.base.Optional;
 import com.google.common.base.Strings;
@@ -14,7 +15,9 @@ import net.lightbody.bmp.core.har.HarEntry;
 import net.lightbody.bmp.mitm.CertificateAndKeySource;
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Rule;
 import org.openqa.selenium.WebDriver;
 import org.slf4j.LoggerFactory;
 
@@ -43,6 +46,12 @@ public class CollectionTestBase {
     private final @Nullable HostAndPort upstreamProxyHostAndPort;
     protected final String protocol;
 
+    protected CollectionTestBase(String protocol) {
+        this.protocol = protocol;
+        this.upstreamProxyHostAndPort = upstreamProxyHostAndPort_;
+        checkArgument("http".equals(protocol) || "https".equals(protocol), "protocol must be  http or https: %s", protocol);
+    }
+
     @BeforeClass
     public static void setUpstreamProxy() {
         String proxyValue = System.getProperty(SYSPROP_TEST_PROXY);
@@ -53,10 +62,12 @@ public class CollectionTestBase {
         }
     }
 
-    protected CollectionTestBase(String protocol) {
-        this.protocol = protocol;
-        this.upstreamProxyHostAndPort = upstreamProxyHostAndPort_;
-        checkArgument("http".equals(protocol) || "https".equals(protocol), "protocol must be  http or https: %s", protocol);
+    @Rule
+    public XvfbRule xvfb = XvfbRule.builder().disabledOnWindows().build();
+
+    @Before
+    public void waitForDisplay() throws InterruptedException {
+        xvfb.getController().waitUntilReady();
     }
 
     /**

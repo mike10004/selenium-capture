@@ -19,7 +19,7 @@ public class FirefoxWebDriverFactoryHttpsCollectionTest extends CollectionTestBa
 
     @Test
     public void testTrafficCollectorWithFirefoxFactory_https() throws Exception {
-        WebDriverFactory webDriverFactory = new FirefoxWebDriverFactory();
+        WebDriverFactory webDriverFactory = new FirefoxWebDriverFactory(xvfb.getController().getDisplay());
         testTrafficCollector(webDriverFactory);
     }
 
