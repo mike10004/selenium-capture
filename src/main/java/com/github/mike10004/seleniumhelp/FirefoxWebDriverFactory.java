@@ -39,12 +39,12 @@ public class FirefoxWebDriverFactory extends OptionalDisplayWebDriverFactory {
             profile = new FirefoxProfile();
         }
         // https://stackoverflow.com/questions/2887978/webdriver-and-proxy-server-for-firefox
-        // TODO: add hosts bypass? or is that only for upstream?
         profile.setPreference("network.proxy.type", 1);
         profile.setPreference("network.proxy.http", "localhost");
         profile.setPreference("network.proxy.http_port", proxy.getPort());
         profile.setPreference("network.proxy.ssl", "localhost");
         profile.setPreference("network.proxy.ssl_port", proxy.getPort());
+        profile.setPreference("network.proxy.no_proxies_on", ""); // no host bypassing; collector should get all traffic
         profile.setPreference("browser.search.geoip.url", "");
         profile.setPreference("network.prefetch-next", false);
         profile.setPreference("network.http.speculative-parallel-limit", 0);
@@ -54,7 +54,6 @@ public class FirefoxWebDriverFactory extends OptionalDisplayWebDriverFactory {
         profile.setPreference("browser.newtabpage.enabled", false);
         profile.setPreference("app.update.url", "");
         profile.setPreference("browser.safebrowsing.provider.mozilla.updateURL", "");
-        profile.setPreference("network.proxy.no_proxies_on", "");
         FirefoxBinary binary = createFirefoxBinary();
         Map<String, String> environment = buildEnvironment();
         FirefoxDriver driver = WebDriverSupport.firefoxInEnvironment(environment).create(binary, profile);
