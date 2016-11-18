@@ -6,6 +6,18 @@
     <groupId>com.github.mike10004</groupId>
     <artifactId>selenium-help</artifactId>
     <version>0.1-SNAPSHOT</version>
+    <properties>
+        <test.log.level>info</test.log.level>
+        <selenium-help.test.proxy.http></selenium-help.test.proxy.http>
+    </properties>
+    <profiles>
+        <profile>
+            <id>log-debug</id>
+            <properties>
+                <test.log.level>debug</test.log.level>
+            </properties>
+        </profile>
+    </profiles>
     <build>
         <pluginManagement>
             <plugins>
@@ -15,6 +27,17 @@
                     <configuration>
                         <source>1.8</source>
                         <target>1.8</target>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <artifactId>maven-surefire-plugin</artifactId>
+                    <version>2.19.1</version>
+                    <configuration>
+                        <systemPropertyVariables>
+                            <wdm.targetPath>${project.build.directory}/webdriver</wdm.targetPath>
+                            <org.slf4j.simpleLogger.defaultLogLevel>${test.log.level}</org.slf4j.simpleLogger.defaultLogLevel>
+                            <selenium-help.test.proxy.http>${selenium-help.test.proxy.http}</selenium-help.test.proxy.http>
+                        </systemPropertyVariables>
                     </configuration>
                 </plugin>
             </plugins>
@@ -93,7 +116,7 @@
         <dependency>
             <groupId>io.github.bonigarcia</groupId>
             <artifactId>webdrivermanager</artifactId>
-            <version>1.4.10</version>
+            <version>1.5.0</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
