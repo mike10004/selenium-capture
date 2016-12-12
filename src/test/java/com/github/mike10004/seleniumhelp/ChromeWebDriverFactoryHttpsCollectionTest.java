@@ -1,5 +1,6 @@
 package com.github.mike10004.seleniumhelp;
 
+import io.github.bonigarcia.wdm.ChromeDriverManager;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.openqa.selenium.chrome.ChromeOptions;
@@ -15,7 +16,7 @@ public class ChromeWebDriverFactoryHttpsCollectionTest extends CollectionTestBas
     public static void setUpDriver() {
         String driverPath = System.getProperty("webdriver.chrome.driver");
         if (driverPath == null) {
-            io.github.bonigarcia.wdm.ChromeDriverManager.getInstance().setup();
+            ChromeDriverManager.getInstance().setup();
         }
     }
 

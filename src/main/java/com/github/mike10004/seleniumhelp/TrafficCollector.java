@@ -1,8 +1,5 @@
 package com.github.mike10004.seleniumhelp;
 
-import com.google.common.base.Optional;
-import com.google.common.base.Supplier;
-import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableList;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.HttpObject;
@@ -10,6 +7,7 @@ import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponse;
 import net.lightbody.bmp.BrowserMobProxy;
 import net.lightbody.bmp.BrowserMobProxyServer;
+import net.lightbody.bmp.core.har.Har;
 import net.lightbody.bmp.filters.HttpsAwareFiltersAdapter;
 import net.lightbody.bmp.mitm.CertificateAndKeySource;
 import net.lightbody.bmp.mitm.manager.ImpersonatingMitmManager;
@@ -26,6 +24,7 @@ import javax.annotation.Nullable;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.EnumSet;
+import java.util.Optional;
 import java.util.Set;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -35,17 +34,17 @@ public class TrafficCollector {
     private final WebDriverFactory webDriverFactory;
     private final CertificateAndKeySource certificateAndKeySource;
     private final ImmutableList<HttpFiltersSource> httpFiltersSources;
-    private final Supplier<Optional<InetSocketAddress>> upstreamProxyProvider;
+    private final java.util.function.Supplier<Optional<InetSocketAddress>> upstreamProxyProvider;
 
     public TrafficCollector(WebDriverFactory webDriverFactory, CertificateAndKeySource certificateAndKeySource,
                             HttpFiltersSource httpFiltersSource,
-                            Supplier<Optional<InetSocketAddress>> upstreamProxyProvider) {
+                            java.util.function.Supplier<Optional<InetSocketAddress>> upstreamProxyProvider) {
         this(webDriverFactory, certificateAndKeySource, ImmutableList.of(httpFiltersSource), upstreamProxyProvider);
     }
 
     public TrafficCollector(WebDriverFactory webDriverFactory, CertificateAndKeySource certificateAndKeySource,
                             Iterable<? extends HttpFiltersSource> httpFiltersSources,
-                            Supplier<Optional<InetSocketAddress>> upstreamProxyProvider) {
+                            java.util.function.Supplier<Optional<InetSocketAddress>> upstreamProxyProvider) {
         this.webDriverFactory = checkNotNull(webDriverFactory);
         this.certificateAndKeySource = checkNotNull(certificateAndKeySource);
         this.httpFiltersSources = ImmutableList.copyOf(httpFiltersSources);
@@ -56,8 +55,8 @@ public class TrafficCollector {
         return EnumSet.allOf(CaptureType.class);
     }
 
-    protected static Supplier<Optional<InetSocketAddress>> absentUpstreamProxyProvider() {
-        return Suppliers.ofInstance(Optional.absent());
+    protected static java.util.function.Supplier<Optional<InetSocketAddress>> absentUpstreamProxyProvider() {
+        return Optional::empty;
     }
 
     /**
@@ -99,7 +98,7 @@ public class TrafficCollector {
         } finally {
             bmp.stop();
         }
-        net.lightbody.bmp.core.har.Har har = bmp.getHar();
+        Har har = bmp.getHar();
         return new HarPlus<>(har, result);
     }
 
@@ -156,7 +155,7 @@ public class TrafficCollector {
         MitmManager mitmManager = createMitmManager(bmp, certificateAndKeySource);
         bmp.setMitmManager(mitmManager);
         httpFiltersSources.forEach(bmp::addLastHttpFilterFactory);
-        InetSocketAddress upstreamProxy = upstreamProxyProvider.get().orNull();
+        InetSocketAddress upstreamProxy = upstreamProxyProvider.get().orElse(null);
         if (upstreamProxy != null) {
             bmp.setChainedProxy(upstreamProxy);
         }

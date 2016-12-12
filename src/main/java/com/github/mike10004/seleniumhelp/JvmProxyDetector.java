@@ -1,13 +1,12 @@
 package com.github.mike10004.seleniumhelp;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Optional;
-import com.google.common.base.Supplier;
 
 import javax.annotation.Nullable;
 import java.net.InetSocketAddress;
 import java.util.Objects;
 import java.util.Properties;
+import java.util.function.Supplier;
 
 public class JvmProxyDetector {
 
@@ -44,13 +43,8 @@ public class JvmProxyDetector {
         }
     }
 
-    public Supplier<Optional<InetSocketAddress>> asOptionalSupplier() {
-        return new Supplier<Optional<InetSocketAddress>>() {
-            @Override
-            public Optional<InetSocketAddress> get() {
-                return Optional.fromNullable(detectJvmProxy());
-            }
-        };
+    public Supplier<java.util.Optional<InetSocketAddress>> asOptionalSupplier() {
+        return () -> java.util.Optional.ofNullable(detectJvmProxy());
     }
 
 }

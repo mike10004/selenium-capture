@@ -2,19 +2,15 @@ package com.github.mike10004.seleniumhelp;
 
 import com.github.mike10004.xvfbtesting.XvfbRule;
 import com.google.common.base.CharMatcher;
-import com.google.common.base.Optional;
 import com.google.common.base.Strings;
-import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.net.HostAndPort;
 import com.google.gson.Gson;
-import net.lightbody.bmp.core.har.Har;
 import net.lightbody.bmp.core.har.HarContent;
 import net.lightbody.bmp.core.har.HarEntry;
 import net.lightbody.bmp.mitm.CertificateAndKeySource;
 import org.apache.commons.lang3.StringEscapeUtils;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Rule;
@@ -29,11 +25,9 @@ import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicReference;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
-import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
@@ -131,15 +125,15 @@ public class CollectionTestBase {
         }
     }
 
-    private class TestProxySupplier implements Supplier<Optional<InetSocketAddress>> {
+    private class TestProxySupplier implements java.util.function.Supplier<java.util.Optional<InetSocketAddress>> {
 
         @Override
-        public Optional<InetSocketAddress> get() {
+        public java.util.Optional<InetSocketAddress> get() {
             if (upstreamProxyHostAndPort != null) {
                 InetSocketAddress address = new InetSocketAddress(upstreamProxyHostAndPort.getHost(), upstreamProxyHostAndPort.getPort());
-                return Optional.of(address);
+                return java.util.Optional.of(address);
             } else {
-                return Optional.absent();
+                return java.util.Optional.empty();
             }
         }
     }

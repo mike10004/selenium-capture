@@ -1,10 +1,9 @@
 package com.github.mike10004.seleniumhelp;
 
+import com.github.mike10004.seleniumhelp.FirefoxCookieDb.Importer;
+import com.github.mike10004.seleniumhelp.FirefoxWebDriverFactory.SupplementingFirefoxProfile.ProfileAction;
 import com.github.mike10004.xvfbselenium.WebDriverSupport;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Predicate;
-import com.google.common.base.Supplier;
-import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -17,7 +16,6 @@ import org.openqa.selenium.firefox.FirefoxBinary;
 import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.firefox.FirefoxProfile;
 
-import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
@@ -25,6 +23,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -35,8 +35,7 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
     private final ImmutableList<DeserializableCookie> cookies;
 
     public FirefoxWebDriverFactory(Map<String, String> environment, Map<String, Object> profilePreferences, Iterable<DeserializableCookie> cookies) {
-        this(Suppliers.ofInstance(ImmutableMap.copyOf(environment)), profilePreferences, cookies);
-
+        this(() -> (ImmutableMap.copyOf(environment)), profilePreferences, cookies);
     }
 
     public FirefoxWebDriverFactory() {
@@ -56,8 +55,7 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
 
     @Override
     public WebDriver createWebDriver(BrowserMobProxy proxy, CertificateAndKeySource certificateAndKeySource) throws IOException {
-
-        List<SupplementingFirefoxProfile.ProfileAction> actions = new ArrayList<>(2);
+        List<ProfileAction> actions = new ArrayList<>(2);
         List<DeserializableCookie> cookies_ = getCookies();
         if (!cookies.isEmpty()) {
             actions.add(new CookieInstallingProfileAction(cookies_, FirefoxCookieDb.getImporter()));
@@ -111,7 +109,7 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
     @VisibleForTesting
     static void checkPreferencesValues(Iterable<?> values) throws IllegalArgumentException {
         for (Object value : values) {
-            if (!preferenceValueChecker.apply(value)) {
+            if (!preferenceValueChecker.test(value)) {
                 throw new IllegalArgumentException(String.format("preference value %s (%s) must have type that is one of %s", value, value == null ? "N/A" : value.getClass(), allowedTypes));
             }
         }
@@ -121,16 +119,13 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
     static Predicate<Object> newTypePredicate(Iterable<Class<?>> permittedSuperclasses) {
         final Set<Class<?>> superclasses = ImmutableSet.copyOf(permittedSuperclasses);
         checkArgument(!superclasses.isEmpty(), "set of superclasses must be nonempty");
-        return new Predicate<Object>() {
-            @Override
-            public boolean apply(@Nullable Object input) {
-                for (Class<?> superclass : superclasses) {
-                    if (superclass.isInstance(input)) {
-                        return true;
-                    }
+        return input -> {
+            for (Class<?> superclass : superclasses) {
+                if (superclass.isInstance(input)) {
+                    return true;
                 }
-                return false;
             }
+            return false;
         };
     }
 
@@ -138,7 +133,7 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
         return new FirefoxBinary();
     }
 
-    private static class CertificateSupplementingProfileAction implements SupplementingFirefoxProfile.ProfileAction {
+    private static class CertificateSupplementingProfileAction implements ProfileAction {
 
         public static final String CERTIFICATE_DB_FILENAME = "cert8.db";
 
@@ -160,14 +155,14 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
         }
     }
 
-    static class CookieInstallingProfileAction implements SupplementingFirefoxProfile.ProfileAction {
+    static class CookieInstallingProfileAction implements ProfileAction {
 
         public static final String COOKIES_DB_FILENAME = "cookies.sqlite";
 
         private final List<DeserializableCookie> cookies;
-        private final FirefoxCookieDb.Importer cookieImporter;
+        private final Importer cookieImporter;
 
-        private CookieInstallingProfileAction(List<DeserializableCookie> cookies, FirefoxCookieDb.Importer cookieImporter) {
+        private CookieInstallingProfileAction(List<DeserializableCookie> cookies, Importer cookieImporter) {
             this.cookies = checkNotNull(cookies);
             this.cookieImporter = checkNotNull(cookieImporter);
         }
@@ -184,7 +179,7 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
 
     }
 
-    private static class SupplementingFirefoxProfile extends FirefoxProfile {
+    protected static class SupplementingFirefoxProfile extends org.openqa.selenium.firefox.FirefoxProfile {
 
         private final ImmutableList<? extends ProfileAction> profileActions;
 
@@ -194,6 +189,7 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
 
         interface ProfileAction {
             void perform(File profileDir);
+            @SuppressWarnings("unused")
             class ProfilePreparationException extends IllegalStateException {
                 public ProfilePreparationException() {
                 }
