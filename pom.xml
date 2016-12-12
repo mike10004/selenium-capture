@@ -7,7 +7,9 @@
     <artifactId>selenium-help</artifactId>
     <version>0.1-SNAPSHOT</version>
     <properties>
-	    <xvfb-manager.version>0.3</xvfb-manager.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <xvfb-manager.version>0.4</xvfb-manager.version>
         <test.log.level>info</test.log.level>
         <selenium-help.test.proxy.http></selenium-help.test.proxy.http>
     </properties>
@@ -44,6 +46,20 @@
             </plugins>
         </pluginManagement>
     </build>
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.seleniumhq.selenium</groupId>
+                <artifactId>selenium-remote-driver</artifactId>
+                <version>3.0.1</version>
+            </dependency>
+            <dependency>
+                <groupId>net.sourceforge.htmlunit</groupId>
+                <artifactId>htmlunit</artifactId>
+                <version>2.23</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
     <dependencies>
         <dependency>
             <groupId>com.google.code.gson</groupId>
@@ -102,10 +118,15 @@
             </exclusions>
         </dependency>
         <dependency>
+            <groupId>org.seleniumhq.selenium</groupId>
+            <artifactId>htmlunit-driver</artifactId>
+            <version>2.23.1</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
             <groupId>com.github.mike10004</groupId>
             <artifactId>native-helper</artifactId>
             <version>5.1.0</version>
-            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
@@ -151,6 +172,11 @@
             <artifactId>xvfb-testing</artifactId>
             <version>${xvfb-manager.version}</version>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.opencsv</groupId>
+            <artifactId>opencsv</artifactId>
+            <version>3.5</version>
         </dependency>
     </dependencies>
 </project>

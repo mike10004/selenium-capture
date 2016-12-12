@@ -2,14 +2,23 @@ package com.github.mike10004.seleniumhelp;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpRequest;
 import org.littleshoot.proxy.HttpFiltersAdapter;
 
+import javax.annotation.Nullable;
+import java.util.AbstractMap;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
-class HeaderModifyingRequestFilters extends HttpFiltersAdapter {
+import static com.google.common.base.Preconditions.checkNotNull;
+
+public class HeaderModifyingRequestFilters extends HttpFiltersAdapter {
 
     private final ImmutableSet<String> headersToRemove;
     private final ImmutableList<? extends Entry<String, ?>> headersToReplace;
@@ -20,6 +29,42 @@ class HeaderModifyingRequestFilters extends HttpFiltersAdapter {
         this.headersToRemove = ImmutableSet.copyOf(headersToRemove);
         this.headersToReplace = ImmutableList.copyOf(headersToReplace);
         this.headersToAdd = ImmutableList.copyOf(headersToAdd);
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public static class Builder {
+
+        private final Set<String> headersToRemove;
+        private final List<Map.Entry<String, ?>> headersToReplace;
+        private final List<Map.Entry<String, ?>> headersToAdd;
+
+        private Builder() {
+            headersToRemove = new LinkedHashSet<>();
+            headersToReplace = new ArrayList<>();
+            headersToAdd = new ArrayList<>();
+        }
+
+        public Builder add(String name, String value) {
+            headersToAdd.add(new AbstractMap.SimpleImmutableEntry<>(checkNotNull(name, "name"), checkNotNull(value, "value")));
+            return this;
+        }
+
+        public Builder remove(String name) {
+            headersToRemove.add(checkNotNull(name, "name"));
+            return this;
+        }
+
+        public Builder set(String name, String value) {
+            headersToReplace.add(new AbstractMap.SimpleImmutableEntry<>(checkNotNull(name, "name"), checkNotNull(value, "value")));
+            return this;
+        }
+
+        public HeaderModifyingRequestFilters build(HttpRequest originalRequest) {
+            return new HeaderModifyingRequestFilters(originalRequest, headersToRemove, headersToReplace, headersToAdd);
+        }
     }
 
     @Override

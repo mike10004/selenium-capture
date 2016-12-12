@@ -1,16 +1,9 @@
-/*
- * (c) 2015 IBG, A Novetta Solutions Company.
- */
-package com.novetta.csid.browsersim;
+package com.github.mike10004.seleniumhelp;
 
 import com.google.common.net.MediaType;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-/**
- *
- * @author mchaberski
- */
 public class ContentTypes {
     
     public static boolean isSameTypeWithoutParameters(String contentType1, String contentType2) {

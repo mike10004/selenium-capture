@@ -1,5 +1,7 @@
 package com.github.mike10004.seleniumhelp;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -20,12 +22,7 @@ public class FirefoxWebDriverFactoryHttpCollectionTest extends CollectionTestBas
     @Test
     public void testTrafficCollectorWithFirefoxFactory_http() throws Exception {
         String display = xvfb.getController().getDisplay();
-        WebDriverFactory webDriverFactory;
-        if (display == null) {
-            webDriverFactory = new FirefoxWebDriverFactory();
-        } else {
-            webDriverFactory = new FirefoxWebDriverFactory(display);
-        }
+        WebDriverFactory webDriverFactory = new FirefoxWebDriverFactory(FirefoxWebDriverFactory.createEnvironmentSupplierForDisplay(display), ImmutableMap.of(), ImmutableList.of());
         testTrafficCollector(webDriverFactory);
     }
 

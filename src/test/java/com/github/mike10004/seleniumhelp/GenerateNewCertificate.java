@@ -1,8 +1,3 @@
-/*
- * (c) 2016 Novetta
- *
- * Created by mike
- */
 package com.github.mike10004.seleniumhelp;
 
 import com.github.mike10004.nativehelper.Program;

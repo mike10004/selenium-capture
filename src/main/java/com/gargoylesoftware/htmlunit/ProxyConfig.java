@@ -25,7 +25,10 @@ import java.util.regex.Pattern;
  *
  * @author Daniel Gredler
  * @see WebClientOptions#getProxyConfig()
+ * @deprecated included in this library to facilitate transitions from using HTMLUnit to Selenium for automation,
+ * but your code should quit using this class eventually. It is not deprecated in the real HTMLUnit library
  */
+@Deprecated
 public class ProxyConfig implements Serializable {
 
     private String proxyHost_;

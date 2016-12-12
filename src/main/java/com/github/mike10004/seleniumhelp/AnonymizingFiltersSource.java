@@ -18,7 +18,17 @@ public class AnonymizingFiltersSource extends HttpFiltersSourceAdapter {
         return instance;
     }
 
-    private static final ImmutableSet<String> headersToRemove = ImmutableSet.of(HttpHeaders.Names.VIA, com.google.common.net.HttpHeaders.X_FORWARDED_FOR, com.google.common.net.HttpHeaders.X_FORWARDED_HOST, com.google.common.net.HttpHeaders.X_FORWARDED_PORT, com.google.common.net.HttpHeaders.X_FORWARDED_PROTO);
+    private static final ImmutableSet<String> headersToRemove = ImmutableSet.of(
+            HttpHeaders.Names.VIA,
+            com.google.common.net.HttpHeaders.X_FORWARDED_FOR,
+            com.google.common.net.HttpHeaders.X_FORWARDED_HOST,
+            com.google.common.net.HttpHeaders.X_FORWARDED_PORT,
+            com.google.common.net.HttpHeaders.X_FORWARDED_PROTO,
+            com.google.common.net.HttpHeaders.X_USER_IP,
+            "User-IP",
+            "Client-IP",
+            "X-Client-IP");
+
     private static final ImmutableSet<? extends Map.Entry<String, ?>> headersToReplace = ImmutableSet.of();
     private static final ImmutableSet<? extends Map.Entry<String, ?>> headersToAdd = ImmutableSet.of();
 

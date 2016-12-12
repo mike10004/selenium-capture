@@ -53,6 +53,15 @@ public class CollectionTestBase {
     }
 
     @BeforeClass
+    public static void checkClasspath() throws ClassNotFoundException {
+        /*
+         * The htmlunit driver depends on an older version of selenium-remote-driver,
+         * so this checks that our pom requires the later version to be used.
+         */
+        Class.forName("org.openqa.selenium.io.CircularOutputStream");
+    }
+
+    @BeforeClass
     public static void setUpstreamProxy() {
         String proxyValue = System.getProperty(SYSPROP_TEST_PROXY);
         if (!Strings.isNullOrEmpty(proxyValue)) {
@@ -139,17 +148,16 @@ public class CollectionTestBase {
         CertificateAndKeySource certificateAndKeySource = new TestCertificateAndKeySource();
         TrafficCollector collector = new TrafficCollector(webDriverFactory, certificateAndKeySource,
                 AnonymizingFiltersSource.getInstance(), new TestProxySupplier());
-        final AtomicReference<String> pageSourceRef = new AtomicReference<>();
-        Har har = collector.collect(new TrafficGenerator() {
+        HarPlus<String> collection = collector.collect(new TrafficGenerator<String>() {
             @Override
-            public void generate(WebDriver driver) throws IOException {
+            public String generate(WebDriver driver) throws IOException {
                 driver.get(url.toString());
                 String currentUrl = driver.getCurrentUrl(), pageSource = driver.getPageSource(), title = driver.getTitle();
                 System.out.format("%s: '%s' (length=%d)%n", currentUrl, StringEscapeUtils.escapeJava(title), pageSource.length());
-                pageSourceRef.set(driver.getPageSource());
+                return driver.getPageSource();
             }
         });
-        List<HarEntry> entries = ImmutableList.copyOf(har.getLog().getEntries());
+        List<HarEntry> entries = ImmutableList.copyOf(collection.har.getLog().getEntries());
         System.out.format("%d request URLs recorded in HAR:%n", entries.size());
         HarContent content = null;
         for (int i = 0; i < entries.size(); i++) {

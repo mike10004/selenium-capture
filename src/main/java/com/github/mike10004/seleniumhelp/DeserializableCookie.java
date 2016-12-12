@@ -1,14 +1,20 @@
 /*
  * (c) 2016 ${COPYRIGHTER}
  */
-package com.novetta.csid.browsersim;
+package com.github.mike10004.seleniumhelp;
 
+import com.google.common.base.Function;
+import com.google.common.collect.ImmutableMap;
 import org.apache.http.cookie.ClientCookie;
+import org.apache.http.cookie.SetCookie;
 import org.apache.http.util.Args;
+import org.openqa.selenium.Cookie;
 
+import javax.annotation.Nullable;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 
 /**
@@ -20,36 +26,20 @@ import java.util.Map;
  * 
  * @author mchaberski
  */
-public class DeserializableCookie implements ClientCookie {
+public class DeserializableCookie implements ClientCookie, SetCookie {
+
+    static final String FIELD_ATTRIBUTES = "attribs";
+    static final String FIELD_DOMAIN = "cookieDomain";
+    static final String FIELD_HTTP_ONLY = "httpOnly";
+    static final String FIELD_LAST_ACCESSED = "lastAccessed";
+    static final String FIELD_CREATION_DATE = "creationDate";
+    static final String FIELD_EXPIRY_DATE = "cookieExpiryDate";
 
     public DeserializableCookie() {
         super();
         this.attribs = new HashMap<>();
     }
 
-    @Override
-    public String toString() {
-        final StringBuilder buffer = new StringBuilder();
-        buffer.append("[version: ");
-        buffer.append(Integer.toString(this.cookieVersion));
-        buffer.append("]");
-        buffer.append("[name: ");
-        buffer.append(this.name);
-        buffer.append("]");
-        buffer.append("[value: ");
-        buffer.append(this.value);
-        buffer.append("]");
-        buffer.append("[domain: ");
-        buffer.append(this.cookieDomain);
-        buffer.append("]");
-        buffer.append("[path: ");
-        buffer.append(this.cookiePath);
-        buffer.append("]");
-        buffer.append("[expiry: ");
-        buffer.append(this.cookieExpiryDate);
-        buffer.append("]");
-        return buffer.toString();
-    }
     private String name;
     private final Map<String, String> attribs;
     private String value;
@@ -61,15 +51,34 @@ public class DeserializableCookie implements ClientCookie {
     private int cookieVersion;
     private Date creationDate;
     private Date lastAccessed;
+    private boolean httpOnly;
 
     @Override
-    public String getAttribute(String name) {
-        return attribs.get(name);
+    public String getAttribute(final String name) {
+        String value = attribs.get(name);
+        if (value != null) {
+            return value;
+        }
+        String casedKey = findAttributeKey(name);
+        if (casedKey != null) {
+            return attribs.get(casedKey);
+        } else {
+            return null;
+        }
+    }
+
+    public String setAttribute(String name, String value) {
+        return attribs.put(name.toLowerCase(java.util.Locale.ROOT), value);
+    }
+
+    protected @Nullable String findAttributeKey(final String name) {
+        return attribs.keySet().stream().map(String::toLowerCase)
+                .filter(name::equalsIgnoreCase).findFirst().orElse(null);
     }
 
     @Override
     public boolean containsAttribute(String name) {
-        return attribs.containsKey(name);
+        return attribs.containsKey(name) || findAttributeKey(name) != null;
     }
 
     @Override
@@ -156,19 +165,19 @@ public class DeserializableCookie implements ClientCookie {
         this.value = value;
     }
 
-    public void setCookieComment(String cookieComment) {
+    public void setComment(String cookieComment) {
         this.cookieComment = cookieComment;
     }
 
-    public void setCookieDomain(String cookieDomain) {
+    public void setDomain(String cookieDomain) {
         this.cookieDomain = cookieDomain;
     }
 
-    public void setCookieExpiryDate(Date cookieExpiryDate) {
+    public void setExpiryDate(Date cookieExpiryDate) {
         this.cookieExpiryDate = cookieExpiryDate;
     }
 
-    public void setCookiePath(String cookiePath) {
+    public void setPath(String cookiePath) {
         this.cookiePath = cookiePath;
     }
 
@@ -176,7 +185,7 @@ public class DeserializableCookie implements ClientCookie {
         isSecure = secure;
     }
 
-    public void setCookieVersion(int cookieVersion) {
+    public void setVersion(int cookieVersion) {
         this.cookieVersion = cookieVersion;
     }
 
@@ -188,6 +197,10 @@ public class DeserializableCookie implements ClientCookie {
         this.lastAccessed = lastAccessed;
     }
 
+    public String getDomainAttribute() {
+        return getAttribute("Domain");
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -196,6 +209,7 @@ public class DeserializableCookie implements ClientCookie {
         DeserializableCookie that = (DeserializableCookie) o;
 
         if (isSecure != that.isSecure) return false;
+        if (httpOnly != that.httpOnly) return false;
         if (cookieVersion != that.cookieVersion) return false;
         if (name != null ? !name.equals(that.name) : that.name != null) return false;
         if (attribs != null ? !attribs.equals(that.attribs) : that.attribs != null) return false;
@@ -231,9 +245,46 @@ public class DeserializableCookie implements ClientCookie {
         result = 31 * result + (cookieExpiryDate != null ? cookieExpiryDate.hashCode() : 0);
         result = 31 * result + (cookiePath != null ? cookiePath.hashCode() : 0);
         result = 31 * result + (isSecure ? 1 : 0);
+        result = 31 * result + (httpOnly ? 1 : 0);
         result = 31 * result + cookieVersion;
         result = 31 * result + (creationDate != null ? creationDate.hashCode() : 0);
         result = 31 * result + (lastAccessed != null ? lastAccessed.hashCode() : 0);
         return result;
     }
+
+    public void replaceAttributes(Map<String, String> attribs) {
+        this.attribs.clear();
+        this.attribs.putAll(attribs);
+    }
+
+    public ImmutableMap<String, String> copyAttributes() {
+        return ImmutableMap.copyOf(attribs);
+    }
+
+    public boolean isHttpOnly() {
+        return httpOnly;
+    }
+
+    public void setHttpOnly(boolean httpOnly) {
+        this.httpOnly = httpOnly;
+    }
+
+    @Override
+    public String toString() {
+        return "DeserializableCookie{" +
+                "name='" + name + '\'' +
+                ", attribs=" + attribs +
+                ", value='" + value + '\'' +
+                ", cookieComment='" + cookieComment + '\'' +
+                ", cookieDomain='" + cookieDomain + '\'' +
+                ", cookieExpiryDate=" + cookieExpiryDate +
+                ", cookiePath='" + cookiePath + '\'' +
+                ", isSecure=" + isSecure +
+                ", cookieVersion=" + cookieVersion +
+                ", creationDate=" + creationDate +
+                ", lastAccessed=" + lastAccessed +
+                ", httpOnly=" + httpOnly +
+                '}';
+    }
+
 }
