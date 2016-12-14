@@ -9,4 +9,4 @@ addons:
     - sqlite3
   firefox: "49.0"
 install: true
-script: mvn install -B -Plog-debug -Dwdm.gitHubTokenName=$GITHUB_TOKEN_NAME -Dwdm.gitHubTokenSecret=$GITHUB_TOKEN_SECRET
+script: mvn install -B -Dwdm.gitHubTokenName=$GITHUB_TOKEN_NAME -Dwdm.gitHubTokenSecret=$GITHUB_TOKEN_SECRET
