@@ -1,5 +1,5 @@
-[![Travis build status](https://img.shields.io/travis/mike10004/xvfb-manager-java.svg)](https://travis-ci.org/mike10004/selenium-help)
-[![Maven Central](https://img.shields.io/maven-central/v/com.github.mike10004/xvfb-manager-parent.svg)](https://repo1.maven.org/maven2/com/github/mike10004/selenium-help/)
+[![Travis build status](https://img.shields.io/travis/mike10004/selenium-help.svg)](https://travis-ci.org/mike10004/selenium-help)
+[![Maven Central](https://img.shields.io/maven-central/v/com.github.mike10004/selenium-help.svg)](https://repo1.maven.org/maven2/com/github/mike10004/selenium-help/)
 
 selenium-help
 =============
