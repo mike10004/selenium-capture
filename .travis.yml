@@ -1,0 +1,11 @@
+dist: trusty
+sudo: false
+group: beta
+language: java
+addons:
+  apt:
+    packages:
+    - chromium-browser
+  firefox: "49.0"
+install: true
+script: mvn install -B -Plog-debug -Dwdm.gitHubTokenName=$GITHUB_TOKEN_NAME -Dwdm.gitHubTokenSecret=$GITHUB_TOKEN_SECRET
