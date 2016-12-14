@@ -122,12 +122,16 @@ public abstract class FirefoxCookieDb {
         }
 
         private void createTable(File sqliteDbFile) throws SQLException, IOException {
-            ProgramWithOutputStrings createTableProgram = Program.running(resolveSqlite3Executable())
-                    .arg(sqliteDbFile.getAbsolutePath())
-                    .args(CREATE_TABLE_SQL)
-                    .outputToStrings();
-            ProgramWithOutputStringsResult createTableResult = createTableProgram.execute();
-            checkResult(createTableResult);
+            // sqlite3 3.11 allows multiple sql statement arguments, but
+            // version 3.8 requires executing once per statement argument
+            for (String stmt : CREATE_TABLE_SQL) {
+                ProgramWithOutputStrings createTableProgram = Program.running(resolveSqlite3Executable())
+                        .arg(sqliteDbFile.getAbsolutePath())
+                        .arg(stmt)
+                        .outputToStrings();
+                ProgramWithOutputStringsResult createTableResult = createTableProgram.execute();
+                checkResult(createTableResult);
+            }
         }
 
         private List<String> queryTableNames(File sqliteDbFile) throws SQLException, IOException {
