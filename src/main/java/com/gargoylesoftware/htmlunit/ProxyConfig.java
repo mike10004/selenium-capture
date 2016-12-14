@@ -20,11 +20,12 @@ import java.util.Map;
 import java.util.regex.Pattern;
 
 /**
- * Class which centralizes proxy configuration, in an effort to reduce clutter in the {@link WebClient}
- * class. One instance of this class exists for each <tt>WebClient</tt> instance.
+ * Verbatim copy of HTMLUnit's class of the same name.
+ * Class which centralizes proxy configuration, in an effort to reduce clutter in
+ * the {@code WebClient} class. One instance of this class exists for
+ * each <tt>WebClient</tt> instance.
  *
  * @author Daniel Gredler
- * @see WebClientOptions#getProxyConfig()
  * @deprecated included in this library to facilitate transitions from using HTMLUnit to Selenium for automation,
  * but your code should quit using this class eventually. It is not deprecated in the real HTMLUnit library
  */

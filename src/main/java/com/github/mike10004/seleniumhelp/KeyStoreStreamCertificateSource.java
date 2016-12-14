@@ -37,15 +37,19 @@ public class KeyStoreStreamCertificateSource implements CertificateAndKeySource 
 
     /**
      * Creates a {@link CertificateAndKeySource} that loads an existing {@link KeyStore} from a classpath resource.
-     *  @param keyStoreType              the KeyStore type, such as PKCS12 or JKS
+     * @param keyStoreType              the KeyStore type, such as PKCS12 or JKS
+     * @param keyStoreByteSource        the byte source providing the keystore bytes
      * @param privateKeyAlias           the alias of the private key in the KeyStore
      * @param keyStorePassword          te KeyStore password
      */
-    public KeyStoreStreamCertificateSource(String keyStoreType, ByteSource keyStoreByteSource, String privateKeyAlias, String keyStorePassword) {
+    public KeyStoreStreamCertificateSource(String keyStoreType, ByteSource keyStoreByteSource,
+                                           String privateKeyAlias, String keyStorePassword) {
         this(keyStoreType, keyStoreByteSource, privateKeyAlias, keyStorePassword, new MemorySecurityProviderTool());
     }
 
-    public KeyStoreStreamCertificateSource(String keyStoreType, ByteSource keyStoreByteSource, String privateKeyAlias, String keyStorePassword, MemorySecurityProviderTool securityProviderTool) {
+    public KeyStoreStreamCertificateSource(String keyStoreType, ByteSource keyStoreByteSource,
+                                           String privateKeyAlias, String keyStorePassword,
+                                           MemorySecurityProviderTool securityProviderTool) {
         this.keyStoreType = checkNotNull(keyStoreType);
         this.keyStoreByteSource = checkNotNull(keyStoreByteSource);
         this.privateKeyAlias = checkNotNull(privateKeyAlias);
