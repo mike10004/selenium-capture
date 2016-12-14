@@ -1,5 +1,8 @@
 package com.github.mike10004.seleniumhelp;
 
+import com.google.common.collect.ImmutableMultimap;
+import com.google.common.collect.Multimap;
+import com.google.common.math.LongMath;
 import com.google.common.net.HttpHeaders;
 import net.lightbody.bmp.core.har.Har;
 import net.lightbody.bmp.core.har.HarEntry;
@@ -40,12 +43,33 @@ public class HarAnalysis {
         Stream<HarEntry> headerValues = findEntriesWithSetCookieHeaders();
         final List<DeserializableCookie> cookies = new ArrayList<>();
         headerValues.forEach(entry -> {
-            makeCookiesFromEntry(cookieSpec, entry, creationDateGetter).forEach(cookies::add);
+            makeCookiesFromEntry(cookieSpec, entry).forEach(cookies::add);
         });
         return cookies;
     }
 
-    private static List<DeserializableCookie> makeCookiesFromEntry(final FlexibleCookieSpec cookieSpec, final HarEntry entry, Function<HarEntry, Date> creationDateGetter) {
+    public static class CookieCollection {
+        private final ImmutableMultimap<HarEntry, DeserializableCookie> cookiesByEntry;
+
+        private CookieCollection(Multimap<HarEntry, DeserializableCookie> cookiesByEntry) {
+            this.cookiesByEntry = ImmutableMultimap.copyOf(cookiesByEntry);
+        }
+
+        private static long getEntryResponseInstant(HarEntry entry) {
+            return LongMath.checkedAdd(entry.getStartedDateTime().getTime(), entry.getTime());
+        }
+
+        public static CookieCollection build(Stream<HarEntry> headerValues, final FlexibleCookieSpec cookieSpec) {
+            ImmutableMultimap.Builder<HarEntry, DeserializableCookie> m = ImmutableMultimap.builder();
+            headerValues.forEach(entry -> {
+                List<DeserializableCookie> cookies = makeCookiesFromEntry(cookieSpec, entry);
+                m.putAll(entry, cookies);
+            });
+            return new CookieCollection(m.build());
+        }
+    }
+
+    private static List<DeserializableCookie> makeCookiesFromEntry(final FlexibleCookieSpec cookieSpec, final HarEntry entry) {
         URL originUrl;
         Date requestDate = entry.getStartedDateTime();
         try {

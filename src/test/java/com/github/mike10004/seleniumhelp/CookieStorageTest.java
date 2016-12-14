@@ -1,15 +1,20 @@
 package com.github.mike10004.seleniumhelp;
 
+import com.github.mike10004.seleniumhelp.ChromeWebDriverFactory.CookiePreparer;
 import com.github.mike10004.xvfbtesting.XvfbRule;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import io.github.bonigarcia.wdm.ChromeDriverManager;
 import io.github.bonigarcia.wdm.MarionetteDriverManager;
 import net.lightbody.bmp.core.har.Har;
 import org.apache.http.cookie.MalformedCookieException;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.openqa.selenium.By;
+import org.openqa.selenium.chrome.ChromeOptions;
+import org.openqa.selenium.remote.DesiredCapabilities;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
@@ -28,14 +33,14 @@ public class CookieStorageTest {
     @Test
     public void testFirefox() throws Exception {
         MarionetteDriverManager.getInstance().setup();
-        testWithDriverFactory(new FirefoxWebDriverFactory(xvfb.getController().configureEnvironment(new HashMap<>()), ImmutableMap.of(), ImmutableList.of()));
+        testWithDriverFactory(new FirefoxWebDriverFactory(xvfb.getController().configureEnvironment(new HashMap<>()),
+                ImmutableMap.of(), ImmutableList.of()));
     }
 
     @Test
     public void testChrome() throws Exception {
-//        MarionetteDriverManager.getInstance().setup();
-//        testWithDriverFactory(new FirefoxWebDriverFactory(Xvfbs.buildEnvironment(xvfb.getController()), ImmutableMap.of(), ImmutableList.of()));
-        Assert.fail("not imp");
+        ChromeDriverManager.getInstance().setup();
+        testWithDriverFactory(new ChromeWebDriverFactory(xvfb.getController().configureEnvironment(new HashMap<>()), new ChromeOptions(), new DesiredCapabilities()));
     }
 
     private void testWithDriverFactory(WebDriverFactory factory) throws IOException, MalformedCookieException {

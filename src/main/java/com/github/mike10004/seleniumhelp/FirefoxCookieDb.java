@@ -77,8 +77,7 @@ public abstract class FirefoxCookieDb {
 
         @Override
         public List<DeserializableCookie> exportCookies(File sqliteDbFile) throws SQLException, IOException {
-            List<Map<String, String>> rows = dumpRows(sqliteDbFile);
-            return Lists.transform(rows, new SqliteRowMapToExplodedCookieConverter().andThen(new ExplodedCookieConverter()));
+            throw new UnsupportedOperationException("not yet supported");
         }
 
         public List<Map<String, String>> dumpRows(File sqliteDbFile) throws SQLException, IOException {
@@ -104,7 +103,7 @@ public abstract class FirefoxCookieDb {
         @Override
         public void importCookies(Iterable<DeserializableCookie> cookies, File sqliteDbFile) throws SQLException, IOException {
             Converter<DeserializableCookie, Map<String, Object>> cookieExploder = new ExplodedCookieConverter().reverse();
-            Converter<Map<String, Object>, Map<String, String>> sqlRowMapper = new SqliteRowMapToExplodedCookieConverter().reverse();
+            Converter<Map<String, Object>, Map<String, String>> sqlRowMapper = new FirefoxCookieRowTransform().asConverter();
             Converter<DeserializableCookie, Map<String, String>> cookieToRowTransform = cookieExploder.andThen(sqlRowMapper);
             Iterable<Map<String, String>> rows = Iterables.transform(cookies, cookieToRowTransform);
             importRows(rows, sqliteDbFile);

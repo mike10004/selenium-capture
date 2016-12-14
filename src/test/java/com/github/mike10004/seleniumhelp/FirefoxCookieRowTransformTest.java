@@ -1,6 +1,5 @@
 package com.github.mike10004.seleniumhelp;
 
-import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
@@ -15,26 +14,14 @@ import java.util.Set;
 
 import static org.junit.Assert.*;
 
-public class SqliteRowMapToExplodedCookieConverterTest {
-
-    @org.junit.Ignore
-    @Test
-    public void doForward() throws Exception {
-        SqliteRowMapToExplodedCookieConverter conv = new SqliteRowMapToExplodedCookieConverter();
-        Map<String, String> input = Iterables.getOnlyElement(Csvs.readRowMaps(CharSource.wrap(ExampleCookieSource.csvText), Csvs.headersFromFirstRow()));
-        Map<String, Object> expected = new LinkedHashMap<>(ExampleCookieSource.asExplodedCookie());
-        expected.put("baseDomain", "google.com");
-        assertTrue("contains httpOnly key", expected.containsKey("httpOnly"));
-        Map<String, Object> actual = conv.convert(input);
-        assertThat("exploded", actual, MapMatcher.expecting(expected));
-    }
+public class FirefoxCookieRowTransformTest {
 
     @Test
-    public void doBackward() throws Exception {
-        SqliteRowMapToExplodedCookieConverter conv = new SqliteRowMapToExplodedCookieConverter();
+    public void apply() throws Exception {
+        FirefoxCookieRowTransform conv = new FirefoxCookieRowTransform();
         Map<String, Object> input = ExampleCookieSource.asExplodedCookie();
         Map<String, String> expected = Iterables.getOnlyElement(Csvs.readRowMaps(CharSource.wrap(ExampleCookieSource.csvText), Csvs.headersFromFirstRow()));
-        Map<String, String> actual = conv.reverse().convert(input);
+        Map<String, String> actual = conv.apply(input);
         final Set<String> ignores = ImmutableSet.of("originAttributes");
         assertThat("imploded", actual, new MapMatcher.DateTruncatingMapMatcher<String, String>(expected, Calendar.SECOND) {
             @Override
@@ -60,7 +47,7 @@ public class SqliteRowMapToExplodedCookieConverterTest {
             }
         });
         assertEquals("originAttributes",
-                SqliteRowMapToExplodedCookieConverter.ATTRIB_JOINER.join(ImmutableMap.of("^appId", "4294967294", "domain", ".google.com")),
+                FirefoxCookieRowTransform.ATTRIB_JOINER.join(ImmutableMap.of("^appId", "4294967294", "domain", ".google.com")),
                 actual.get("originAttributes"));
     }
 }

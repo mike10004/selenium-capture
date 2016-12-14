@@ -287,4 +287,11 @@ public class DeserializableCookie implements ClientCookie, SetCookie {
                 '}';
     }
 
+    public String getBestDomainProperty() {
+        String domainAttr = getDomainAttribute();
+        if (domainAttr != null) {
+            return domainAttr;
+        }
+        return getDomain();
+    }
 }

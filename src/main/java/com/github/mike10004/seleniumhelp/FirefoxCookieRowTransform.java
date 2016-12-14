@@ -1,5 +1,6 @@
 package com.github.mike10004.seleniumhelp;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.CharMatcher;
 import com.google.common.base.Converter;
 import com.google.common.base.Joiner;
@@ -15,7 +16,7 @@ import java.util.Map.Entry;
 import java.util.TreeMap;
 import java.util.function.Function;
 
-public class SqliteRowMapToExplodedCookieConverter extends Converter<Map<String, String>, Map<String, Object>> {
+public class FirefoxCookieRowTransform {
 
     private static java.util.function.Function<Map<String, Object>, Object> valueByKey(final String key) {
         return map -> map.get(key);
@@ -23,6 +24,7 @@ public class SqliteRowMapToExplodedCookieConverter extends Converter<Map<String,
 
     private static final CharMatcher dot = CharMatcher.is('.');
 
+    @VisibleForTesting
     static MapJoiner ATTRIB_JOINER = Joiner.on(';').withKeyValueSeparator('=');
 
     private static final ImmutableMap<String, Function<Map<String, Object>, Object>> _sqliteFieldToCookieValueGetterMap = ImmutableBiMap.<String, Function<Map<String, Object>, Object>>builder()
@@ -59,17 +61,35 @@ public class SqliteRowMapToExplodedCookieConverter extends Converter<Map<String,
             })
             .build();
 
-    @Override
-    protected Map<String, Object> doForward(Map<String, String> row) {
-        throw new UnsupportedOperationException("not implemented");
+    private final Converter<Map<String, Object>, Map<String, String>> converter;
+
+    public FirefoxCookieRowTransform() {
+        converter = new Converter<Map<String, Object>, Map<String, String>>() {
+            @Override
+            protected Map<String, String> doForward(Map<String, Object> explodedCookie) {
+                 return FirefoxCookieRowTransform.this.apply(explodedCookie);
+            }
+
+            @Override
+            protected Map<String, Object> doBackward(Map<String, String> stringStringMap) {
+                throw new UnsupportedOperationException("doBackward not supported");
+            }
+        };
+    }
+
+    public java.util.function.Function<Map<String, Object>, Map<String, String>> asFunction() {
+        return converter::convert;
+    }
+
+    public Converter<Map<String, Object>, Map<String, String>> asConverter() {
+        return converter;
     }
 
     protected Function<Map<String, Object>, Object> getCookieValueGetterBySqlFieldName(String sqlFieldName) {
         return _sqliteFieldToCookieValueGetterMap.getOrDefault(sqlFieldName, map -> map.get(sqlFieldName));
     }
 
-    @Override
-    protected Map<String, String> doBackward(Map<String, Object> explodedCookie) {
+    public Map<String, String> apply(Map<String, Object> explodedCookie) {
         Map<String, String> sqlRowMap = new TreeMap<>();
         for (String sqlFieldName : FirefoxCookieDb.sqliteColumnNames) {
             sqlRowMap.put(sqlFieldName, "");
