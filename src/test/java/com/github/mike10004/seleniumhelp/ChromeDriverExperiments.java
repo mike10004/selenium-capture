@@ -1,5 +1,6 @@
 package com.github.mike10004.seleniumhelp;
 
+import com.google.common.base.Function;
 import com.google.common.io.ByteSource;
 import com.google.common.io.Resources;
 import com.google.gson.Gson;
@@ -20,6 +21,7 @@ import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
+import javax.annotation.Nullable;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -203,7 +205,13 @@ public class ChromeDriverExperiments {
             System.out.println(uri);
             driver.get(uri.toString());
             WebElement outputElement = new WebDriverWait(driver, 3)
-                    .until(ExpectedConditions.presenceOfElementLocated(ChromeWebDriverFactory.CookieImplanter.elementTextIsJson(By.cssSelector("#output"), ChromeWebDriverFactory.CookieImplanter.jsonObjectWithStringProperty("status", "all_imports_processed"::equals))));
+                    .until(new Function<WebDriver, WebElement>(){
+                        @Nullable
+                        @Override
+                        public WebElement apply(WebDriver input) {
+                            throw new UnsupportedOperationException("deprecated; use byOutputStatus instance method of CookieImplanter");
+                        }
+                    });
             String outputJson = outputElement.getText();
             System.out.format("output json:%n%s%n", StringUtils.abbreviate(new Gson().toJson(new JsonParser().parse(outputJson)), 256));
             if (outputJson.trim().isEmpty()) {

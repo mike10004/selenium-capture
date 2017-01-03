@@ -26,6 +26,7 @@ import java.net.InetSocketAddress;
 import java.util.EnumSet;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Supplier;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -44,11 +45,30 @@ public class TrafficCollector {
 
     public TrafficCollector(WebDriverFactory webDriverFactory, CertificateAndKeySource certificateAndKeySource,
                             Iterable<? extends HttpFiltersSource> httpFiltersSources,
-                            java.util.function.Supplier<Optional<InetSocketAddress>> upstreamProxyProvider) {
+                            java.util.function.Supplier<java.util.Optional<InetSocketAddress>> upstreamProxyProvider) {
         this.webDriverFactory = checkNotNull(webDriverFactory);
         this.certificateAndKeySource = checkNotNull(certificateAndKeySource);
         this.httpFiltersSources = ImmutableList.copyOf(httpFiltersSources);
         this.upstreamProxyProvider = checkNotNull(upstreamProxyProvider);
+    }
+
+    /**
+     * Constructs an instance of the class. Accepts a Guava supplier as the upstream proxy provider.
+     * @param webDriverFactory
+     * @param certificateAndKeySource
+     * @param httpFiltersSources
+     * @param upstreamProxyProvider
+     * @deprecated use constructor that takes {@code java.util.function.Supplier} argument
+     */
+    @Deprecated
+    public TrafficCollector(WebDriverFactory webDriverFactory, CertificateAndKeySource certificateAndKeySource,
+                            Iterable<? extends HttpFiltersSource> httpFiltersSources,
+                            com.google.common.base.Supplier<com.google.common.base.Optional<InetSocketAddress>> upstreamProxyProvider) {
+        this(webDriverFactory, certificateAndKeySource, httpFiltersSources, guavaToJava(upstreamProxyProvider));
+    }
+
+    private static <T> java.util.function.Supplier<java.util.Optional<T>> guavaToJava(final com.google.common.base.Supplier<com.google.common.base.Optional<T>> supplier) {
+        return () -> java.util.Optional.ofNullable(supplier.get().orNull());
     }
 
     protected Set<CaptureType> getCaptureTypes() {

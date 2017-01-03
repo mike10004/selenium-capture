@@ -5,15 +5,13 @@ import com.google.common.base.CharMatcher;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.ByteSource;
 import com.google.common.io.Resources;
+import com.google.gson.ExclusionStrategy;
+import com.google.gson.FieldAttributes;
 import com.google.gson.Gson;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-import com.google.gson.JsonPrimitive;
+import com.google.gson.GsonBuilder;
 import net.lightbody.bmp.BrowserMobProxy;
 import net.lightbody.bmp.client.ClientUtil;
 import net.lightbody.bmp.mitm.CertificateAndKeySource;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.http.client.utils.URIBuilder;
 import org.openqa.selenium.By;
 import org.openqa.selenium.Capabilities;
@@ -30,23 +28,20 @@ import org.openqa.selenium.support.ui.WebDriverWait;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.Collection;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
 
 public class ChromeWebDriverFactory extends EnvironmentWebDriverFactory {
 
@@ -121,7 +116,7 @@ public class ChromeWebDriverFactory extends EnvironmentWebDriverFactory {
             public int index;
             public boolean success;
             public String message;
-            public JsonObject savedCookie;
+            public ChromeCookie savedCookie;
         }
 
         public String status;
@@ -136,15 +131,16 @@ public class ChromeWebDriverFactory extends EnvironmentWebDriverFactory {
 
         private static final Logger log = LoggerFactory.getLogger(CookieImplanter.class);
 
-        private static final String COOKIE_IMPLANT_EXTENSION_ID = "neiaahbjfbepoclbammdhcailekhmcdm";
-        private static final String COOKIE_IMPLANT_EXTENSION_VERSION = "1.1";
+        private static final String COOKIE_IMPLANT_EXTENSION_ID = "njacaggbgbhpimllodfhihjndngkadjh";
+        private static final String COOKIE_IMPLANT_EXTENSION_VERSION = "1.3";
         private static final String COOKIE_IMPLANT_EXTENSION_RESOURCE_PATH = "/chrome-cookie-implant/" + COOKIE_IMPLANT_EXTENSION_ID + "-" + COOKIE_IMPLANT_EXTENSION_VERSION + ".crx";
 
         private final ByteSource cookieImplantCrxSource;
         private final Path scratchDir;
         private final Supplier<? extends Collection<DeserializableCookie>> cookiesSupplier;
-        private final transient Gson gson = new Gson();
-        private final int outputTimeoutSeconds = 3;
+        private final transient Gson gson = buildChromeCookieGson();
+        private final transient ChromeCookieTransform chromeCookieTransform = new ChromeCookieTransform();
+        private final int outputTimeoutSeconds = 10;
 
         public CookieImplanter(Path scratchDir, Supplier<? extends Collection<DeserializableCookie>> cookiesSupplier) {
             this(scratchDir, cookiesSupplier, Resources.asByteSource(CookieImplanter.class.getResource(COOKIE_IMPLANT_EXTENSION_RESOURCE_PATH)));
@@ -154,6 +150,21 @@ public class ChromeWebDriverFactory extends EnvironmentWebDriverFactory {
             this.cookieImplantCrxSource = checkNotNull(cookieImplantCrxSource);
             this.scratchDir = checkNotNull(scratchDir);
             this.cookiesSupplier = checkNotNull(cookiesSupplier);
+        }
+
+        protected Gson buildChromeCookieGson() {
+            return new GsonBuilder()
+                    .addSerializationExclusionStrategy(new ExclusionStrategy() {
+                        @Override
+                        public boolean shouldSkipField(FieldAttributes f) {
+                            return false;
+                        }
+
+                        @Override
+                        public boolean shouldSkipClass(Class<?> clazz) {
+                            return false;
+                        }
+                    }).create();
         }
 
         @Override
@@ -168,11 +179,7 @@ public class ChromeWebDriverFactory extends EnvironmentWebDriverFactory {
             Collection<DeserializableCookie> inputCookies = cookiesSupplier.get();
             URI manageUrl = buildImplantUriFromCookies(inputCookies.stream());
             driver.get(manageUrl.toString());
-            JsonObject outputJson = waitForCookieImplantOutput(driver, outputTimeoutSeconds);
-            if (!outputJson.has("imports") || !outputJson.get("imports").isJsonArray()) {
-                throw new CookieImplantException("output.imports has unexpected type: " + outputJson.get("imports"));
-            }
-            CookieImplantOutput output = gson.fromJson(outputJson, CookieImplantOutput.class);
+            CookieImplantOutput output = waitForCookieImplantOutput(driver, outputTimeoutSeconds);
             int numFailures = 0;
             for (CookieImplantOutput.CookieImplantResult result : output.imports) {
                 if (!result.success) {
@@ -205,96 +212,37 @@ public class ChromeWebDriverFactory extends EnvironmentWebDriverFactory {
             }
         }
 
-        @SuppressWarnings("SameParameterValue")
-        static Predicate<JsonElement> jsonObjectWithStringProperty(final String propertyName, Predicate<String> valuePredicate) {
-            return jsonElement -> {
-                if (jsonElement == null || !jsonElement.isJsonObject()) {
+        protected <T> By elementTextRepresentsObject(By elementLocator, Class<T> deserializedType, Predicate<? super T> predicate) {
+            final AtomicInteger pollCounter = new AtomicInteger(0);
+            return Bys.elementWithText(elementLocator, json -> {
+                if (json == null) {
                     return false;
                 }
-                JsonObject obj = jsonElement.getAsJsonObject();
-                JsonElement property = obj.get(propertyName);
-                if (property == null || !property.isJsonPrimitive()) {
-                    return false;
-                }
-                if (property.getAsJsonPrimitive().isString()) {
-                    return valuePredicate.test(property.getAsString());
-                }
-                return false;
-            };
-        }
-
-        static By elementTextIsJson(By elementLocator, Predicate<JsonElement> jsonPredicate) {
-            final JsonParser parser = new JsonParser();
-            return Bys.elementWithText(elementLocator, t -> {
-                if (t == null) {
-                    return false;
-                }
-                JsonElement element = parser.parse(t);
-                return jsonPredicate.test(element);
+                System.out.format("OUTPUT JSON %d%n", pollCounter.incrementAndGet());
+                System.out.println(json);
+                System.out.println();
+                T thing = gson.fromJson(json, deserializedType);
+                return predicate.test(thing);
             });
         }
 
-        protected static JsonObject waitForCookieImplantOutput(WebDriver driver, int timeOutInSeconds) {
-            WebElement outputElement = new WebDriverWait(driver, timeOutInSeconds).until(ExpectedConditions.presenceOfElementLocated(elementTextIsJson(By.cssSelector("#output"), jsonObjectWithStringProperty("status", "all_imports_processed"::equals))));
+        protected By byOutputStatus(Predicate<String> statusPredicate) {
+            return elementTextRepresentsObject(By.cssSelector("#output"), CookieImplantOutput.class, cio -> statusPredicate.test(cio.status));
+        }
+
+        protected CookieImplantOutput waitForCookieImplantOutput(WebDriver driver, int timeOutInSeconds) {
+            WebElement outputElement = new WebDriverWait(driver, timeOutInSeconds)
+                    .until(ExpectedConditions.presenceOfElementLocated(byOutputStatus("all_imports_processed"::equalsIgnoreCase)));
             String outputJson = outputElement.getText();
-            if (outputJson.trim().isEmpty()) {
-                throw new CookieImplantException("output empty");
-            }
-            JsonObject output = new JsonParser().parse(outputJson).getAsJsonObject();
+            CookieImplantOutput output = gson.fromJson(outputJson, CookieImplantOutput.class);
             return output;
         }
 
-        protected final Function<DeserializableCookie, String> cookieJsonTransform = new Function<DeserializableCookie, String>() {
-
-            private void maybeAdd(JsonObject object, String field, @Nullable String value) {
-                maybeAdd(object, field, value == null ? null : new JsonPrimitive(value));
-            }
-
-            private void maybeAdd(JsonObject object, String field, @Nullable Number value) {
-                maybeAdd(object, field, value == null ? null : new JsonPrimitive(value));
-            }
-
-            private void maybeAdd(JsonObject object, String field, @Nullable JsonElement value) {
-                if (value != null && !value.isJsonNull()) {
-                    object.add(field, value);
-                }
-            }
-
-            // for cookie object definition, see https://developer.chrome.com/extensions/cookies#method-set
-            @Override
-            public String apply(DeserializableCookie c) {
-                JsonObject j = new JsonObject();
-                j.addProperty("domain", checkNotNull(c.getBestDomainProperty(), "domain not set on cookie"));
-                j.addProperty("url", guessUrlFromDomain(c).toString());
-                maybeAdd(j, "name", c.getName());
-                maybeAdd(j, "value", c.getValue());
-                j.addProperty("secure", c.isSecure());
-                j.addProperty("httpOnly", c.isHttpOnly());
-                Date expiry = c.getExpiryDate();
-                if (expiry != null) {
-                    long expiryInSeconds = expiry.getTime() / 1000;
-                    j.addProperty("expirationDate", expiryInSeconds);
-                }
-                return gson.toJson(j);
-            }
-
-            protected URI guessUrlFromDomain(DeserializableCookie cookie) {
-                String domain = cookie.getBestDomainProperty();
-                if (domain == null) {
-                    throw new IllegalArgumentException("domain or domain attribute must be set on cookie");
-                }
-                domain = CharMatcher.is('.').trimLeadingFrom(domain);
-                String scheme = cookie.isSecure() ? "https" : "http";
-                try {
-                    return new URI(scheme, domain, "/", null);
-                } catch (URISyntaxException e) {
-                    throw new IllegalArgumentException("domain probably invalid: " + StringUtils.abbreviate(domain, 128), e);
-                }
-            }
-        };
 
         protected URI buildImplantUriFromCookies(Stream<DeserializableCookie> cookies) {
-            return buildImplantUriFromCookieJsons(cookies.map(cookieJsonTransform));
+            return buildImplantUriFromCookieJsons(cookies
+                    .map(chromeCookieTransform::transform)
+                    .map(gson::toJson));
         }
 
         protected URI buildImplantUriFromCookieJsons(Stream<String> cookieJsons) {
@@ -308,5 +256,33 @@ public class ChromeWebDriverFactory extends EnvironmentWebDriverFactory {
             }
 
         }
+    }
+
+    public static class ChromeCookieTransform {
+
+        public ChromeCookie transform(DeserializableCookie input) {
+            ChromeCookie output = new ChromeCookie();
+            output.url = constructUrlFromDomain(input.getBestDomainProperty(), input.isHttpOnly(), input.getPath());
+            output.name = input.getName();
+            output.value = input.getValue();
+            output.domain = input.getBestDomainProperty();
+            output.path = input.getPath();
+            output.expirationDate = input.getExpiryDate().getTime() / 1000d;
+            output.secure = input.isSecure();
+            output.httpOnly = input.isHttpOnly();
+            output.sameSite = ChromeCookie.SameSiteStatus.no_restriction;
+            return output;
+        }
+
+        private static CharMatcher dotMatcher = CharMatcher.is('.');
+        private static CharMatcher slashMatcher = CharMatcher.is('/');
+
+        protected String constructUrlFromDomain(String domain, boolean secure, String path) {
+            domain = dotMatcher.trimLeadingFrom(domain);
+            String scheme = secure ? "https" : "http";
+            path = slashMatcher.trimLeadingFrom(path);
+            return scheme + "://" + domain + "/" + path;
+        }
+
     }
 }

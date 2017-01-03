@@ -10,7 +10,7 @@ import java.util.function.Supplier;
 
 public class JvmProxyDetector {
 
-    protected @Nullable InetSocketAddress detectJvmProxy() {
+    public @Nullable InetSocketAddress detectJvmProxy() {
         return detectJvmProxy(System.getProperties());
     }
 
