@@ -6,7 +6,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.io.CharSink;
 import com.google.common.io.CharSource;
-import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.opencsv.CSVReader;
 import com.opencsv.CSVWriter;
 import org.apache.commons.lang3.StringUtils;
@@ -123,7 +122,6 @@ class Csvs {
         return row;
     }
 
-    @CanIgnoreReturnValue
     public static int writeRowMapsWithHeaders(Iterable<String> headers, Iterable<Map<String, String>> rows, String defaultValue, UnknownKeyStrategy unknownKeyStrategy, CharSink sink) throws IOException {
         return writeRowMaps(headers, true, rows, defaultValue, unknownKeyStrategy, sink);
     }
