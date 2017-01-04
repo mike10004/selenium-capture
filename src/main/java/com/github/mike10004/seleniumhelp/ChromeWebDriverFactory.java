@@ -2,6 +2,7 @@ package com.github.mike10004.seleniumhelp;
 
 import com.github.mike10004.xvfbselenium.WebDriverSupport;
 import com.google.common.base.CharMatcher;
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.ByteSource;
 import com.google.common.io.Resources;
@@ -29,11 +30,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.nio.file.Path;
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -64,11 +68,13 @@ public class ChromeWebDriverFactory extends EnvironmentWebDriverFactory {
         this(ImmutableMap.of(), new ChromeOptions(), new DesiredCapabilities());
     }
 
-    public ChromeWebDriverFactory(Supplier<Map<String, String>> environmentSupplier, ChromeOptions chromeOptions, Capabilities capabilitiesOverrides) {
+    public ChromeWebDriverFactory(Supplier<Map<String, String>> environmentSupplier,
+                                  ChromeOptions chromeOptions, Capabilities capabilitiesOverrides) {
         this(environmentSupplier, chromeOptions, capabilitiesOverrides, cookielessPreparer);
     }
 
-    public ChromeWebDriverFactory(Supplier<Map<String, String>> environmentSupplier, ChromeOptions chromeOptions, Capabilities capabilitiesOverrides, CookiePreparer cookiePreparer) {
+    public ChromeWebDriverFactory(Supplier<Map<String, String>> environmentSupplier,
+                                  ChromeOptions chromeOptions, Capabilities capabilitiesOverrides, CookiePreparer cookiePreparer) {
         super(environmentSupplier);
         this.chromeOptions = checkNotNull(chromeOptions);
         this.capabilitiesOverrides = checkNotNull(capabilitiesOverrides);
@@ -119,7 +125,11 @@ public class ChromeWebDriverFactory extends EnvironmentWebDriverFactory {
             public ChromeCookie savedCookie;
         }
 
-        public String status;
+        public enum CookieImplantStatus {
+            not_yet_processed, some_imports_processed, all_imports_processed
+        }
+
+        public CookieImplantStatus status;
         public List<CookieImplantResult> imports;
     }
 
@@ -132,10 +142,10 @@ public class ChromeWebDriverFactory extends EnvironmentWebDriverFactory {
         private static final Logger log = LoggerFactory.getLogger(CookieImplanter.class);
 
         private static final String COOKIE_IMPLANT_EXTENSION_ID = "njacaggbgbhpimllodfhihjndngkadjh";
-        private static final String COOKIE_IMPLANT_EXTENSION_VERSION = "1.3";
+        private static final String COOKIE_IMPLANT_EXTENSION_VERSION = "1.4";
         private static final String COOKIE_IMPLANT_EXTENSION_RESOURCE_PATH = "/chrome-cookie-implant/" + COOKIE_IMPLANT_EXTENSION_ID + "-" + COOKIE_IMPLANT_EXTENSION_VERSION + ".crx";
 
-        private final ByteSource cookieImplantCrxSource;
+        private final URL cookieImplantCrxResource;
         private final Path scratchDir;
         private final Supplier<? extends Collection<DeserializableCookie>> cookiesSupplier;
         private final transient Gson gson = buildChromeCookieGson();
@@ -143,11 +153,11 @@ public class ChromeWebDriverFactory extends EnvironmentWebDriverFactory {
         private final int outputTimeoutSeconds = 10;
 
         public CookieImplanter(Path scratchDir, Supplier<? extends Collection<DeserializableCookie>> cookiesSupplier) {
-            this(scratchDir, cookiesSupplier, Resources.asByteSource(CookieImplanter.class.getResource(COOKIE_IMPLANT_EXTENSION_RESOURCE_PATH)));
+            this(scratchDir, cookiesSupplier, CookieImplanter.class.getResource(COOKIE_IMPLANT_EXTENSION_RESOURCE_PATH));
         }
 
-        public CookieImplanter(Path scratchDir, Supplier<? extends Collection<DeserializableCookie>> cookiesSupplier, ByteSource cookieImplantCrxSource) {
-            this.cookieImplantCrxSource = checkNotNull(cookieImplantCrxSource);
+        public CookieImplanter(Path scratchDir, Supplier<? extends Collection<DeserializableCookie>> cookiesSupplier, URL cookieImplantCrxResource) {
+            this.cookieImplantCrxResource = checkNotNull(cookieImplantCrxResource, "cookie implant .crx resource");
             this.scratchDir = checkNotNull(scratchDir);
             this.cookiesSupplier = checkNotNull(cookiesSupplier);
         }
@@ -169,8 +179,18 @@ public class ChromeWebDriverFactory extends EnvironmentWebDriverFactory {
 
         @Override
         public void supplementOptions(ChromeOptions options) throws IOException {
-            File crxFile = File.createTempFile("chrome-cookie-implant", ".crx", scratchDir.toFile());
-            cookieImplantCrxSource.copyTo(com.google.common.io.Files.asByteSink(crxFile));
+            File crxFile;
+            if ("file".equals(cookieImplantCrxResource.getProtocol())) {
+                try {
+                    crxFile = new File(cookieImplantCrxResource.toURI());
+                } catch (URISyntaxException e) {
+                    throw new FileNotFoundException("not a valid uri: " + cookieImplantCrxResource);
+                }
+            } else {
+                crxFile = File.createTempFile("chrome-cookie-implant", ".crx", scratchDir.toFile());
+                ByteSource cookieImplantCrxSource = Resources.asByteSource(cookieImplantCrxResource);
+                cookieImplantCrxSource.copyTo(com.google.common.io.Files.asByteSink(crxFile));
+            }
             options.addExtensions(crxFile);
         }
 
@@ -213,26 +233,22 @@ public class ChromeWebDriverFactory extends EnvironmentWebDriverFactory {
         }
 
         protected <T> By elementTextRepresentsObject(By elementLocator, Class<T> deserializedType, Predicate<? super T> predicate) {
-            final AtomicInteger pollCounter = new AtomicInteger(0);
             return Bys.elementWithText(elementLocator, json -> {
                 if (json == null) {
                     return false;
                 }
-                System.out.format("OUTPUT JSON %d%n", pollCounter.incrementAndGet());
-                System.out.println(json);
-                System.out.println();
                 T thing = gson.fromJson(json, deserializedType);
                 return predicate.test(thing);
             });
         }
 
-        protected By byOutputStatus(Predicate<String> statusPredicate) {
+        protected By byOutputStatus(Predicate<CookieImplantOutput.CookieImplantStatus> statusPredicate) {
             return elementTextRepresentsObject(By.cssSelector("#output"), CookieImplantOutput.class, cio -> statusPredicate.test(cio.status));
         }
 
         protected CookieImplantOutput waitForCookieImplantOutput(WebDriver driver, int timeOutInSeconds) {
             WebElement outputElement = new WebDriverWait(driver, timeOutInSeconds)
-                    .until(ExpectedConditions.presenceOfElementLocated(byOutputStatus("all_imports_processed"::equalsIgnoreCase)));
+                    .until(ExpectedConditions.presenceOfElementLocated(byOutputStatus(CookieImplantOutput.CookieImplantStatus.all_imports_processed::equals)));
             String outputJson = outputElement.getText();
             CookieImplantOutput output = gson.fromJson(outputJson, CookieImplantOutput.class);
             return output;
@@ -262,12 +278,13 @@ public class ChromeWebDriverFactory extends EnvironmentWebDriverFactory {
 
         public ChromeCookie transform(DeserializableCookie input) {
             ChromeCookie output = new ChromeCookie();
-            output.url = constructUrlFromDomain(input.getBestDomainProperty(), input.isHttpOnly(), input.getPath());
+            output.url = fabricateUrlFromDomain(input.getBestDomainProperty(), input.isHttpOnly(), input.getPath());
             output.name = input.getName();
             output.value = input.getValue();
             output.domain = input.getBestDomainProperty();
             output.path = input.getPath();
-            output.expirationDate = input.getExpiryDate().getTime() / 1000d;
+            Date expiryDate = input.getExpiryDate();
+            output.expirationDate = expiryDate == null ? null : expiryDate.getTime() / 1000d;
             output.secure = input.isSecure();
             output.httpOnly = input.isHttpOnly();
             output.sameSite = ChromeCookie.SameSiteStatus.no_restriction;
@@ -277,10 +294,14 @@ public class ChromeWebDriverFactory extends EnvironmentWebDriverFactory {
         private static CharMatcher dotMatcher = CharMatcher.is('.');
         private static CharMatcher slashMatcher = CharMatcher.is('/');
 
-        protected String constructUrlFromDomain(String domain, boolean secure, String path) {
+        protected String fabricateUrlFromDomain(String domain, boolean secure, String path) {
+            if (Strings.isNullOrEmpty(domain)) {
+                LoggerFactory.getLogger(ChromeCookieTransform.class).warn("input cookie has no domain, so no URL can be fabricated; chrome will not like this");
+                return "";
+            }
             domain = dotMatcher.trimLeadingFrom(domain);
             String scheme = secure ? "https" : "http";
-            path = slashMatcher.trimLeadingFrom(path);
+            path = slashMatcher.trimLeadingFrom(Strings.nullToEmpty(path));
             return scheme + "://" + domain + "/" + path;
         }
 
