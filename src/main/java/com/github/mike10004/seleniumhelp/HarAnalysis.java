@@ -1,7 +1,11 @@
 package com.github.mike10004.seleniumhelp;
 
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.MoreObjects;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
+import com.google.common.collect.Ordering;
 import com.google.common.math.LongMath;
 import com.google.common.net.HttpHeaders;
 import net.lightbody.bmp.core.har.Har;
@@ -10,20 +14,33 @@ import net.lightbody.bmp.core.har.HarNameValuePair;
 import net.lightbody.bmp.core.har.HarRequest;
 import net.lightbody.bmp.core.har.HarResponse;
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.lang3.tuple.Triple;
 import org.apache.http.cookie.MalformedCookieException;
 
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public class HarAnalysis {
+
+    private static class CookieSpecHolder {
+        private final static FlexibleCookieSpec cookieSpec_ = FlexibleCookieSpec.getDefault();
+
+        public static FlexibleCookieSpec get() {
+            return FlexibleCookieSpec.getDefault();
+        }
+    }
 
     private final Har har;
 
@@ -35,31 +52,42 @@ public class HarAnalysis {
         return new HarAnalysis(har);
     }
 
-    public List<DeserializableCookie> findCookies(final FlexibleCookieSpec cookieSpec) {
+    public CookieCollection findCookies() {
+        return findCookies(CookieSpecHolder.get());
+    }
+
+    CookieCollection findCookies(final FlexibleCookieSpec cookieSpec) {
         return findCookies(cookieSpec, HarEntry::getStartedDateTime);
     }
 
-    public List<DeserializableCookie> findCookies(final FlexibleCookieSpec cookieSpec, Function<HarEntry, Date> creationDateGetter) {
+    public CookieCollection findCookies(Function<HarEntry, Date> creationDateGetter) {
+        return findCookies(CookieSpecHolder.get(), creationDateGetter);
+    }
+
+    CookieCollection findCookies(final FlexibleCookieSpec cookieSpec, Function<HarEntry, Date> creationDateGetter) {
         Stream<HarEntry> headerValues = findEntriesWithSetCookieHeaders();
-        final List<DeserializableCookie> cookies = new ArrayList<>();
-        headerValues.forEach(entry -> {
-            makeCookiesFromEntry(cookieSpec, entry).forEach(cookies::add);
-        });
-        return cookies;
+        return CookieCollection.build(headerValues, cookieSpec);
     }
 
     public static class CookieCollection {
+
         private final ImmutableMultimap<HarEntry, DeserializableCookie> cookiesByEntry;
 
-        private CookieCollection(Multimap<HarEntry, DeserializableCookie> cookiesByEntry) {
+        @VisibleForTesting
+        CookieCollection(Multimap<HarEntry, DeserializableCookie> cookiesByEntry) {
             this.cookiesByEntry = ImmutableMultimap.copyOf(cookiesByEntry);
         }
 
-        private static long getEntryResponseInstant(HarEntry entry) {
+        @VisibleForTesting
+        static long getEntryResponseInstant(HarEntry entry) {
             return LongMath.checkedAdd(entry.getStartedDateTime().getTime(), entry.getTime());
         }
 
-        public static CookieCollection build(Stream<HarEntry> headerValues, final FlexibleCookieSpec cookieSpec) {
+        public static CookieCollection build(Stream<HarEntry> headerValues) {
+            return build(headerValues, CookieSpecHolder.get());
+        }
+
+        static CookieCollection build(Stream<HarEntry> headerValues, final FlexibleCookieSpec cookieSpec) {
             ImmutableMultimap.Builder<HarEntry, DeserializableCookie> m = ImmutableMultimap.builder();
             headerValues.forEach(entry -> {
                 List<DeserializableCookie> cookies = makeCookiesFromEntry(cookieSpec, entry);
@@ -67,6 +95,43 @@ public class HarAnalysis {
             });
             return new CookieCollection(m.build());
         }
+
+        /**
+         * Creates a list of cookies that would ultimately be retained by a browser. Browsers
+         * insert or update cookies as they are received, and cookies with the same name/domain/path values
+         * are overwritten. This method sorts the HAR entries by the time responses were received
+         * by the browser and builds a list of each cookie that was received last among those with the
+         * same domain, name, and path.
+         *
+         * <p>Reference: https://www.sitepoint.com/3-things-about-cookies-you-may-not-know/</p>
+         * @return a copy of the list of cookies with most recent receipt timestamps for each
+         *         domain/name/path triplet
+         */
+        public ImmutableList<DeserializableCookie> makeUltimateCookieList() {
+            return ImmutableList.copyOf(buildUltimateCookieMap().values());
+        }
+
+        @VisibleForTesting
+        static Stream<HarEntry> sortHarEntriesByResponseInstant(Stream<HarEntry> entries) {
+            return entries.sorted(Ordering.<Long>natural().onResultOf(CookieCollection::getEntryResponseInstant));
+        }
+
+        @VisibleForTesting
+        Map<Triple<String, String, String>, DeserializableCookie> buildUltimateCookieMap() {
+            Map<Triple<String, String, String>, DeserializableCookie> updatingMap = new TreeMap<>(Ordering.<Triple<String, String, String>>natural());
+            Stream<HarEntry> entriesByResponseInstant = sortHarEntriesByResponseInstant(cookiesByEntry.keySet().stream());
+            entriesByResponseInstant.forEach(harEntry -> {
+                for (DeserializableCookie cookie : cookiesByEntry.get(harEntry)) {
+                    Triple<String, String, String> cookieLabel = Triple.of(MoreObjects.firstNonNull(cookie.getBestDomainProperty(), ""),
+                            MoreObjects.firstNonNull(cookie.getName(), ""),
+                            MoreObjects.firstNonNull(cookie.getPath(), "/"));
+                    updatingMap.put(cookieLabel, cookie);
+                }
+            });
+            return updatingMap;
+        }
+
+        static boolean debug;
     }
 
     private static List<DeserializableCookie> makeCookiesFromEntry(final FlexibleCookieSpec cookieSpec, final HarEntry entry) {
@@ -103,7 +168,7 @@ public class HarAnalysis {
         return entriesWithCookieHeaders;
     }
 
-    public Stream<Pair<HarRequest, Stream<String>>> findCookies() {
+    public Stream<Pair<HarRequest, Stream<String>>> findCookieHeaderValues() {
         Stream<HarEntry> entriesWithCookieHeaders = findEntriesWithSetCookieHeaders();
         Stream<Pair<HarRequest, HarResponse>> interactionsWithCookieHeaders = entriesWithCookieHeaders.map(entryToInteraction());
         Stream<Pair<HarRequest, Stream<String>>> mappedInteractions = interactionsWithCookieHeaders.map(rightTransform(responseHeaderTransform(HttpHeaders.SET_COOKIE)));
