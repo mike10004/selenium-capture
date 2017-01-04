@@ -42,7 +42,7 @@ public abstract class CookieUsageTestBase {
             driver.get(url.toString());
             return (Void) null;
         });
-        List<DeserializableCookie> cookies = HarAnalysis.of(collection.har).findCookies(FlexibleCookieSpec.getDefault());
+        List<DeserializableCookie> cookies = HarAnalysis.of(collection.har).findCookies(FlexibleCookieSpec.getDefault()).makeUltimateCookieList();
         checkOurCookies(cookies);
         System.out.format("cookies received: %s%n", cookies);
         checkState(!cookies.isEmpty(), "expected at least one cookie to be set");
