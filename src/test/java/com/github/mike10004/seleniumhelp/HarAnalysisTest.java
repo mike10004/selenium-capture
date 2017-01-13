@@ -7,11 +7,20 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Multimap;
 import com.google.common.math.LongMath;
+import com.google.common.net.HttpHeaders;
 import net.lightbody.bmp.core.har.HarEntry;
+import net.lightbody.bmp.core.har.HarNameValuePair;
+import net.lightbody.bmp.core.har.HarRequest;
+import net.lightbody.bmp.core.har.HarResponse;
 import net.lightbody.bmp.core.har.HarTimings;
 import org.apache.commons.lang3.time.DateUtils;
 import org.junit.Test;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.PrintStream;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
@@ -121,5 +130,33 @@ public class HarAnalysisTest {
                 .add("start", h.getStartedDateTime().getTime())
                 .add("duration", h.getTime())
                 .toString();
+    }
+
+    @Test
+    public void makeCookiesFromEntry() throws IOException {
+        Charset charset = StandardCharsets.UTF_8;
+        ByteArrayOutputStream bucket = new ByteArrayOutputStream(256);
+        PrintStream stdout = System.out;
+        try (PrintStream bucketOut = new PrintStream(bucket, false, charset.name())){
+            System.setOut(bucketOut);
+            HarEntry entry = createHarEntry(new Date(), 10);
+            HarRequest request = new HarRequest();
+            request.setUrl("https://www.example.com/");
+            entry.setRequest(request);
+            HarResponse response = new HarResponse();
+            entry.setResponse(response);
+            response.getHeaders().add(new HarNameValuePair(HttpHeaders.SET_COOKIE, "foo=bar"));
+            CookieCollection cookies = CookieCollection.build(Stream.of(entry));
+            List<DeserializableCookie> cookieList = cookies.makeUltimateCookieList();
+            assertEquals("cookie count", 1, cookieList.size());
+        } finally {
+            System.setOut(stdout);
+        }
+        String bucketContents = new String(bucket.toByteArray(), charset);
+        if (!bucketContents.isEmpty()) {
+            System.out.println("printed on stdout during CookieCollection.build or CookieCollection.makeUltimateCookieList:");
+            System.out.println(bucketContents);
+        }
+        assertEquals("bucket should be empty", 0, bucketContents.length());
     }
 }

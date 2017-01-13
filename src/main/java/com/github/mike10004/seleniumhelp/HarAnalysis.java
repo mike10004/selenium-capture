@@ -131,7 +131,6 @@ public class HarAnalysis {
             return updatingMap;
         }
 
-        static boolean debug;
     }
 
     private static List<DeserializableCookie> makeCookiesFromEntry(final FlexibleCookieSpec cookieSpec, final HarEntry entry) {
@@ -147,7 +146,6 @@ public class HarAnalysis {
                 .map(HarNameValuePair::getValue);
         final List<DeserializableCookie> cookies = new ArrayList<>();
         headerValues.forEach(headerValue -> {
-            System.out.format("Set-Cookie: %s%n", headerValue);
             try {
                 Stream<DeserializableCookie> cookieStream = cookieSpec.parse(headerValue, originUrl).stream()
                         .map(x -> (DeserializableCookie) x);
