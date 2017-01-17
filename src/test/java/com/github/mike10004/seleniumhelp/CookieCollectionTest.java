@@ -1,6 +1,5 @@
 package com.github.mike10004.seleniumhelp;
 
-import com.github.mike10004.seleniumhelp.HarAnalysis.CookieCollection;
 import com.google.common.base.MoreObjects;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableList;
@@ -31,10 +30,10 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
 import static org.junit.Assert.assertEquals;
 
-public class HarAnalysisTest {
+public class CookieCollectionTest {
 
     @Test
-    public void CookieCollection_makeUltimateCookieList_simple() throws Exception {
+    public void makeUltimateCookieList_simple() throws Exception {
         System.out.println("CookieCollection_makeUltimateCookieList_simple");
         Date t1Start = new Date(1483557811893L);
         Date t1Finish = DateUtils.addMilliseconds(t1Start, 400);
@@ -58,7 +57,7 @@ public class HarAnalysisTest {
     }
 
     @Test
-    public void CookieCollection_makeUltimateCookieList() throws Exception {
+    public void makeUltimateCookieList() throws Exception {
         Date t1Start = new Date(1483557811893L);
         Date t1Finish = DateUtils.addMilliseconds(t1Start, 400);
         Date t2Start = DateUtils.addMilliseconds(t1Start, -100);
@@ -83,7 +82,7 @@ public class HarAnalysisTest {
     }
 
     @Test
-    public void CookieCollection_sortHarEntries() {
+    public void sortHarEntries() {
         Date t1Start = new Date(1483557811893L);
         Date t1Finish = DateUtils.addMilliseconds(t1Start, 400);
         Date t2Start = DateUtils.addMilliseconds(t1Start, -100);
