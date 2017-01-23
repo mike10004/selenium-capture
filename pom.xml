@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.github.mike10004</groupId>
     <artifactId>selenium-help</artifactId>
-    <version>0.10</version>
+    <version>0.11</version>
     <name>selenium-help</name>
     <description>Library that helps you use Selenium WebDriver in Java</description>
     <url>https://github.com/mike10004/selenium-help</url>
@@ -33,7 +33,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <xvfb-manager.version>0.4</xvfb-manager.version>
+        <xvfb-manager.version>0.5</xvfb-manager.version>
         <test.log.level>info</test.log.level>
         <selenium-help.test.proxy.http></selenium-help.test.proxy.http>
     </properties>
@@ -226,7 +226,7 @@
         <dependency>
             <groupId>com.github.mike10004</groupId>
             <artifactId>native-helper</artifactId>
-            <version>5.1.0</version>
+            <version>6.0.0</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
