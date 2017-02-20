@@ -24,10 +24,7 @@ public class ChromeCookiePreparerTest {
 
     @Test
     public void ChromeCookieTransform_transform_noExpiryDate() {
-        DeserializableCookie d = new DeserializableCookie();
-        d.setName("foo");
-        d.setValue("bar");
-        d.setDomain("example.com");
+        DeserializableCookie d = DeserializableCookie.builder("foo", "bar").domain("example.com").build();
         ChromeCookieTransform transform = new ChromeCookieTransform();
         ChromeCookie c = transform.transform(d);
         assertEquals("name", d.getName(), c.name);
@@ -38,12 +35,8 @@ public class ChromeCookiePreparerTest {
 
     @Test
     public void ChromeCookieTransform_transform() {
-        DeserializableCookie d = new DeserializableCookie();
-        d.setName("foo");
-        d.setValue("bar");
-        d.setDomain("example.com");
         Date expiryDate = new Date();
-        d.setExpiryDate(expiryDate);
+        DeserializableCookie d = DeserializableCookie.builder("foo", "bar").domain("example.com").expiry(expiryDate).build();
         ChromeCookieTransform transform = new ChromeCookieTransform();
         ChromeCookie c = transform.transform(d);
         assertEquals("name", d.getName(), c.name);

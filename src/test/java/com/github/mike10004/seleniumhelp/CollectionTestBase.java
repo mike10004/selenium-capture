@@ -139,7 +139,7 @@ public class CollectionTestBase {
     }
 
     protected HarContent testTrafficCollector(WebDriverFactory webDriverFactory, final URL url) throws IOException {
-        CertificateAndKeySource certificateAndKeySource = new TestCertificateAndKeySource();
+        CertificateAndKeySource certificateAndKeySource = TestCertificateAndKeySource.create();
         TrafficCollector collector = new TrafficCollector(webDriverFactory, certificateAndKeySource,
                 AnonymizingFiltersSource.getInstance(), new TestProxySupplier());
         HarPlus<String> collection = collector.collect(new TrafficGenerator<String>() {

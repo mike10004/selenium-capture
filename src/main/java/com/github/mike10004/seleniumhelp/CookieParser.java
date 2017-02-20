@@ -9,7 +9,6 @@ import org.apache.http.cookie.CookieAttributeHandler;
 import org.apache.http.cookie.CookieOrigin;
 import org.apache.http.cookie.MalformedCookieException;
 import org.apache.http.cookie.SM;
-import org.apache.http.cookie.SetCookie;
 import org.apache.http.message.ParserCursor;
 import org.apache.http.message.TokenParser;
 import org.apache.http.util.Args;
@@ -52,14 +51,11 @@ class CookieParser {
         return origin.getHost();
     }
 
-    protected DeserializableCookie createCookie(CookieOrigin origin, String name, String value, Date creationDate) {
-        DeserializableCookie c = new DeserializableCookie();
-        c.setDomain(getDefaultDomain(origin));
-        c.setPath(getDefaultPath(origin));
-        c.setCreationDate(creationDate);
-        c.setValue(value);
-        c.setName(name);
-        return c;
+    protected DeserializableCookie.Builder buildCookie(CookieOrigin origin, String name, String value, Date creationDate) {
+        return DeserializableCookie.builder(name, value)
+                .domain(getDefaultDomain(origin))
+                .path(getDefaultPath(origin))
+                .creationDate(creationDate);
     }
 
     protected Date now() {
@@ -102,9 +98,9 @@ class CookieParser {
         if (!cursor.atEnd()) {
             cursor.updatePos(cursor.getPos() + 1);
         }
-        final DeserializableCookie cookie = createCookie(origin, name, value, now());
+        final DeserializableCookie.Builder cookie = buildCookie(origin, name, value, now());
 
-        final Map<String, String> attribMap = new LinkedHashMap<String, String>();
+        final Map<String, String> attribMap = new LinkedHashMap<>();
         while (!cursor.atEnd()) {
             final String paramName = tokenParser.parseToken(buffer, cursor, TOKEN_DELIMS)
                     .toLowerCase(Locale.ROOT);
@@ -119,14 +115,13 @@ class CookieParser {
                     }
                 }
             }
-            cookie.setAttribute(paramName, paramValue);
             attribMap.put(paramName, paramValue);
         }
         // Ignore 'Expires' if 'Max-Age' is present
         if (attribMap.containsKey(ClientCookie.MAX_AGE_ATTR)) {
             attribMap.remove(ClientCookie.EXPIRES_ATTR);
         }
-        cookie.replaceAttributes(attribMap);
+        cookie.attributes(attribMap);
         for (final Map.Entry<String, String> entry: attribMap.entrySet()) {
             final String paramName = entry.getKey().toLowerCase(Locale.ROOT);
             final String paramValue = entry.getValue();
@@ -136,7 +131,7 @@ class CookieParser {
             }
         }
 
-        return Collections.singletonList(cookie);
+        return Collections.singletonList(cookie.build());
     }
 
     static String getDefaultPath(final CookieOrigin origin) {

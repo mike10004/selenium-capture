@@ -96,11 +96,9 @@ public class CookieCollectionTest {
     }
 
     private static DeserializableCookie createCookie(String domain, String path, String name, String value) {
-        DeserializableCookie d = new DeserializableCookie();
-        d.setDomain(domain);
-        d.setName(name);
-        d.setPath(path);
-        d.setValue(value);
+        DeserializableCookie d = DeserializableCookie.builder(name, value)
+                .domain(domain)
+                .path(path).build();
         return d;
     }
 

@@ -23,6 +23,7 @@ import org.apache.http.util.Args;
 
 import java.net.URL;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.stream.Collectors;
@@ -61,11 +62,11 @@ class FlexibleCookieSpec extends CookieSpecBase {
         return new FlexibleCookieSpec(new DefaultCookieSpecProvider().create(new BasicHttpContext()));
     }
 
-    public List<Cookie> parse(String setCookieHeaderValue, URL originUrl) throws MalformedCookieException {
-        return parse(setCookieHeaderValue, CookieUtility.getInstance().buildCookieOrigin(originUrl).origin);
+    public List<Cookie> parse(String setCookieHeaderValue, URL originUrl, Date creationDate) throws MalformedCookieException {
+        return parse(setCookieHeaderValue, CookieUtility.getInstance().buildCookieOrigin(originUrl).origin, creationDate);
     }
 
-    public List<Cookie> parse(String setCookieHeaderValue, CookieOrigin origin) throws MalformedCookieException {
+    public List<Cookie> parse(String setCookieHeaderValue, CookieOrigin origin, Date creationDate) throws MalformedCookieException {
         Header header = new BasicHeader(HttpHeaders.SET_COOKIE, setCookieHeaderValue);
         return parse(header, origin);
     }

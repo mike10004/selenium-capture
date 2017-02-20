@@ -3,55 +3,81 @@
  */
 package com.github.mike10004.seleniumhelp;
 
-import com.google.common.base.Function;
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
+import com.google.gson.Gson;
+import com.google.gson.annotations.JsonAdapter;
+import org.apache.commons.lang3.time.DateUtils;
 import org.apache.http.cookie.ClientCookie;
 import org.apache.http.cookie.SetCookie;
+import org.apache.http.impl.cookie.BasicClientCookie;
 import org.apache.http.util.Args;
-import org.openqa.selenium.Cookie;
 
 import javax.annotation.Nullable;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Class that represents a cookie that's easy to deserialize from json.
  * The purpose of this class is to substitute for 
- * {@link org.apache.http.impl.cookie.BasicClientCookie}, which does not have
+ * {@link BasicClientCookie}, which does not have
  * a no-args constructor, during deserialization by a 
- * {@link com.google.gson.Gson} instance.
+ * {@link Gson} instance.
  * 
  * @author mchaberski
  */
-public class DeserializableCookie implements ClientCookie, SetCookie {
+public class DeserializableCookie implements ClientCookie {
 
     static final String FIELD_ATTRIBUTES = "attribs";
     static final String FIELD_DOMAIN = "cookieDomain";
+    @SuppressWarnings("unused")
     static final String FIELD_HTTP_ONLY = "httpOnly";
     static final String FIELD_LAST_ACCESSED = "lastAccessed";
     static final String FIELD_CREATION_DATE = "creationDate";
     static final String FIELD_EXPIRY_DATE = "cookieExpiryDate";
 
-    public DeserializableCookie() {
-        super();
-        this.attribs = new HashMap<>();
+    @SuppressWarnings("unused") // for gson deserialization
+    private DeserializableCookie() {
+        this(new Builder("", ""));
     }
 
-    private String name;
-    private final Map<String, String> attribs;
-    private String value;
-    private String cookieComment;
-    private String cookieDomain;
-    private Date cookieExpiryDate;
-    private String cookiePath;
-    private boolean isSecure;
-    private int cookieVersion;
-    private Date creationDate;
-    private Date lastAccessed;
-    private boolean httpOnly;
+    private final String name;
+    private final String value;
+    @JsonAdapter(ImmutableStringMapTypeAdapter.class)
+    private final ImmutableMap<String, String> attribs;
+    private final String cookieComment;
+    private final String cookieDomain;
+    private final Date cookieExpiryDate;
+    private final String cookiePath;
+    private final boolean isSecure;
+    private final int cookieVersion;
+    private final Date creationDate;
+    private final Date lastAccessed;
+    private final boolean httpOnly;
+
+    private DeserializableCookie(Builder builder) {
+        name = builder.name;
+        attribs = ImmutableMap.copyOf(builder.attribs.entrySet().stream().filter(e -> e.getValue() != null).collect(Collectors.toSet()));
+        value = builder.value;
+        cookieComment = builder.cookieComment;
+        cookieDomain = builder.cookieDomain;
+        cookieExpiryDate = builder.cookieExpiryDate;
+        cookiePath = builder.cookiePath;
+        isSecure = builder.isSecure;
+        cookieVersion = builder.cookieVersion;
+        creationDate = builder.creationDate;
+        lastAccessed = builder.lastAccessed;
+        httpOnly = builder.httpOnly;
+    }
+
+    public static Builder builder(String name, String value) {
+        return new Builder(name, value);
+    }
 
     @Override
     public String getAttribute(final String name) {
@@ -65,10 +91,6 @@ public class DeserializableCookie implements ClientCookie, SetCookie {
         } else {
             return null;
         }
-    }
-
-    public String setAttribute(String name, String value) {
-        return attribs.put(name.toLowerCase(java.util.Locale.ROOT), value);
     }
 
     protected @Nullable String findAttributeKey(final String name) {
@@ -157,46 +179,6 @@ public class DeserializableCookie implements ClientCookie, SetCookie {
         return lastAccessed;
     }
 
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public void setValue(String value) {
-        this.value = value;
-    }
-
-    public void setComment(String cookieComment) {
-        this.cookieComment = cookieComment;
-    }
-
-    public void setDomain(String cookieDomain) {
-        this.cookieDomain = cookieDomain;
-    }
-
-    public void setExpiryDate(Date cookieExpiryDate) {
-        this.cookieExpiryDate = cookieExpiryDate;
-    }
-
-    public void setPath(String cookiePath) {
-        this.cookiePath = cookiePath;
-    }
-
-    public void setSecure(boolean secure) {
-        isSecure = secure;
-    }
-
-    public void setVersion(int cookieVersion) {
-        this.cookieVersion = cookieVersion;
-    }
-
-    public void setCreationDate(Date creationDate) {
-        this.creationDate = creationDate;
-    }
-
-    public void setLastAccessed(Date lastAccessed) {
-        this.lastAccessed = lastAccessed;
-    }
-
     public String getDomainAttribute() {
         return getAttribute("Domain");
     }
@@ -232,7 +214,7 @@ public class DeserializableCookie implements ClientCookie, SetCookie {
         if ((a == null) != (b == null)) {
             return false;
         }
-        return org.apache.commons.lang3.time.DateUtils.truncatedEquals(a, b, Calendar.SECOND);
+        return DateUtils.truncatedEquals(a, b, Calendar.SECOND);
     }
 
     @Override
@@ -252,21 +234,12 @@ public class DeserializableCookie implements ClientCookie, SetCookie {
         return result;
     }
 
-    public void replaceAttributes(Map<String, String> attribs) {
-        this.attribs.clear();
-        this.attribs.putAll(attribs);
-    }
-
     public ImmutableMap<String, String> copyAttributes() {
         return ImmutableMap.copyOf(attribs);
     }
 
     public boolean isHttpOnly() {
         return httpOnly;
-    }
-
-    public void setHttpOnly(boolean httpOnly) {
-        this.httpOnly = httpOnly;
     }
 
     @Override
@@ -293,5 +266,184 @@ public class DeserializableCookie implements ClientCookie, SetCookie {
             return domainAttr;
         }
         return getDomain();
+    }
+
+
+    @SuppressWarnings("BooleanParameter")
+    public static final class Builder implements SetCookie {
+        private final String name;
+        private final Map<String, String> attribs = new LinkedHashMap<>();
+        private final String value;
+        private String cookieComment;
+        private String cookieDomain;
+        private Date cookieExpiryDate;
+        private String cookiePath;
+        private boolean isSecure;
+        private int cookieVersion;
+        private Date creationDate;
+        private Date lastAccessed;
+        private boolean httpOnly;
+
+        private Builder(String name, String value) {
+            this.name = checkNotNull(name);
+            this.value = Strings.nullToEmpty(value);
+        }
+
+        @SuppressWarnings("unused")
+        public Builder attribute(String key, String value) {
+            this.attribs.put(key, value);
+            return this;
+        }
+
+        public Builder attributes(Map<String, String> val) {
+            this.attribs.putAll(val);
+            return this;
+        }
+
+        @SuppressWarnings("unused")
+        public Builder comment(String val) {
+            cookieComment = val;
+            return this;
+        }
+
+        public Builder domain(String val) {
+            cookieDomain = val;
+            return this;
+        }
+
+        public Builder expiry(Date val) {
+            cookieExpiryDate = val;
+            return this;
+        }
+
+        public Builder path(String val) {
+            cookiePath = val;
+            return this;
+        }
+
+        public Builder secure(boolean val) {
+            isSecure = val;
+            return this;
+        }
+
+        @SuppressWarnings("unused")
+        public Builder version(int val) {
+            cookieVersion = val;
+            return this;
+        }
+
+        public Builder creationDate(Date val) {
+            creationDate = val;
+            return this;
+        }
+
+        public Builder lastAccessed(Date val) {
+            lastAccessed = val;
+            return this;
+        }
+
+        public Builder httpOnly(boolean val) {
+            httpOnly = val;
+            return this;
+        }
+
+        public DeserializableCookie build() {
+            return new DeserializableCookie(this);
+        }
+
+        @Override
+        public void setComment(String cookieComment) {
+            this.cookieComment = cookieComment;
+        }
+
+        @Override
+        public void setDomain(String cookieDomain) {
+            this.cookieDomain = cookieDomain;
+        }
+
+        @Override
+        public void setExpiryDate(Date cookieExpiryDate) {
+            this.cookieExpiryDate = cookieExpiryDate;
+        }
+
+        @Override
+        public void setPath(String cookiePath) {
+            this.cookiePath = cookiePath;
+        }
+
+        @Override
+        public void setSecure(boolean secure) {
+            isSecure = secure;
+        }
+
+        @Override
+        public void setVersion(int cookieVersion) {
+            this.cookieVersion = cookieVersion;
+        }
+
+        @Override
+        public void setValue(String value) {
+            throw new UnsupportedOperationException("this is a cookie builder, not a mutable cookie object");
+        }
+
+        @Override
+        public String getName() {
+            throw new UnsupportedOperationException("this is a cookie builder, not a mutable cookie object");
+        }
+
+        @Override
+        public String getValue() {
+            throw new UnsupportedOperationException("this is a cookie builder, not a mutable cookie object");
+        }
+
+        @Override
+        public String getComment() {
+            throw new UnsupportedOperationException("this is a cookie builder, not a mutable cookie object");
+        }
+
+        @Override
+        public String getCommentURL() {
+            throw new UnsupportedOperationException("this is a cookie builder, not a mutable cookie object");
+        }
+
+        @Override
+        public Date getExpiryDate() {
+            throw new UnsupportedOperationException("this is a cookie builder, not a mutable cookie object");
+        }
+
+        @Override
+        public boolean isPersistent() {
+            throw new UnsupportedOperationException("this is a cookie builder, not a mutable cookie object");
+        }
+
+        @Override
+        public String getDomain() {
+            throw new UnsupportedOperationException("this is a cookie builder, not a mutable cookie object");
+        }
+
+        @Override
+        public String getPath() {
+            throw new UnsupportedOperationException("this is a cookie builder, not a mutable cookie object");
+        }
+
+        @Override
+        public int[] getPorts() {
+            throw new UnsupportedOperationException("this is a cookie builder, not a mutable cookie object");
+        }
+
+        @Override
+        public boolean isSecure() {
+            throw new UnsupportedOperationException("this is a cookie builder, not a mutable cookie object");
+        }
+
+        @Override
+        public int getVersion() {
+            throw new UnsupportedOperationException("this is a cookie builder, not a mutable cookie object");
+        }
+
+        @Override
+        public boolean isExpired(Date date) {
+            throw new UnsupportedOperationException("this is a cookie builder, not a mutable cookie object");
+        }
     }
 }

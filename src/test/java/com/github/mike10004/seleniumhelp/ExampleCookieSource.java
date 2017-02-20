@@ -50,17 +50,15 @@ public class ExampleCookieSource {
     }
 
     public static DeserializableCookie asDeserializableCookie() {
-        DeserializableCookie c = new DeserializableCookie();
-        c.setName(ExampleCookieSource.name);
+        DeserializableCookie.Builder c = DeserializableCookie.builder(ExampleCookieSource.name, ExampleCookieSource.value);
         c.setSecure(ExampleCookieSource.secure);
         c.setPath(ExampleCookieSource.path);
-        c.setValue(ExampleCookieSource.value);
-        c.replaceAttributes(ExampleCookieSource.attribs);
+        c.attributes(ExampleCookieSource.attribs);
         c.setExpiryDate(new Date(ExampleCookieSource.expiryDateMillisSinceEpoch));
         c.setDomain(originHost);
-        c.setCreationDate(new Date(ExampleCookieSource.createdDateMillisSinceEpoch));
-        c.setLastAccessed(new Date(ExampleCookieSource.accessDateMillisSinceEpoch));
-        c.setHttpOnly(ExampleCookieSource.httpOnly);
-        return c;
+        c.creationDate(new Date(ExampleCookieSource.createdDateMillisSinceEpoch));
+        c.lastAccessed(new Date(ExampleCookieSource.accessDateMillisSinceEpoch));
+        c.httpOnly(ExampleCookieSource.httpOnly);
+        return c.build();
     }
 }

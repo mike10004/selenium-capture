@@ -72,15 +72,13 @@ public class SeleniumCookieConverterTest {
     }
 
     private static DeserializableCookie toDeserializableCookie(org.apache.http.cookie.Cookie reference) {
-        DeserializableCookie c = new DeserializableCookie();
+        DeserializableCookie.Builder c = DeserializableCookie.builder(reference.getName(), reference.getValue());
         c.setComment(reference.getComment());
         c.setDomain(reference.getDomain());
         c.setExpiryDate(reference.getExpiryDate());
         c.setPath(reference.getPath());
-        c.setName(reference.getName());
-        c.setValue(reference.getValue());
         c.setSecure(reference.isSecure());
-        return c;
+        return c.build();
     }
 
     private static CookieOrigin urlToOrigin(URI uri) {

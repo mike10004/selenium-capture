@@ -12,14 +12,12 @@ public class SeleniumCookieConverter extends Converter<org.openqa.selenium.Cooki
 
     @Override
     protected DeserializableCookie doForward(org.openqa.selenium.Cookie cookie) {
-        DeserializableCookie d = new DeserializableCookie();
-        d.setDomain(cookie.getDomain());
-        d.setExpiryDate(cookie.getExpiry());
-        d.setValue(cookie.getValue());
-        d.setName(cookie.getName());
-        d.setPath(cookie.getPath());
-        d.setSecure(cookie.isSecure());
-        d.setHttpOnly(cookie.isHttpOnly());
+        DeserializableCookie d = DeserializableCookie.builder(cookie.getName(), cookie.getValue())
+        .domain(cookie.getDomain())
+        .expiry(cookie.getExpiry())
+        .path(cookie.getPath())
+        .secure(cookie.isSecure())
+        .httpOnly(cookie.isHttpOnly()).build();
         return d;
     }
 

@@ -116,20 +116,19 @@ public abstract class CookieUsageTestBase {
 
     protected abstract WebDriverFactory createCookiefulWebDriverFactory(XvfbController xvfbController, List<DeserializableCookie> cookiesSetByServer);
 
+    @SuppressWarnings("SameParameterValue")
     static DeserializableCookie newCookie(String name, String value) {
-        DeserializableCookie cookie = new DeserializableCookie();
-        cookie.setHttpOnly(true);
+        DeserializableCookie.Builder cookie = DeserializableCookie.builder(name, value);
+        cookie.httpOnly(true);
         Date now = new Date();
         Date later = DateUtils.addMonths(now, 3);
-        cookie.setCreationDate(now);
-        cookie.setLastAccessed(now);
+        cookie.creationDate(now);
+        cookie.lastAccessed(now);
         cookie.setExpiryDate(later);
         cookie.setSecure(true);
         cookie.setDomain("localhost");
-        cookie.setName(name);
-        cookie.setValue(value);
         cookie.setPath("/");
-        return cookie;
+        return cookie.build();
     }
 
 

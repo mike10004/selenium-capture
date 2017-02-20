@@ -1,5 +1,6 @@
 package com.github.mike10004.seleniumhelp;
 
+import net.lightbody.bmp.mitm.CertificateAndKeySource;
 import net.lightbody.bmp.mitm.manager.ImpersonatingMitmManager;
 import org.junit.Test;
 import org.littleshoot.proxy.MitmManager;
@@ -12,7 +13,7 @@ public class TrafficCollectorTest {
 
     @Test
     public void createMitmManager() throws Exception {
-        TestCertificateAndKeySource certificateAndKeySource = new TestCertificateAndKeySource();
+        CertificateAndKeySource certificateAndKeySource = TestCertificateAndKeySource.create();
         MitmManager mitmManager = ImpersonatingMitmManager.builder()
                 .rootCertificateSource(certificateAndKeySource)
                 .build();

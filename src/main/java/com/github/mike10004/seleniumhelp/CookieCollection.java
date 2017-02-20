@@ -98,12 +98,9 @@ public class CookieCollection {
         final List<DeserializableCookie> cookies = new ArrayList<>();
         headerValues.forEach(headerValue -> {
             try {
-                Stream<DeserializableCookie> cookieStream = cookieSpec.parse(headerValue, originUrl).stream()
+                Stream<DeserializableCookie> cookieStream = cookieSpec.parse(headerValue, originUrl, requestDate).stream()
                         .map(x -> (DeserializableCookie) x);
-                cookieStream.forEach(cookie -> {
-                    cookie.setCreationDate(requestDate);
-                    cookies.add(cookie);
-                });
+                cookieStream.forEach(cookies::add);
             } catch (MalformedCookieException e) {
                 throw new IllegalArgumentException(e);
             }

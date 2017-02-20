@@ -47,23 +47,19 @@ public class ExplodedCookieConverterTest {
     }
 
     @Test
-    public void doBackward_empty() throws Exception {
+    public void doBackward_almostEmpty() throws Exception {
         ExplodedCookieConverter conv = new ExplodedCookieConverter();
-        DeserializableCookie cookie = new DeserializableCookie();
+        DeserializableCookie cookie = DeserializableCookie.builder("x", null).build();
         Map<String, Object> exploded = conv.reverse().convert(cookie);
         assertNotNull(exploded);
         // this is kind of a weird check, but the exploded cookie map does contain one entry (for 'isSecure')
-        assertEquals("conversion of empty cookie results in mostly-empty map", ImmutableSet.of(new SimpleImmutableEntry<>("isSecure", false)), exploded.entrySet());
+        assertEquals("conversion of empty cookie results in mostly-empty map", ImmutableSet.of(new SimpleImmutableEntry<>("name", "x"), new SimpleImmutableEntry<>("value", ""), new SimpleImmutableEntry<>("isSecure", false)), exploded.entrySet());
     }
 
     @Test
     public void doBackward_cookieMissingSomeStuff() throws Exception {
         ExplodedCookieConverter conv = new ExplodedCookieConverter();
-        DeserializableCookie cookie = new DeserializableCookie();
-        cookie.setName("foo");
-        cookie.setValue("bar");
-        cookie.setDomain(".example.com");
-        cookie.setPath("/");
+        DeserializableCookie cookie = DeserializableCookie.builder("foo", "bar").domain(".example.com").path("/").build();
         Map<String, Object> exploded = conv.reverse().convert(cookie);
         assertNotNull(exploded);
         // mostly checking that no exception was thrown, but we'll check map size for good measure
