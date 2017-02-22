@@ -7,10 +7,7 @@ import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-import org.openqa.selenium.chrome.ChromeOptions;
-import org.openqa.selenium.remote.DesiredCapabilities;
 
-import java.util.HashMap;
 import java.util.List;
 
 public class ChromeCookieUsageTest extends CookieUsageTestBase {
@@ -25,13 +22,18 @@ public class ChromeCookieUsageTest extends CookieUsageTestBase {
 
     @Override
     protected WebDriverFactory createCookielessWebDriverFactory(XvfbController xvfbController) {
-        return new ChromeWebDriverFactory(xvfbController.configureEnvironment(new HashMap<>()), new ChromeOptions(), new DesiredCapabilities());
+        return ChromeWebDriverFactory.builder()
+                .environment(xvfbController::newEnvironment)
+                .build();
     }
 
     @Override
     protected WebDriverFactory createCookiefulWebDriverFactory(XvfbController xvfbController, List<DeserializableCookie> cookiesSetByServer) {
         CookiePreparer cookieImplanter = ChromeWebDriverFactory.makeCookieImplanter(tmp.getRoot().toPath(), () -> cookiesSetByServer);
-        return new ChromeWebDriverFactory(xvfbController.configureEnvironment(new HashMap<>()), new ChromeOptions(), new DesiredCapabilities(), cookieImplanter);
+        return ChromeWebDriverFactory.builder()
+                .environment(xvfbController::newEnvironment)
+                .cookiePreparer(cookieImplanter)
+                .build();
     }
 
     @Test

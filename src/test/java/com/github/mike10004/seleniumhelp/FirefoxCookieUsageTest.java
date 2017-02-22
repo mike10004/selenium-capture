@@ -1,13 +1,10 @@
 package com.github.mike10004.seleniumhelp;
 
 import com.github.mike10004.xvfbmanager.XvfbController;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import io.github.bonigarcia.wdm.FirefoxDriverManager;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.util.HashMap;
 import java.util.List;
 
 public class FirefoxCookieUsageTest extends CookieUsageTestBase {
@@ -19,12 +16,17 @@ public class FirefoxCookieUsageTest extends CookieUsageTestBase {
 
     @Override
     protected WebDriverFactory createCookielessWebDriverFactory(XvfbController xvfbController) {
-        return new FirefoxWebDriverFactory(xvfbController.configureEnvironment(new HashMap<>()), ImmutableMap.of(), ImmutableList.of());
+        return FirefoxWebDriverFactory.builder()
+                .environment(xvfbController::newEnvironment)
+                .build();
     }
 
     @Override
     protected WebDriverFactory createCookiefulWebDriverFactory(XvfbController xvfbController, List<DeserializableCookie> cookiesSetByServer) {
-        return new FirefoxWebDriverFactory(xvfbController.configureEnvironment(new HashMap<>()), ImmutableMap.of(), cookiesSetByServer);
+        return FirefoxWebDriverFactory.builder()
+                .environment(xvfbController::newEnvironment)
+                .cookies(cookiesSetByServer)
+                .build();
     }
 
     @Test

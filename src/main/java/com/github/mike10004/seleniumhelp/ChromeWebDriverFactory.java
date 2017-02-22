@@ -1,10 +1,6 @@
 package com.github.mike10004.seleniumhelp;
 
-import com.github.mike10004.chromecookieimplant.ChromeCookie;
 import com.github.mike10004.xvfbselenium.WebDriverSupport;
-import com.google.common.base.CharMatcher;
-import com.google.common.base.Strings;
-import com.google.common.collect.ImmutableMap;
 import net.lightbody.bmp.BrowserMobProxy;
 import net.lightbody.bmp.client.ClientUtil;
 import net.lightbody.bmp.mitm.CertificateAndKeySource;
@@ -16,15 +12,11 @@ import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.remote.CapabilityType;
 import org.openqa.selenium.remote.DesiredCapabilities;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Collection;
-import java.util.Map;
 import java.util.function.Supplier;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 public class ChromeWebDriverFactory extends EnvironmentWebDriverFactory {
 
@@ -32,33 +24,20 @@ public class ChromeWebDriverFactory extends EnvironmentWebDriverFactory {
     private final Capabilities capabilitiesOverrides;
     private final CookiePreparer cookiePreparer;
 
-    public ChromeWebDriverFactory(Map<String, String> environment, ChromeOptions chromeOptions, Capabilities capabilitiesOverrides) {
-        this(environment, chromeOptions, capabilitiesOverrides, cookielessPreparer);
-    }
-
-    public ChromeWebDriverFactory(Map<String, String> environment, ChromeOptions chromeOptions, Capabilities capabilitiesOverrides, CookiePreparer cookiePreparer) {
-        super(environment);
-        this.chromeOptions = checkNotNull(chromeOptions);
-        this.capabilitiesOverrides = checkNotNull(capabilitiesOverrides);
-        this.cookiePreparer = checkNotNull(cookiePreparer);
-    }
-
     @SuppressWarnings("unused")
     public ChromeWebDriverFactory() {
-        this(ImmutableMap.of(), new ChromeOptions(), new DesiredCapabilities());
+        this(builder());
     }
 
-    public ChromeWebDriverFactory(Supplier<Map<String, String>> environmentSupplier,
-                                  ChromeOptions chromeOptions, Capabilities capabilitiesOverrides) {
-        this(environmentSupplier, chromeOptions, capabilitiesOverrides, cookielessPreparer);
+    protected ChromeWebDriverFactory(Builder builder) {
+        super(builder);
+        chromeOptions = builder.chromeOptions;
+        capabilitiesOverrides = builder.capabilitiesOverrides;
+        cookiePreparer = builder.cookiePreparer;
     }
 
-    public ChromeWebDriverFactory(Supplier<Map<String, String>> environmentSupplier,
-                                  ChromeOptions chromeOptions, Capabilities capabilitiesOverrides, CookiePreparer cookiePreparer) {
-        super(environmentSupplier);
-        this.chromeOptions = checkNotNull(chromeOptions);
-        this.capabilitiesOverrides = checkNotNull(capabilitiesOverrides);
-        this.cookiePreparer = checkNotNull(cookiePreparer);
+    public static Builder builder() {
+        return new Builder();
     }
 
     @Override
@@ -117,6 +96,35 @@ public class ChromeWebDriverFactory extends EnvironmentWebDriverFactory {
 
     public static CookiePreparer makeCookieImplanter(Path scratchDir, Supplier<? extends Collection<DeserializableCookie>> cookiesSupplier) {
         return new ChromeCookiePreparer(scratchDir, cookiesSupplier);
+    }
+
+    public static final class Builder extends EnvironmentWebDriverFactory.Builder<Builder> {
+
+        private CookiePreparer cookiePreparer = cookielessPreparer;
+        private Capabilities capabilitiesOverrides = new DesiredCapabilities();
+        private ChromeOptions chromeOptions = new ChromeOptions();
+
+        private Builder() {
+        }
+
+        public Builder chromeOptions(ChromeOptions val) {
+            chromeOptions = val;
+            return this;
+        }
+
+        public Builder capabilitiesOverrides(Capabilities val) {
+            capabilitiesOverrides = val;
+            return this;
+        }
+
+        public Builder cookiePreparer(CookiePreparer val) {
+            cookiePreparer = val;
+            return this;
+        }
+
+        public ChromeWebDriverFactory build() {
+            return new ChromeWebDriverFactory(this);
+        }
     }
 
 }

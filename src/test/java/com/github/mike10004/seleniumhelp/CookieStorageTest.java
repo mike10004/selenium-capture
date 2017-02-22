@@ -1,19 +1,14 @@
 package com.github.mike10004.seleniumhelp;
 
 import com.github.mike10004.xvfbtesting.XvfbRule;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import io.github.bonigarcia.wdm.ChromeDriverManager;
 import io.github.bonigarcia.wdm.FirefoxDriverManager;
 import net.lightbody.bmp.core.har.Har;
 import org.apache.http.cookie.MalformedCookieException;
 import org.junit.Rule;
 import org.junit.Test;
-import org.openqa.selenium.chrome.ChromeOptions;
-import org.openqa.selenium.remote.DesiredCapabilities;
 
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
@@ -27,14 +22,13 @@ public class CookieStorageTest {
     @Test
     public void testFirefox() throws Exception {
         FirefoxDriverManager.getInstance().setup();
-        testWithDriverFactory(new FirefoxWebDriverFactory(xvfb.getController().configureEnvironment(new HashMap<>()),
-                ImmutableMap.of(), ImmutableList.of()));
+        testWithDriverFactory(FirefoxWebDriverFactory.builder().environment(xvfb.getController().newEnvironment()).build());
     }
 
     @Test
     public void testChrome() throws Exception {
         ChromeDriverManager.getInstance().setup();
-        testWithDriverFactory(new ChromeWebDriverFactory(xvfb.getController().configureEnvironment(new HashMap<>()), new ChromeOptions(), new DesiredCapabilities()));
+        testWithDriverFactory(ChromeWebDriverFactory.builder().environment(xvfb.getController()::newEnvironment).build());
     }
 
     private void testWithDriverFactory(WebDriverFactory factory) throws IOException, MalformedCookieException {

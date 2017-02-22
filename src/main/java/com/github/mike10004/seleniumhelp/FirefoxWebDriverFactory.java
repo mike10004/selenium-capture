@@ -7,6 +7,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
 import com.google.common.io.ByteSource;
 import com.google.common.io.Files;
 import net.lightbody.bmp.BrowserMobProxy;
@@ -20,6 +21,7 @@ import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -31,22 +33,21 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
 
+    private final Supplier<FirefoxBinary> binarySupplier;
     private final Map<String, Object> profilePreferences;
     private final ImmutableList<DeserializableCookie> cookies;
 
-    public FirefoxWebDriverFactory(Map<String, String> environment, Map<String, Object> profilePreferences, Iterable<DeserializableCookie> cookies) {
-        this(() -> (ImmutableMap.copyOf(environment)), profilePreferences, cookies);
-    }
-
+    @SuppressWarnings("unused")
     public FirefoxWebDriverFactory() {
-        this(ImmutableMap.of(), ImmutableMap.of(), ImmutableList.of());
+        this(builder());
     }
 
-    public FirefoxWebDriverFactory(Supplier<Map<String, String>> environmentSupplier, Map<String, Object> profilePreferences, Iterable<DeserializableCookie> cookies) {
-        super(environmentSupplier);
-        this.profilePreferences = ImmutableMap.copyOf(profilePreferences);
+    protected FirefoxWebDriverFactory(Builder builder) {
+        super(builder);
+        this.binarySupplier = checkNotNull(builder.binarySupplier);
+        this.profilePreferences = ImmutableMap.copyOf(builder.profilePreferences);
         checkPreferencesValues(this.profilePreferences.values());
-        this.cookies = ImmutableList.copyOf(cookies);
+        this.cookies = ImmutableList.copyOf(builder.cookies);
     }
 
     protected ImmutableList<DeserializableCookie> getCookies() {
@@ -83,7 +84,7 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
         profile.setPreference("app.update.url", "");
         profile.setPreference("browser.safebrowsing.provider.mozilla.updateURL", "");
         applyAdditionalPreferences(profilePreferences, proxy, certificateAndKeySource, profile);
-        FirefoxBinary binary = createFirefoxBinary();
+        FirefoxBinary binary = binarySupplier.get();
         Map<String, String> environment = environmentSupplier.get();
         FirefoxDriver driver = WebDriverSupport.firefoxInEnvironment(environment).create(binary, profile);
         return driver;
@@ -106,6 +107,7 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
 
     private static final ImmutableSet<Class<?>> allowedTypes = ImmutableSet.of(String.class, Integer.class, Boolean.class);
     private static final Predicate<Object> preferenceValueChecker =newTypePredicate(allowedTypes);
+
     @VisibleForTesting
     static void checkPreferencesValues(Iterable<?> values) throws IllegalArgumentException {
         for (Object value : values) {
@@ -129,8 +131,8 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
         };
     }
 
-    protected FirefoxBinary createFirefoxBinary() {
-        return new FirefoxBinary();
+    public static Builder builder() {
+        return new Builder();
     }
 
     private static class CertificateSupplementingProfileAction implements ProfileAction {
@@ -218,4 +220,95 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
             return profileDir;
         }
     }
+
+    @SuppressWarnings("unused")
+    public static class Builder extends EnvironmentWebDriverFactory.Builder<Builder> {
+
+        private Supplier<FirefoxBinary> binarySupplier = FirefoxBinary::new;
+        private Map<String, Object> profilePreferences = new LinkedHashMap<>();
+        private List<DeserializableCookie> cookies = new ArrayList<>();
+
+        private Builder() {
+        }
+
+        public Builder binary(FirefoxBinary binary) {
+            return binary(() -> binary);
+        }
+
+        public Builder binary(Supplier<FirefoxBinary> binarySupplier) {
+            this.binarySupplier = checkNotNull(binarySupplier);
+            return this;
+        }
+
+        /**
+         * Replaces the current map of profile preferences.
+         * @param val
+         * @return
+         */
+        public Builder preferences(Map<String, Object> val) {
+            profilePreferences = checkNotNull(val);
+            return this;
+        }
+
+        /**
+         * Puts all the argument preferences onto this instance's preferences map.
+         * @param val
+         * @return
+         */
+        public Builder putPreferences(Map<String, Object> val) {
+            profilePreferences.putAll(val);
+            return this;
+        }
+
+        /**
+         * Adds one cookie.
+         * @param cookie
+         * @return
+         */
+        public Builder cookie(DeserializableCookie cookie) {
+            cookies.add(cookie);
+            return this;
+        }
+
+        /**
+         * Adds all the argument cookies
+         * @param val
+         * @return
+         */
+        public Builder addCookies(Iterable<DeserializableCookie> val) {
+            Iterables.addAll(cookies, val);
+            return this;
+        }
+
+        /**
+         * Replaces the list of cookies.
+         * @param val
+         * @return
+         */
+        public Builder cookies(Iterable<DeserializableCookie> val) {
+            cookies.clear();
+            return addCookies(val);
+        }
+
+        @SuppressWarnings("BooleanParameter")
+        public Builder preference(String key, boolean value) {
+            profilePreferences.put(key, value);
+            return this;
+        }
+
+        public Builder preference(String key, int value) {
+            profilePreferences.put(key, value);
+            return this;
+        }
+
+        public Builder preference(String key, String value) {
+            profilePreferences.put(key, value);
+            return this;
+        }
+
+        public FirefoxWebDriverFactory build() {
+            return new FirefoxWebDriverFactory(this);
+        }
+    }
+
 }
