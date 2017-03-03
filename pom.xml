@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.github.mike10004</groupId>
     <artifactId>selenium-help</artifactId>
-    <version>0.13</version>
+    <version>0.14</version>
     <name>selenium-help</name>
     <description>Library that helps you use Selenium WebDriver in Java</description>
     <url>https://github.com/mike10004/selenium-help</url>
@@ -277,6 +277,18 @@
             <groupId>com.github.mike10004</groupId>
             <artifactId>chrome-cookie-implant-client</artifactId>
             <version>1.5</version>
+        </dependency>
+        <dependency>
+            <groupId>com.machinepublishers</groupId>
+            <artifactId>jbrowserdriver</artifactId>
+            <version>0.17.3</version>
+            <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.seleniumhq.selenium</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
     </dependencies>
 </project>

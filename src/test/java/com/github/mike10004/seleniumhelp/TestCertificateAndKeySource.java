@@ -6,11 +6,14 @@ import net.lightbody.bmp.mitm.CertificateAndKeySource;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.zip.GZIPInputStream;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
 public class TestCertificateAndKeySource extends KeyStoreStreamCertificateSource implements FirefoxCompatibleCertificateSource {
@@ -30,7 +33,22 @@ public class TestCertificateAndKeySource extends KeyStoreStreamCertificateSource
 
     @Override
     public ByteSource getFirefoxCertificateDatabase() throws IOException {
-        return Resources.asByteSource(getClass().getResource(RESOURCE_DIR + "/cert8.db"));
+        ByteSource gzipped = Resources.asByteSource(getClass().getResource(RESOURCE_DIR + "/cert8.db.gz"));
+        return new GunzippingByteSource(gzipped);
+    }
+
+    private static class GunzippingByteSource extends ByteSource {
+
+        private final ByteSource gzippedByteSource;
+
+        private GunzippingByteSource(ByteSource gzippedByteSource) {
+            this.gzippedByteSource = checkNotNull(gzippedByteSource);
+        }
+
+        @Override
+        public InputStream openStream() throws IOException {
+            return new GZIPInputStream(gzippedByteSource.openStream());
+        }
     }
 
     private static class CustomCertificate {
@@ -55,11 +73,15 @@ public class TestCertificateAndKeySource extends KeyStoreStreamCertificateSource
         URI resourceUri;
         try {
             resourceUri = resource.toURI();
-
         } catch (URISyntaxException e) {
             throw new IllegalStateException(e);
         }
         checkState("file".equals(resourceUri.getScheme()));
         return new File(resourceUri);
+    }
+
+    public static ByteSource getCertificatePemByteSource() {
+        URL resource = TestCertificateAndKeySource.class.getResource(RESOURCE_DIR + "/mitm-certificate.pem.gz");
+        return new GunzippingByteSource(Resources.asByteSource(resource));
     }
 }

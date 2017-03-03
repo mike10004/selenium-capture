@@ -3,11 +3,8 @@ package com.github.mike10004.seleniumhelp;
 import com.github.mike10004.xvfbmanager.XvfbController;
 import com.github.mike10004.xvfbtesting.XvfbRule;
 import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Multimap;
 import com.google.common.net.HttpHeaders;
-import io.netty.handler.codec.http.HttpRequest;
-import io.netty.handler.codec.http.HttpResponse;
 import net.lightbody.bmp.core.har.Har;
 import net.lightbody.bmp.core.har.HarEntry;
 import net.lightbody.bmp.core.har.HarNameValuePair;
@@ -16,9 +13,10 @@ import org.junit.Rule;
 import org.openqa.selenium.WebDriverException;
 
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -37,7 +35,7 @@ public abstract class CookieUsageTestBase {
 
     private List<DeserializableCookie> browseAndSetCookies(URL url, XvfbController xvfbController) throws IOException {
         WebDriverFactory factory = createCookielessWebDriverFactory(xvfbController);
-        HarPlus<Void> collection = new HttpsTestTrafficCollector(factory).collect(driver -> {
+        HarPlus<Void> collection = HttpsTestTrafficCollector.build(factory).collect(driver -> {
             System.out.format("visiting: %s%n", url);
             driver.get(url.toString());
             return (Void) null;
@@ -64,6 +62,15 @@ public abstract class CookieUsageTestBase {
         }
     }
 
+    private static boolean isRequestToUrl(URL reference, URI probe) {
+        try {
+            return reference.toURI().equals(probe);
+        } catch (URISyntaxException e) {
+            e.printStackTrace(System.out);
+            return false;
+        }
+    }
+
     public void exerciseCookieCapabilities() throws IOException, WebDriverException {
         Har har;
         final URL cookieSetUrl = new URL("https://httprequestecho.appspot.com/cookies/set");
@@ -74,24 +81,16 @@ public abstract class CookieUsageTestBase {
             cookiesSetByServer = browseAndSetCookies(cookieSetUrl, xvfbController);
             System.out.format("creating webdriver factory with %s%n", cookiesSetByServer);
             WebDriverFactory factory = createCookiefulWebDriverFactory(xvfbController, cookiesSetByServer);
-            har = new HttpsTestTrafficCollector(factory).collect(driver -> {
+            har = HttpsTestTrafficCollector.build(factory).collect(driver -> {
                 driver.get("http://www.example.com/");
                 sleepQuietly(1000);
                 driver.get(cookieGetUrl.toString());
                 return (Void) null;
-            }, new TrafficListener() {
-                @Override
-                public void responseReceived(HttpResponse response) {
+            }, (request, response) -> {
+                if (isRequestToUrl(cookieGetUrl, request.url)) {
+                    System.out.format("sending request to %s with headers %s%n", request.url, request.headers.keySet());
                 }
-
-                @Override
-                public void sendingRequest(HttpRequest request) {
-                    String uri = request.getUri();
-                    if (cookieGetUrl.getPath().equals(uri)) {
-                        System.out.format("sending request to %s with headers %s%n", uri, request.headers().names());
-                    }
-                    cookieHeaderValues.putAll(request.getUri(), request.headers().getAll(HttpHeaders.COOKIE));
-                }
+                cookieHeaderValues.putAll(request.url.toString(), request.getHeaderValues(HttpHeaders.COOKIE).collect(Collectors.toList()));
             }).har;
         }
         System.out.format("cookie header values for paths %s: %s%n", cookieHeaderValues.keySet(), cookieHeaderValues);

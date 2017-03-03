@@ -1,72 +1,78 @@
 package com.github.mike10004.seleniumhelp;
 
-import io.netty.handler.codec.DecoderResult;
-import io.netty.handler.codec.http.HttpHeaders;
-import io.netty.handler.codec.http.HttpMethod;
-import io.netty.handler.codec.http.HttpRequest;
-import io.netty.handler.codec.http.HttpVersion;
+import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableMultimap;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.http.NameValuePair;
+import org.apache.http.client.utils.URLEncodedUtils;
 
-import java.util.function.Supplier;
+import java.net.URI;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-public class ImmutableHttpRequest implements HttpRequest {
+public class ImmutableHttpRequest extends ImmutableHttpMessage {
 
-    private final HttpRequest inner;
-    private final Supplier<HttpHeaders> headersSupplier;
+    public final String method;
+    public final URI url;
+    private transient final Object paramsLock = new Object();
+    private volatile ImmutableMultimap<String, String> queryParams;
 
-    public ImmutableHttpRequest(HttpRequest inner) {
-        this.inner = checkNotNull(inner);
-        headersSupplier = ImmutableHttpHeaders.memoize(inner);
-    }
-
-    @Override
-    public HttpRequest setMethod(HttpMethod method) {
-        throw new UnsupportedOperationException("immutable");
-    }
-
-    @Override
-    public HttpRequest setUri(String uri) {
-        throw new UnsupportedOperationException("immutable");
-    }
-
-    @Override
-    public HttpRequest setProtocolVersion(HttpVersion version) {
-        throw new UnsupportedOperationException("immutable");
-    }
-
-    @Override
-    public HttpHeaders headers() {
-        return headersSupplier.get();
-    }
-
-    @Override
-    public void setDecoderResult(DecoderResult result) {
-        throw new UnsupportedOperationException("immutable");
-    }
-
-    @Override
-    public HttpMethod getMethod() {
-        return inner.getMethod();
-    }
-
-    @Override
-    public String getUri() {
-        return inner.getUri();
-    }
-
-    @Override
-    public HttpVersion getProtocolVersion() {
-        return inner.getProtocolVersion();
-    }
-
-    @Override
-    public DecoderResult getDecoderResult() {
-        return inner.getDecoderResult();
+    private ImmutableHttpRequest(Builder builder) {
+        super(builder);
+        this.method = checkNotNull(builder.method);
+        this.url = checkNotNull(builder.url);
     }
 
     @Override
     public String toString() {
-        return inner.toString();
+        return toStringHelper()
+                .add("method", method)
+                .add("url", StringUtils.abbreviate(url.toString(), 128))
+                .toString();
+    }
+
+    public static Builder builder(URI requestUrl) {
+        return new Builder(requestUrl);
+    }
+
+    public ImmutableMultimap<String, String> parseQueryParams() {
+        return parseQueryParams(StandardCharsets.UTF_8);
+    }
+
+    public ImmutableMultimap<String, String> parseQueryParams(Charset charset) {
+        synchronized (paramsLock) {
+            if (queryParams == null) {
+                List<NameValuePair> nameValuePairs = URLEncodedUtils.parse(url, charset.name());
+                ImmutableMultimap.Builder<String, String> b = ImmutableMultimap.builder();
+                for (NameValuePair nameValuePair : nameValuePairs) {
+                    b.put(Strings.nullToEmpty(nameValuePair.getName()), Strings.nullToEmpty(nameValuePair.getValue()));
+                }
+                queryParams = b.build();
+            }
+            return queryParams;
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static final class Builder extends MessageBuilder<Builder> {
+
+        private String method = "GET";
+        private final URI url;
+
+        private Builder(URI url) {
+            this.url = checkNotNull(url);
+        }
+
+        public Builder method(String method) {
+            this.method = io.netty.handler.codec.http.HttpMethod.valueOf(method).name();
+            return this;
+        }
+
+        public ImmutableHttpRequest build() {
+            return new ImmutableHttpRequest(this);
+        }
     }
 }

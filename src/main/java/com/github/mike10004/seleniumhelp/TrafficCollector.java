@@ -2,13 +2,10 @@ package com.github.mike10004.seleniumhelp;
 
 import com.google.common.collect.ImmutableList;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.handler.codec.http.HttpObject;
 import io.netty.handler.codec.http.HttpRequest;
-import io.netty.handler.codec.http.HttpResponse;
 import net.lightbody.bmp.BrowserMobProxy;
 import net.lightbody.bmp.BrowserMobProxyServer;
 import net.lightbody.bmp.core.har.Har;
-import net.lightbody.bmp.filters.HttpsAwareFiltersAdapter;
 import net.lightbody.bmp.mitm.CertificateAndKeySource;
 import net.lightbody.bmp.mitm.manager.ImpersonatingMitmManager;
 import net.lightbody.bmp.proxy.CaptureType;
@@ -23,8 +20,10 @@ import org.openqa.selenium.WebDriverException;
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.EnumSet;
-import java.util.Optional;
+import java.util.List;
 import java.util.Set;
 import java.util.function.Supplier;
 
@@ -33,54 +32,47 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class TrafficCollector {
 
     private final WebDriverFactory webDriverFactory;
+    @Nullable
     private final CertificateAndKeySource certificateAndKeySource;
     private final ImmutableList<HttpFiltersSource> httpFiltersSources;
-    private final java.util.function.Supplier<Optional<InetSocketAddress>> upstreamProxyProvider;
+    private final Supplier<InetSocketAddress> upstreamProxyProvider;
 
-    public TrafficCollector(WebDriverFactory webDriverFactory, CertificateAndKeySource certificateAndKeySource,
-                            HttpFiltersSource httpFiltersSource,
-                            java.util.function.Supplier<Optional<InetSocketAddress>> upstreamProxyProvider) {
-        this(webDriverFactory, certificateAndKeySource, ImmutableList.of(httpFiltersSource), upstreamProxyProvider);
-    }
-
-    public TrafficCollector(WebDriverFactory webDriverFactory, CertificateAndKeySource certificateAndKeySource,
-                            Iterable<? extends HttpFiltersSource> httpFiltersSources,
-                            java.util.function.Supplier<java.util.Optional<InetSocketAddress>> upstreamProxyProvider) {
+    /**
+     * Constructs an instance of the class. Should only be used by subclasses that know
+     * what they're doing. Otherwise, use
+     * @param webDriverFactory web driver factory to use
+     * @param certificateAndKeySource credential source
+     * @param upstreamProxyProvider upstream proxy provider; can supply null if no upstream proxy is to be used
+     * @param httpFiltersSources list of filters sources; this should probably include {@link AnonymizingFiltersSource}
+     */
+    protected TrafficCollector(WebDriverFactory webDriverFactory,
+                            @Nullable CertificateAndKeySource certificateAndKeySource,
+                            Supplier<InetSocketAddress> upstreamProxyProvider,
+                               Iterable<? extends HttpFiltersSource> httpFiltersSources) {
         this.webDriverFactory = checkNotNull(webDriverFactory);
-        this.certificateAndKeySource = checkNotNull(certificateAndKeySource);
+        this.certificateAndKeySource = certificateAndKeySource;
         this.httpFiltersSources = ImmutableList.copyOf(httpFiltersSources);
         this.upstreamProxyProvider = checkNotNull(upstreamProxyProvider);
     }
 
-    /**
-     * Constructs an instance of the class. Accepts a Guava supplier as the upstream proxy provider.
-     * @param webDriverFactory
-     * @param certificateAndKeySource
-     * @param httpFiltersSources
-     * @param upstreamProxyProvider
-     * @deprecated use constructor that takes {@code java.util.function.Supplier} argument
-     */
-    @Deprecated
-    public TrafficCollector(WebDriverFactory webDriverFactory, CertificateAndKeySource certificateAndKeySource,
-                            Iterable<? extends HttpFiltersSource> httpFiltersSources,
-                            com.google.common.base.Supplier<com.google.common.base.Optional<InetSocketAddress>> upstreamProxyProvider) {
-        this(webDriverFactory, certificateAndKeySource, httpFiltersSources, guavaToJava(upstreamProxyProvider));
+    private TrafficCollector(Builder builder) {
+        webDriverFactory = builder.webDriverFactory;
+        certificateAndKeySource = builder.certificateAndKeySource;
+        httpFiltersSources = ImmutableList.copyOf(builder.httpFiltersSources);
+        upstreamProxyProvider = builder.upstreamProxyProvider;
     }
 
-    private static <T> java.util.function.Supplier<java.util.Optional<T>> guavaToJava(final com.google.common.base.Supplier<com.google.common.base.Optional<T>> supplier) {
-        return () -> java.util.Optional.ofNullable(supplier.get().orNull());
+    public static Builder builder(WebDriverFactory webDriverFactory) {
+        return new Builder(webDriverFactory);
     }
 
     protected Set<CaptureType> getCaptureTypes() {
         return EnumSet.allOf(CaptureType.class);
     }
 
-    protected static java.util.function.Supplier<Optional<InetSocketAddress>> absentUpstreamProxyProvider() {
-        return Optional::empty;
-    }
-
     /**
-     * Collects traffic generated by the given generator into a HAR.
+     * Collects traffic generated by the given generator into a HAR. This invokes
+     * {@link #collect(TrafficGenerator, TrafficMonitor)} with a null monitor reference.
      * @param generator the generator
      * @param <R> type of result the generator returns
      * @return the HAR containing all traffic generated
@@ -92,21 +84,22 @@ public class TrafficCollector {
     }
 
     /**
-     * Collects traffic generated by the given generator into a HAR.
+     * Collects traffic generated by the given generator into a HAR. Notifications of request/response
+     * interactions can be sent to the given monitor, optionally.
      * @param generator the generator
      * @param <R> type of result the generator returns
-     * @param listener the listener, or null
+     * @param monitor a monitor, or null
      * @return the HAR containing all traffic generated
      * @throws IOException if something I/O related goes awry
      * @throws WebDriverException if the web driver could not be created or the generator throws one
      */
-    public <R> HarPlus<R> collect(TrafficGenerator<R> generator, @Nullable TrafficListener listener) throws IOException, WebDriverException {
+    public <R> HarPlus<R> collect(TrafficGenerator<R> generator, @Nullable TrafficMonitor monitor) throws IOException, WebDriverException {
         checkNotNull(generator, "generator");
         BrowserMobProxy bmp = createProxy(certificateAndKeySource);
         bmp.enableHarCaptureTypes(getCaptureTypes());
         bmp.newHar();
-        if (listener != null) {
-            addResponseNotificationFilters(bmp, listener);
+        if (monitor != null) {
+            addTrafficMonitorFilter(bmp, monitor);
         }
         bmp.start();
         R result;
@@ -124,40 +117,13 @@ public class TrafficCollector {
         return new HarPlus<>(har, result);
     }
 
-    protected static class ResponseNotificationFilter extends HttpsAwareFiltersAdapter {
-
-        private final TrafficListener trafficListener;
-
-        public ResponseNotificationFilter(HttpRequest originalRequest, ChannelHandlerContext ctx, TrafficListener trafficListener) {
-            super(originalRequest, ctx);
-            this.trafficListener = checkNotNull(trafficListener);
-        }
-
-        @Override
-        public HttpObject serverToProxyResponse(HttpObject httpObject) {
-            if (httpObject instanceof HttpResponse) {
-                trafficListener.responseReceived(new ImmutableHttpResponse((HttpResponse) httpObject));
-            }
-            return httpObject;
-        }
-
-        @Override
-        public HttpResponse proxyToServerRequest(HttpObject httpObject) {
-            if (httpObject instanceof HttpRequest) {
-                trafficListener.sendingRequest(new ImmutableHttpRequest((HttpRequest) httpObject));
-            }
-            return null;
-        }
-
-    }
-
-    protected void addResponseNotificationFilters(BrowserMobProxy bmp, final TrafficListener listener) {
-        checkNotNull(listener, "listener");
+    protected void addTrafficMonitorFilter(BrowserMobProxy bmp, final TrafficMonitor monitor) {
+        checkNotNull(monitor, "monitor");
         bmp.addLastHttpFilterFactory(new HttpFiltersSourceAdapter() {
             @Override
             public HttpFilters filterRequest(HttpRequest originalRequest, ChannelHandlerContext ctx) {
                 if (!ProxyUtils.isCONNECT(originalRequest)) {
-                    return new ResponseNotificationFilter(originalRequest, ctx, listener);
+                    return new TrafficMonitorFilter(originalRequest, ctx, monitor);
                 } else {
                     return null;
                 }
@@ -174,14 +140,63 @@ public class TrafficCollector {
 
     protected BrowserMobProxy createProxy(CertificateAndKeySource certificateAndKeySource) {
         BrowserMobProxy bmp = new BrowserMobProxyServer();
-        MitmManager mitmManager = createMitmManager(bmp, certificateAndKeySource);
-        bmp.setMitmManager(mitmManager);
+        if (certificateAndKeySource != null) {
+            MitmManager mitmManager = createMitmManager(bmp, certificateAndKeySource);
+            bmp.setMitmManager(mitmManager);
+        }
         httpFiltersSources.forEach(bmp::addLastHttpFilterFactory);
-        InetSocketAddress upstreamProxy = upstreamProxyProvider.get().orElse(null);
+        @Nullable InetSocketAddress upstreamProxy = upstreamProxyProvider.get();
         if (upstreamProxy != null) {
             bmp.setChainedProxy(upstreamProxy);
         }
         return bmp;
     }
 
+
+    public static final class Builder {
+
+        private final WebDriverFactory webDriverFactory;
+        private CertificateAndKeySource certificateAndKeySource = null;
+        private final List<HttpFiltersSource> httpFiltersSources = new ArrayList<>();
+        private Supplier<InetSocketAddress> upstreamProxyProvider = () -> null;
+
+        private Builder(WebDriverFactory webDriverFactory) {
+            this.webDriverFactory = checkNotNull(webDriverFactory);
+            httpFiltersSources.add(AnonymizingFiltersSource.getInstance());
+        }
+
+        public Builder collectHttps(CertificateAndKeySource certificateAndKeySource) {
+            this.certificateAndKeySource = checkNotNull(certificateAndKeySource);
+            return this;
+        }
+
+        public Builder nonAnonymizing() {
+            httpFiltersSources.remove(AnonymizingFiltersSource.getInstance());
+            return this;
+        }
+
+        public Builder filter(HttpFiltersSource filter) {
+            httpFiltersSources.add(filter);
+            return this;
+        }
+
+        public Builder filters(Collection<? extends HttpFiltersSource> val) {
+            httpFiltersSources.addAll(val);
+            return this;
+        }
+
+        public Builder upstreamProxy(InetSocketAddress address) {
+            upstreamProxyProvider = () -> address;
+            return this;
+        }
+
+        public Builder upstreamProxy(Supplier<InetSocketAddress> val) {
+            upstreamProxyProvider = checkNotNull(val);
+            return this;
+        }
+
+        public TrafficCollector build() {
+            return new TrafficCollector(this);
+        }
+    }
 }

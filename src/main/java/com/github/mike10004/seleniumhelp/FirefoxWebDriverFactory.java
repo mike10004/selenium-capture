@@ -17,6 +17,7 @@ import org.openqa.selenium.firefox.FirefoxBinary;
 import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.firefox.FirefoxProfile;
 
+import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
@@ -55,7 +56,7 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
     }
 
     @Override
-    public WebDriver createWebDriver(BrowserMobProxy proxy, CertificateAndKeySource certificateAndKeySource) throws IOException {
+    public WebDriver createWebDriver(BrowserMobProxy proxy, @Nullable CertificateAndKeySource certificateAndKeySource) throws IOException {
         List<ProfileAction> actions = new ArrayList<>(2);
         List<DeserializableCookie> cookies_ = getCookies();
         if (!cookies.isEmpty()) {
@@ -64,7 +65,6 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
         if (certificateAndKeySource instanceof FirefoxCompatibleCertificateSource) {
             ByteSource certificateDbByteSource = ((FirefoxCompatibleCertificateSource)certificateAndKeySource).getFirefoxCertificateDatabase();
             actions.add(new CertificateSupplementingProfileAction(certificateDbByteSource));
-
         }
         FirefoxProfile profile = new SupplementingFirefoxProfile(actions);
         // https://stackoverflow.com/questions/2887978/webdriver-and-proxy-server-for-firefox
@@ -90,7 +90,8 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
         return driver;
     }
 
-    protected void applyAdditionalPreferences(Map<String, Object> profilePreferences, BrowserMobProxy proxy, CertificateAndKeySource certificateAndKeySource, FirefoxProfile profile) {
+    protected void applyAdditionalPreferences(Map<String, Object> profilePreferences, BrowserMobProxy proxy,
+          @Nullable CertificateAndKeySource certificateAndKeySource, FirefoxProfile profile) {
         for (String key : profilePreferences.keySet()) {
             Object value = profilePreferences.get(key);
             if (value instanceof String) {

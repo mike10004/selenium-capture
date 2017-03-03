@@ -1,19 +1,18 @@
 package com.github.mike10004.seleniumhelp;
 
+import com.google.common.base.MoreObjects;
 import com.google.common.net.HttpHeaders;
 import net.lightbody.bmp.core.har.Har;
 import net.lightbody.bmp.core.har.HarEntry;
 import net.lightbody.bmp.core.har.HarNameValuePair;
+import net.lightbody.bmp.core.har.HarPostData;
 import net.lightbody.bmp.core.har.HarRequest;
 import net.lightbody.bmp.core.har.HarResponse;
 import org.apache.commons.lang3.tuple.Pair;
-import org.apache.http.cookie.MalformedCookieException;
 
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.ArrayList;
+import javax.annotation.Nullable;
+import java.util.Collection;
 import java.util.Date;
-import java.util.List;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
@@ -70,26 +69,12 @@ public class HarAnalysis {
         };
     }
 
-    private static <L, R> Predicate<Pair<L, R>> conjoinedPairPredicate(final Predicate<? super L> leftPredicate, final Predicate<? super R> rightPredicate) {
-        return input -> input != null && leftPredicate.test(input.getLeft()) && rightPredicate.test(input.getRight());
-    }
-
     public static Function<HarEntry, Pair<HarRequest, HarResponse>> entryToInteraction() {
         return input -> Pair.of(input.getRequest(), input.getResponse());
     }
 
     public static Predicate<HarEntry> entryPredicate(final Predicate<HarRequest> requestPredicate, final Predicate<HarResponse> responsePredicate) {
         return harEntry -> harEntry != null && requestPredicate.test(harEntry.getRequest()) && responsePredicate.test(harEntry.getResponse());
-    }
-
-    public Stream<Pair<HarRequest, HarResponse>> asInteractions() {
-        return har.getLog().getEntries().stream().map(entryToInteraction());
-    }
-
-    public Stream<Pair<HarRequest, HarResponse>> asInteractions(Predicate<HarRequest> requestPredicate, Predicate<HarResponse> responsePredicate) {
-        return har.getLog().getEntries().stream()
-                .filter(entryPredicate(requestPredicate, responsePredicate))
-                .map(entryToInteraction());
     }
 
     public static Predicate<HarRequest> anyRequest() {
@@ -108,8 +93,45 @@ public class HarAnalysis {
         return pairTransform(Function.identity(), right);
     }
 
-    public static <L1, L2, R> Function<Pair<L1, R>, Pair<L2, R>> leftTransform(final Function<L1, L2> left) {
-        return pairTransform(left, Function.identity());
+    public static String describe(HarRequest request) {
+        if (request == null) {
+            return "null";
+        }
+        return MoreObjects.toStringHelper(request)
+                .add("method", request.getMethod())
+                .add("url", request.getUrl())
+                .add("headers.count", sizeOf(request.getHeaders()))
+                .add("postData", request.getPostData())
+                .toString();
     }
 
+    private static int lengthOf(@Nullable String str) {
+        return str == null ? -1 : str.length();
+    }
+
+    private static int sizeOf(@Nullable Collection<?> collection) {
+        return collection == null ? -1 : collection.size();
+    }
+
+    public static String describe(HarResponse response) {
+        if (response == null) {
+            return "null";
+        }
+        return MoreObjects.toStringHelper(response)
+                .add("status", response.getStatus())
+                .add("headers.count", sizeOf(response.getHeaders()))
+                .add("bodySize", response.getBodySize())
+                .toString();
+    }
+
+    public static String describe(HarPostData postData) {
+        if (postData == null) {
+            return "null";
+        }
+        return MoreObjects.toStringHelper(postData)
+                .add("params.size", sizeOf(postData.getParams()))
+                .add("text.length", lengthOf(postData.getText()))
+                .add("mimeType", postData.getMimeType())
+                .toString();
+    }
 }

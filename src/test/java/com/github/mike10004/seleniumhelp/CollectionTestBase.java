@@ -14,7 +14,6 @@ import org.apache.commons.lang3.StringEscapeUtils;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Rule;
-import org.openqa.selenium.WebDriver;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
@@ -125,31 +124,30 @@ public class CollectionTestBase {
         }
     }
 
-    private class TestProxySupplier implements java.util.function.Supplier<java.util.Optional<InetSocketAddress>> {
+    private class TestProxySupplier implements java.util.function.Supplier<InetSocketAddress> {
 
         @Override
-        public java.util.Optional<InetSocketAddress> get() {
+        public InetSocketAddress get() {
             if (upstreamProxyHostAndPort != null) {
                 InetSocketAddress address = new InetSocketAddress(upstreamProxyHostAndPort.getHost(), upstreamProxyHostAndPort.getPort());
-                return java.util.Optional.of(address);
+                return address;
             } else {
-                return java.util.Optional.empty();
+                return null;
             }
         }
     }
 
     protected HarContent testTrafficCollector(WebDriverFactory webDriverFactory, final URL url) throws IOException {
         CertificateAndKeySource certificateAndKeySource = TestCertificateAndKeySource.create();
-        TrafficCollector collector = new TrafficCollector(webDriverFactory, certificateAndKeySource,
-                AnonymizingFiltersSource.getInstance(), new TestProxySupplier());
-        HarPlus<String> collection = collector.collect(new TrafficGenerator<String>() {
-            @Override
-            public String generate(WebDriver driver) throws IOException {
-                driver.get(url.toString());
-                String currentUrl = driver.getCurrentUrl(), pageSource = driver.getPageSource(), title = driver.getTitle();
-                System.out.format("%s: '%s' (length=%d)%n", currentUrl, StringEscapeUtils.escapeJava(title), pageSource.length());
-                return driver.getPageSource();
-            }
+        TrafficCollector collector = TrafficCollector.builder(webDriverFactory)
+                .collectHttps(certificateAndKeySource)
+                .upstreamProxy(new TestProxySupplier())
+                .build();
+        HarPlus<String> collection = collector.collect(driver -> {
+            driver.get(url.toString());
+            String currentUrl = driver.getCurrentUrl(), pageSource = driver.getPageSource(), title = driver.getTitle();
+            System.out.format("%s: '%s' (length=%d)%n", currentUrl, StringEscapeUtils.escapeJava(title), pageSource.length());
+            return driver.getPageSource();
         });
         List<HarEntry> entries = ImmutableList.copyOf(collection.har.getLog().getEntries());
         System.out.format("%d request URLs recorded in HAR:%n", entries.size());

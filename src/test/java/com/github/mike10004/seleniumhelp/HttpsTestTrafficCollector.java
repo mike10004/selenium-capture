@@ -1,9 +1,11 @@
 package com.github.mike10004.seleniumhelp;
 
-class HttpsTestTrafficCollector extends TrafficCollector {
+class HttpsTestTrafficCollector {
 
-    public HttpsTestTrafficCollector(WebDriverFactory webDriverFactory) {
-        super(webDriverFactory, TestCertificateAndKeySource.create(),
-                AnonymizingFiltersSource.getInstance(), absentUpstreamProxyProvider());
+    public static TrafficCollector build(WebDriverFactory webDriverFactory) {
+        return TrafficCollector.builder(webDriverFactory)
+                .collectHttps(TestCertificateAndKeySource.create())
+                .build();
     }
+
 }

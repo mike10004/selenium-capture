@@ -13,6 +13,7 @@ import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.remote.CapabilityType;
 import org.openqa.selenium.remote.DesiredCapabilities;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Collection;
@@ -41,7 +42,7 @@ public class ChromeWebDriverFactory extends EnvironmentWebDriverFactory {
     }
 
     @Override
-    public WebDriver createWebDriver(BrowserMobProxy proxy, CertificateAndKeySource certificateAndKeySource) throws IOException {
+    public WebDriver createWebDriver(BrowserMobProxy proxy, @Nullable CertificateAndKeySource certificateAndKeySource) throws IOException {
         cookiePreparer.supplementOptions(chromeOptions);
         DesiredCapabilities capabilities = toCapabilities(chromeOptions);
         Proxy seleniumProxy = ClientUtil.createSeleniumProxy(proxy);
@@ -98,6 +99,7 @@ public class ChromeWebDriverFactory extends EnvironmentWebDriverFactory {
         return new ChromeCookiePreparer(scratchDir, cookiesSupplier);
     }
 
+    @SuppressWarnings("unused")
     public static final class Builder extends EnvironmentWebDriverFactory.Builder<Builder> {
 
         private CookiePreparer cookiePreparer = cookielessPreparer;
