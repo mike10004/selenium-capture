@@ -243,8 +243,8 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
 
         /**
          * Replaces the current map of profile preferences.
-         * @param val
-         * @return
+         * @param val map of profile preferences
+         * @return this instance
          */
         public Builder preferences(Map<String, Object> val) {
             profilePreferences = checkNotNull(val);
@@ -253,8 +253,8 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
 
         /**
          * Puts all the argument preferences onto this instance's preferences map.
-         * @param val
-         * @return
+         * @param val preferences to put
+         * @return this instance
          */
         public Builder putPreferences(Map<String, Object> val) {
             profilePreferences.putAll(val);
@@ -263,8 +263,8 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
 
         /**
          * Adds one cookie.
-         * @param cookie
-         * @return
+         * @param cookie cookie to add
+         * @return this instance
          */
         public Builder cookie(DeserializableCookie cookie) {
             cookies.add(cookie);
@@ -272,9 +272,9 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
         }
 
         /**
-         * Adds all the argument cookies
-         * @param val
-         * @return
+         * Adds a list of cookies.
+         * @param val cookies to add
+         * @return this instance
          */
         public Builder addCookies(Iterable<DeserializableCookie> val) {
             Iterables.addAll(cookies, val);
@@ -283,8 +283,8 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
 
         /**
          * Replaces the list of cookies.
-         * @param val
-         * @return
+         * @param val cookies
+         * @return this instance
          */
         public Builder cookies(Iterable<DeserializableCookie> val) {
             cookies.clear();

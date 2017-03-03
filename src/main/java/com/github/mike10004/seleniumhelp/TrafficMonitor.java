@@ -14,6 +14,7 @@ public interface TrafficMonitor {
      * This method is invoked from {@link TrafficMonitorFilter#serverToProxyResponse(HttpObject)}
      * or one of that class's error methods.
      * @param httpResponse the HTTP response
+     * @param httpRequest the HTTP request
      * @see TrafficMonitorFilter
      */
     void responseReceived(ImmutableHttpRequest httpRequest, ImmutableHttpResponse httpResponse);

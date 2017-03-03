@@ -1,7 +1,17 @@
 /*
- * (c) 2017 Novetta
- *
- * Created by mike
+   Copyright Patrick Lightbody (net.lightbody.bmp.filters.HarCaptureFilter)
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
  */
 package com.github.mike10004.seleniumhelp;
 
@@ -61,7 +71,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
  *        </ul>
  *     </li>
  * </ul>
- * </p>
  */
 public class TrafficMonitorFilter extends HttpsAwareFiltersAdapter {
 
@@ -103,19 +112,21 @@ public class TrafficMonitorFilter extends HttpsAwareFiltersAdapter {
     /**
      * Create a new instance of the HarCaptureFilter that will capture request and response information. If no har is specified in the
      * constructor, this filter will do nothing.
-     * <p/>
+     * <p>
      * Regardless of the CaptureTypes specified in <code>dataToCapture</code>, the HarCaptureFilter will always capture:
      * <ul>
      *     <li>Request and response sizes</li>
      *     <li>HTTP request and status lines</li>
      *     <li>Page timing information</li>
      * </ul>
-     *
      * @param originalRequest the original HttpRequest from the HttpFiltersSource factory
+     * @param ctx channel handler context
+     * @param trafficMonitor traffic monitor (subscriber to notifications from this filter)
      * @throws IllegalArgumentException if request method is {@code CONNECT}
      */
     public TrafficMonitorFilter(HttpRequest originalRequest, ChannelHandlerContext ctx, TrafficMonitor trafficMonitor) {
         super(originalRequest, ctx);
+        net.lightbody.bmp.filters.HarCaptureFilter.class.getName();
         if (ProxyUtils.isCONNECT(originalRequest)) {
             throw new IllegalArgumentException("Attempted traffic listener capture for HTTP CONNECT request");
         }
@@ -181,10 +192,8 @@ public class TrafficMonitorFilter extends HttpsAwareFiltersAdapter {
     }
 
     /**
-     * Creates a HarRequest object using the method, url, and HTTP version of the specified request.
-     *
+     * Populates a HarRequest object using the method, url, and HTTP version of the specified request.
      * @param httpRequest HTTP request on which the HarRequest will be based
-     * @return a new HarRequest object
      */
     private void populateHarRequestFromHttpRequest(HttpRequest httpRequest, HarRequest harRequest) {
         harRequest.setMethod(httpRequest.getMethod().toString());
@@ -297,7 +306,6 @@ public class TrafficMonitorFilter extends HttpsAwareFiltersAdapter {
 
         if (responseCaptureFilter.isResponseCompressed() && !responseCaptureFilter.isDecompressionSuccessful()) {
             log.warn("Unable to decompress content with encoding: {}. Contents will be encoded as base64 binary data.", responseCaptureFilter.getContentEncoding());
-
             forceBinary = true;
         }
 
@@ -371,7 +379,7 @@ public class TrafficMonitorFilter extends HttpsAwareFiltersAdapter {
     }
 
     /**
-     * Populates the serverIpAddress field of the harEntry using the internal hostname->IP address cache.
+     * Populates the serverIpAddress field of the harEntry using the internal hostname to IP address cache.
      *
      * @param httpRequest HTTP request to take the hostname from
      */
