@@ -1,8 +1,3 @@
-/*
- * (c) 2017 Novetta
- *
- * Created by mike
- */
 package com.github.mike10004.seleniumhelp;
 
 import com.machinepublishers.jbrowserdriver.JBrowserDriver;

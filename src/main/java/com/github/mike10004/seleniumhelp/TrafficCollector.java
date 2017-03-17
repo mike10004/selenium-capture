@@ -36,6 +36,8 @@ public class TrafficCollector {
     private final CertificateAndKeySource certificateAndKeySource;
     private final ImmutableList<HttpFiltersSource> httpFiltersSources;
     private final Supplier<InetSocketAddress> upstreamProxyProvider;
+    private final Supplier<BrowserMobProxy> localProxyInstantiator;
+    private final ImmutableList<HarPostProcessor> harPostProcessors;
 
     /**
      * Constructs an instance of the class. Should only be used by subclasses that know
@@ -48,18 +50,24 @@ public class TrafficCollector {
     protected TrafficCollector(WebDriverFactory webDriverFactory,
                             @Nullable CertificateAndKeySource certificateAndKeySource,
                             Supplier<InetSocketAddress> upstreamProxyProvider,
-                               Iterable<? extends HttpFiltersSource> httpFiltersSources) {
+                               Iterable<? extends HttpFiltersSource> httpFiltersSources,
+                               Supplier<BrowserMobProxy> localProxyInstantiator,
+                               Iterable<? extends HarPostProcessor> harPostProcessors) {
         this.webDriverFactory = checkNotNull(webDriverFactory);
         this.certificateAndKeySource = certificateAndKeySource;
         this.httpFiltersSources = ImmutableList.copyOf(httpFiltersSources);
         this.upstreamProxyProvider = checkNotNull(upstreamProxyProvider);
+        this.localProxyInstantiator = checkNotNull(localProxyInstantiator);
+        this.harPostProcessors = ImmutableList.copyOf(harPostProcessors);
     }
 
     private TrafficCollector(Builder builder) {
-        webDriverFactory = builder.webDriverFactory;
-        certificateAndKeySource = builder.certificateAndKeySource;
-        httpFiltersSources = ImmutableList.copyOf(builder.httpFiltersSources);
-        upstreamProxyProvider = builder.upstreamProxyProvider;
+        this(builder.webDriverFactory,
+                builder.certificateAndKeySource,
+                builder.upstreamProxyProvider,
+                builder.httpFiltersSources,
+                builder.localProxyInstantiator,
+                builder.harPostProcessors);
     }
 
     public static Builder builder(WebDriverFactory webDriverFactory) {
@@ -95,7 +103,8 @@ public class TrafficCollector {
      */
     public <R> HarPlus<R> collect(TrafficGenerator<R> generator, @Nullable TrafficMonitor monitor) throws IOException, WebDriverException {
         checkNotNull(generator, "generator");
-        BrowserMobProxy bmp = createProxy(certificateAndKeySource);
+        BrowserMobProxy bmp = instantiateProxy();
+        configureProxy(bmp, certificateAndKeySource);
         bmp.enableHarCaptureTypes(getCaptureTypes());
         bmp.newHar();
         if (monitor != null) {
@@ -104,17 +113,38 @@ public class TrafficCollector {
         bmp.start();
         R result;
         try {
-            WebDriver driver = webDriverFactory.createWebDriver(bmp, certificateAndKeySource);
-            try {
-                result = generator.generate(driver);
-            } finally {
-                driver.quit();
-            }
+            result = invokeGenerate(bmp, generator);
         } finally {
             bmp.stop();
         }
         Har har = bmp.getHar();
+        for (HarPostProcessor harPostProcessor : harPostProcessors) {
+            harPostProcessor.process(har);
+        }
         return new HarPlus<>(har, result);
+    }
+
+    public <R> R monitor(TrafficGenerator<R> generator, TrafficMonitor monitor) throws IOException, WebDriverException {
+        checkNotNull(generator, "generator");
+        checkNotNull(monitor, "monitor");
+        BrowserMobProxy bmp = instantiateProxy();
+        configureProxy(bmp, certificateAndKeySource);
+        addTrafficMonitorFilter(bmp, monitor);
+        bmp.start();
+        try {
+            return invokeGenerate(bmp, generator);
+        } finally {
+            bmp.stop();
+        }
+    }
+
+    private <R> R invokeGenerate(BrowserMobProxy bmp, TrafficGenerator<R> generator) throws IOException, WebDriverException {
+        WebDriver driver = webDriverFactory.createWebDriver(bmp, certificateAndKeySource);
+        try {
+            return generator.generate(driver);
+        } finally {
+            driver.quit();
+        }
     }
 
     protected void addTrafficMonitorFilter(BrowserMobProxy bmp, final TrafficMonitor monitor) {
@@ -138,8 +168,11 @@ public class TrafficCollector {
         return mitmManager;
     }
 
-    protected BrowserMobProxy createProxy(CertificateAndKeySource certificateAndKeySource) {
-        BrowserMobProxy bmp = new BrowserMobProxyServer();
+    protected BrowserMobProxy instantiateProxy() {
+        return localProxyInstantiator.get();
+    }
+
+    protected void configureProxy(BrowserMobProxy bmp, CertificateAndKeySource certificateAndKeySource) {
         if (certificateAndKeySource != null) {
             MitmManager mitmManager = createMitmManager(bmp, certificateAndKeySource);
             bmp.setMitmManager(mitmManager);
@@ -149,16 +182,18 @@ public class TrafficCollector {
         if (upstreamProxy != null) {
             bmp.setChainedProxy(upstreamProxy);
         }
-        return bmp;
     }
 
 
+    @SuppressWarnings("unused")
     public static final class Builder {
 
         private final WebDriverFactory webDriverFactory;
         private CertificateAndKeySource certificateAndKeySource = null;
         private final List<HttpFiltersSource> httpFiltersSources = new ArrayList<>();
         private Supplier<InetSocketAddress> upstreamProxyProvider = () -> null;
+        private Supplier<BrowserMobProxy> localProxyInstantiator = BrowserMobProxyServer::new;
+        private final List<HarPostProcessor> harPostProcessors = new ArrayList<>();
 
         private Builder(WebDriverFactory webDriverFactory) {
             this.webDriverFactory = checkNotNull(webDriverFactory);
@@ -167,6 +202,11 @@ public class TrafficCollector {
 
         public Builder collectHttps(CertificateAndKeySource certificateAndKeySource) {
             this.certificateAndKeySource = checkNotNull(certificateAndKeySource);
+            return this;
+        }
+
+        public Builder localProxyInstantiator(Supplier<BrowserMobProxy> localProxyInstantiator) {
+            this.localProxyInstantiator = checkNotNull(localProxyInstantiator);
             return this;
         }
 
@@ -192,6 +232,11 @@ public class TrafficCollector {
 
         public Builder upstreamProxy(Supplier<InetSocketAddress> val) {
             upstreamProxyProvider = checkNotNull(val);
+            return this;
+        }
+
+        public Builder harPostProcessor(HarPostProcessor harPostProcessor) {
+            harPostProcessors.add(harPostProcessor);
             return this;
         }
 

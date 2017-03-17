@@ -21,7 +21,7 @@ public class CookieStorageTest {
 
     @Test
     public void testFirefox() throws Exception {
-        FirefoxDriverManager.getInstance().setup();
+        FirefoxDriverManager.getInstance().setup(UnitTests.REQUIRED_GECKODRIVER_VERSION);
         testWithDriverFactory(FirefoxWebDriverFactory.builder().environment(xvfb.getController().newEnvironment()).build());
     }
 
@@ -39,6 +39,12 @@ public class CookieStorageTest {
         Har har = collection.har;
         final FlexibleCookieSpec cookieSpec = FlexibleCookieSpec.getDefault();
         List<DeserializableCookie> harCookies = HarAnalysis.of(har).findCookies(cookieSpec).makeUltimateCookieList();
+        if (harCookies.size() > 1) {
+            System.out.println("multiple cookies found");
+            for (DeserializableCookie cookie : harCookies) {
+                System.out.format("%s%n", cookie);
+            }
+        }
         assertEquals("num cookies", 1, harCookies.size());
         checkCookies(harCookies);
     }

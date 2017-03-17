@@ -14,7 +14,7 @@ public class FirefoxWebDriverFactoryHttpCollectionTest extends CollectionTestBas
     public static void setUpDriver() {
         String driverPath = System.getProperty("webdriver.gecko.driver");
         if (driverPath == null) {
-            FirefoxDriverManager.getInstance().setup();
+            FirefoxDriverManager.getInstance().setup(UnitTests.REQUIRED_GECKODRIVER_VERSION);
         }
     }
 

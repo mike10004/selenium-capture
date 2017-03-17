@@ -131,7 +131,7 @@ public class TrafficMonitorFilter extends HttpsAwareFiltersAdapter {
             throw new IllegalArgumentException("Attempted traffic listener capture for HTTP CONNECT request");
         }
         requestCaptureFilter = new ClientRequestCaptureFilter(originalRequest);
-        responseCaptureFilter = new ServerResponseCaptureFilter(originalRequest, true);
+        responseCaptureFilter = new BrAwareServerResponseCaptureFilter(originalRequest, true);
         this.trafficMonitor = checkNotNull(trafficMonitor);
     }
 

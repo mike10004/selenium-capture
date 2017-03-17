@@ -11,7 +11,7 @@ public class FirefoxCookieUsageTest extends CookieUsageTestBase {
 
     @BeforeClass
     public static void setup() {
-        FirefoxDriverManager.getInstance().setup();
+        FirefoxDriverManager.getInstance().setup(UnitTests.REQUIRED_GECKODRIVER_VERSION);
     }
 
     @Override
