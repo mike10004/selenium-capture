@@ -6,7 +6,11 @@ import com.google.common.net.HttpHeaders;
 import com.google.common.net.MediaType;
 import com.helger.css.ECSSVersion;
 import com.helger.css.reader.CSSReader;
-import net.lightbody.bmp.core.har.*;
+import net.lightbody.bmp.core.har.Har;
+import net.lightbody.bmp.core.har.HarContent;
+import net.lightbody.bmp.core.har.HarEntry;
+import net.lightbody.bmp.core.har.HarNameValuePair;
+import net.lightbody.bmp.core.har.HarResponse;
 import org.brotli.dec.BrotliInputStream;
 
 import javax.annotation.Nullable;
@@ -16,9 +20,7 @@ import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -38,7 +40,6 @@ public class HarCleaner {
      * Cleans a given har by decoding its responses where necessary.
      * @param inputHar the har to clean
      * @return a list of the modified entries
-     * @throws IOException
      */
     public List<HarEntry> clean(Har inputHar) {
         List<HarEntry> entries = inputHar.getLog().getEntries().stream().filter(entry -> {

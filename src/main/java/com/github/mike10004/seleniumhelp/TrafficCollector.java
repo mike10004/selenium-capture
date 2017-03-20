@@ -41,11 +41,14 @@ public class TrafficCollector {
 
     /**
      * Constructs an instance of the class. Should only be used by subclasses that know
-     * what they're doing. Otherwise, use
+     * what they're doing. Otherwise, use {@link #builder(WebDriverFactory)} to create
+     * an instance.
      * @param webDriverFactory web driver factory to use
      * @param certificateAndKeySource credential source
      * @param upstreamProxyProvider upstream proxy provider; can supply null if no upstream proxy is to be used
      * @param httpFiltersSources list of filters sources; this should probably include {@link AnonymizingFiltersSource}
+     * @param localProxyInstantiator supplier that constructs the local proxy instance
+     * @param harPostProcessors list of HAR post-processors
      */
     protected TrafficCollector(WebDriverFactory webDriverFactory,
                             @Nullable CertificateAndKeySource certificateAndKeySource,
