@@ -19,7 +19,7 @@ public class FirefoxWebDriverFactoryHttpsCollectionTest extends CollectionTestBa
     }
 
     @Test
-    public void testTrafficCollectorWithFirefoxFactory_https() throws Exception {
+    public void https() throws Exception {
         String display = xvfb.getController().getDisplay();
         WebDriverFactory webDriverFactory = FirefoxWebDriverFactory.builder()
             .environment(FirefoxWebDriverFactory.createEnvironmentSupplierForDisplay(display))

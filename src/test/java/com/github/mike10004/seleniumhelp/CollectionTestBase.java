@@ -138,11 +138,13 @@ public class CollectionTestBase {
     }
 
     protected HarContent testTrafficCollector(WebDriverFactory webDriverFactory, final URL url) throws IOException {
-        CertificateAndKeySource certificateAndKeySource = TestCertificateAndKeySource.create();
-        TrafficCollector collector = TrafficCollector.builder(webDriverFactory)
-                .collectHttps(certificateAndKeySource)
-                .upstreamProxy(new TestProxySupplier())
-                .build();
+        TrafficCollector.Builder tcBuilder = TrafficCollector.builder(webDriverFactory)
+                .upstreamProxy(new TestProxySupplier());
+        if ("https".equals(protocol)) {
+            CertificateAndKeySource certificateAndKeySource = TestCertificateAndKeySource.create();
+            tcBuilder.collectHttps(certificateAndKeySource);
+        }
+        TrafficCollector collector = tcBuilder.build();
         HarPlus<String> collection = collector.collect(driver -> {
             driver.get(url.toString());
             String currentUrl = driver.getCurrentUrl(), pageSource = driver.getPageSource(), title = driver.getTitle();

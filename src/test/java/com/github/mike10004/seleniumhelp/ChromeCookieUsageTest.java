@@ -17,7 +17,7 @@ public class ChromeCookieUsageTest extends CookieUsageTestBase {
 
     @BeforeClass
     public static void setupChromeDriver() {
-        ChromeDriverManager.getInstance().setup();
+        ChromeDriverManager.getInstance().setup(UnitTests.RECOMMENDED_CHROMEDRIVER_VERSION);
     }
 
     @Override

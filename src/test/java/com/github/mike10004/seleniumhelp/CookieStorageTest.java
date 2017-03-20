@@ -27,7 +27,7 @@ public class CookieStorageTest {
 
     @Test
     public void testChrome() throws Exception {
-        ChromeDriverManager.getInstance().setup();
+        ChromeDriverManager.getInstance().setup(UnitTests.RECOMMENDED_CHROMEDRIVER_VERSION);
         testWithDriverFactory(ChromeWebDriverFactory.builder().environment(xvfb.getController()::newEnvironment).build());
     }
 

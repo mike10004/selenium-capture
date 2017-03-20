@@ -14,12 +14,12 @@ public class ChromeWebDriverFactoryHttpCollectionTest extends CollectionTestBase
     public static void setUpDriver() {
         String driverPath = System.getProperty("webdriver.chrome.driver");
         if (driverPath == null) {
-            ChromeDriverManager.getInstance().setup();
+            ChromeDriverManager.getInstance().setup(UnitTests.RECOMMENDED_CHROMEDRIVER_VERSION);
         }
     }
 
     @Test
-    public void testTrafficCollectorWithFirefoxFactory_http() throws Exception {
+    public void http() throws Exception {
         String display = xvfb.getController().getDisplay();
         WebDriverFactory webDriverFactory = ChromeWebDriverFactory.builder()
                 .environment(ChromeWebDriverFactory.createEnvironmentSupplierForDisplay(display))
