@@ -1,6 +1,5 @@
 package com.github.mike10004.seleniumhelp;
 
-import com.google.common.base.Function;
 import com.google.common.io.ByteSource;
 import com.google.common.io.Resources;
 import com.google.gson.Gson;
@@ -69,12 +68,12 @@ public class ChromeDriverExperiments {
             String preCookieGet = null, postCookieGet;
             URI url = URI.create("https://httprequestecho.appspot.com/");
             driver.get("chrome-extension://fngmhnnpilhplaeedifhccceomclgfbg/popup.html?url=" + url + "&incognito=false");
-            WebElement pasteButton = new WebDriverWait(driver, 3).until(ExpectedConditions.presenceOfElementLocated(By.cssSelector("a#pasteButton")));
+            WebElement pasteButton = new WebDriverWait(driver, 3).until(ExpectedConditions.presenceOfElementLocated(By.cssSelector("a#pasteButton"))::apply);
             pasteButton.click();
-            WebElement textArea = new WebDriverWait(driver, 3).until(ExpectedConditions.presenceOfElementLocated(By.cssSelector("div#pasteCookie textarea")));
+            WebElement textArea = new WebDriverWait(driver, 3).until(ExpectedConditions.presenceOfElementLocated(By.cssSelector("div#pasteCookie textarea"))::apply);
             String COOKIE_JSON = produceCookieArrayJson(url, "httprequestecho.appspot.com", "/", "SLIM_COOKIE_NAME", "SLIM_COOKIE_VALUE");
             textArea.sendKeys(COOKIE_JSON);
-            WebElement importButton = new WebDriverWait(driver, 3).until(ExpectedConditions.presenceOfElementLocated(By.cssSelector("#submitDiv #submitButton")));
+            WebElement importButton = new WebDriverWait(driver, 3).until(ExpectedConditions.presenceOfElementLocated(By.cssSelector("#submitDiv #submitButton"))::apply);
             importButton.click();
             driver.get("https://httprequestecho.appspot.com/get");
             postCookieGet = driver.getPageSource();
@@ -205,7 +204,7 @@ public class ChromeDriverExperiments {
             System.out.println(uri);
             driver.get(uri.toString());
             WebElement outputElement = new WebDriverWait(driver, 3)
-                    .until(new Function<WebDriver, WebElement>(){
+                    .until(new java.util.function.Function<WebDriver, WebElement>(){
                         @Nullable
                         @Override
                         public WebElement apply(WebDriver input) {

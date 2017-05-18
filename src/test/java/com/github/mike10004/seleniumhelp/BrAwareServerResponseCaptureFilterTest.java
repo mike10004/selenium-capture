@@ -45,7 +45,7 @@ public class BrAwareServerResponseCaptureFilterTest {
     @Rule
     public final XvfbRule xvfb = XvfbRule.builder().disabledOnWindows().build();
 
-    @Test
+    @Test(timeout = 10000L)
     public void endToEnd_chrome() throws Exception {
         byte[] brotliBytes = loadBrotliCompressedSample();
         byte[] decompressedBytes = loadUncompressedSample();

@@ -1,45 +1,35 @@
 package com.github.mike10004.seleniumhelp;
 
-import org.openqa.selenium.Keys;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.interactions.Action;
 import org.openqa.selenium.interactions.Actions;
-import org.openqa.selenium.interactions.Keyboard;
-import org.openqa.selenium.interactions.Mouse;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public class ArbitraryActions extends Actions {
+
     public ArbitraryActions(WebDriver driver) {
         super(checkNotNull(driver, "driver"));
     }
 
-    public ArbitraryActions(Keyboard keyboard, Mouse mouse) {
-        super(checkNotNull(keyboard, "keyboard"), checkNotNull(mouse, "mouse"));
-    }
-
-    public ArbitraryActions(Keyboard keyboard) {
-        super(checkNotNull(keyboard, "keyboard"));
-    }
-
     @Override
-    public ArbitraryActions keyDown(Keys theKey) {
+    public ArbitraryActions keyDown(CharSequence theKey) {
         return (ArbitraryActions) super.keyDown(theKey);
     }
 
     @Override
-    public ArbitraryActions keyDown(WebElement element, Keys theKey) {
+    public ArbitraryActions keyDown(WebElement element, CharSequence theKey) {
         return (ArbitraryActions) super.keyDown(element, theKey);
     }
 
     @Override
-    public ArbitraryActions keyUp(Keys theKey) {
+    public ArbitraryActions keyUp(CharSequence theKey) {
         return (ArbitraryActions) super.keyUp(theKey);
     }
 
     @Override
-    public ArbitraryActions keyUp(WebElement element, Keys theKey) {
+    public ArbitraryActions keyUp(WebElement element, CharSequence theKey) {
         return (ArbitraryActions) super.keyUp(element, theKey);
     }
 
