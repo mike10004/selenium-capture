@@ -1,7 +1,6 @@
 package com.github.mike10004.seleniumhelp;
 
 import com.github.mike10004.xvfbmanager.XvfbController;
-import io.github.bonigarcia.wdm.FirefoxDriverManager;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -11,7 +10,7 @@ public class FirefoxCookieUsageTest extends CookieUsageTestBase {
 
     @BeforeClass
     public static void setup() {
-        FirefoxDriverManager.getInstance().setup(UnitTests.REQUIRED_GECKODRIVER_VERSION);
+        UnitTests.setupRecommendedGeckoDriver();
     }
 
     @Override

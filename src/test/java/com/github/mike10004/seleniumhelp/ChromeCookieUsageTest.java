@@ -2,7 +2,6 @@ package com.github.mike10004.seleniumhelp;
 
 import com.github.mike10004.seleniumhelp.ChromeWebDriverFactory.CookiePreparer;
 import com.github.mike10004.xvfbmanager.XvfbController;
-import io.github.bonigarcia.wdm.ChromeDriverManager;
 import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
@@ -17,7 +16,7 @@ public class ChromeCookieUsageTest extends CookieUsageTestBase {
 
     @BeforeClass
     public static void setupChromeDriver() {
-        ChromeDriverManager.getInstance().setup(UnitTests.RECOMMENDED_CHROMEDRIVER_VERSION);
+        UnitTests.setupRecommendedChromeDriver();
     }
 
     @Override

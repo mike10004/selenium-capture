@@ -1,8 +1,6 @@
 package com.github.mike10004.seleniumhelp;
 
 import com.github.mike10004.xvfbtesting.XvfbRule;
-import io.github.bonigarcia.wdm.ChromeDriverManager;
-import io.github.bonigarcia.wdm.FirefoxDriverManager;
 import net.lightbody.bmp.core.har.Har;
 import org.apache.http.cookie.MalformedCookieException;
 import org.junit.Rule;
@@ -21,13 +19,13 @@ public class CookieStorageTest {
 
     @Test
     public void testFirefox() throws Exception {
-        FirefoxDriverManager.getInstance().setup(UnitTests.REQUIRED_GECKODRIVER_VERSION);
+        UnitTests.setupRecommendedGeckoDriver();
         testWithDriverFactory(FirefoxWebDriverFactory.builder().environment(xvfb.getController().newEnvironment()).build());
     }
 
     @Test
     public void testChrome() throws Exception {
-        ChromeDriverManager.getInstance().setup(UnitTests.RECOMMENDED_CHROMEDRIVER_VERSION);
+        UnitTests.setupRecommendedChromeDriver();
         testWithDriverFactory(ChromeWebDriverFactory.builder().environment(xvfb.getController()::newEnvironment).build());
     }
 

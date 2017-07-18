@@ -1,6 +1,5 @@
 package com.github.mike10004.seleniumhelp;
 
-import io.github.bonigarcia.wdm.FirefoxDriverManager;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -14,7 +13,7 @@ public class FirefoxWebDriverFactoryHttpsCollectionTest extends CollectionTestBa
     public static void setUpDriver() {
         String driverPath = System.getProperty("webdriver.gecko.driver");
         if (driverPath == null) {
-            FirefoxDriverManager.getInstance().setup(UnitTests.REQUIRED_GECKODRIVER_VERSION);
+            UnitTests.setupRecommendedGeckoDriver();
         }
     }
 

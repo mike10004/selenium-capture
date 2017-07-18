@@ -7,7 +7,6 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import io.github.bonigarcia.wdm.ChromeDriverManager;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DateUtils;
@@ -68,12 +67,12 @@ public class ChromeDriverExperiments {
             String preCookieGet = null, postCookieGet;
             URI url = URI.create("https://httprequestecho.appspot.com/");
             driver.get("chrome-extension://fngmhnnpilhplaeedifhccceomclgfbg/popup.html?url=" + url + "&incognito=false");
-            WebElement pasteButton = new WebDriverWait(driver, 3).until(ExpectedConditions.presenceOfElementLocated(By.cssSelector("a#pasteButton"))::apply);
+            WebElement pasteButton = new WebDriverWait(driver, 3).until(ExpectedConditions.presenceOfElementLocated(By.cssSelector("a#pasteButton")));
             pasteButton.click();
-            WebElement textArea = new WebDriverWait(driver, 3).until(ExpectedConditions.presenceOfElementLocated(By.cssSelector("div#pasteCookie textarea"))::apply);
+            WebElement textArea = new WebDriverWait(driver, 3).until(ExpectedConditions.presenceOfElementLocated(By.cssSelector("div#pasteCookie textarea")));
             String COOKIE_JSON = produceCookieArrayJson(url, "httprequestecho.appspot.com", "/", "SLIM_COOKIE_NAME", "SLIM_COOKIE_VALUE");
             textArea.sendKeys(COOKIE_JSON);
-            WebElement importButton = new WebDriverWait(driver, 3).until(ExpectedConditions.presenceOfElementLocated(By.cssSelector("#submitDiv #submitButton"))::apply);
+            WebElement importButton = new WebDriverWait(driver, 3).until(ExpectedConditions.presenceOfElementLocated(By.cssSelector("#submitDiv #submitButton")));
             importButton.click();
             driver.get("https://httprequestecho.appspot.com/get");
             postCookieGet = driver.getPageSource();
@@ -246,7 +245,7 @@ public class ChromeDriverExperiments {
     }
 
     private static <T> void main(Doer<T> doer) throws Exception {
-        ChromeDriverManager.getInstance().setup(UnitTests.RECOMMENDED_CHROMEDRIVER_VERSION);
+        UnitTests.setupRecommendedChromeDriver();
         File tmpDir = new File(System.getProperty("user.dir"), "target");
         File userDataDir = Files.createTempDirectory(tmpDir.toPath(), "chrome").toFile();
         try {

@@ -7,7 +7,6 @@ import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import com.google.common.io.Resources;
 import com.google.common.net.HttpHeaders;
 import com.google.common.net.MediaType;
-import io.github.bonigarcia.wdm.ChromeDriverManager;
 import io.netty.handler.codec.http.DefaultFullHttpRequest;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpRequest;
@@ -39,7 +38,7 @@ public class BrAwareServerResponseCaptureFilterTest {
 
     @BeforeClass
     public static void initChromeDriver() {
-        ChromeDriverManager.getInstance().setup(UnitTests.RECOMMENDED_CHROMEDRIVER_VERSION);
+        UnitTests.setupRecommendedChromeDriver();
     }
 
     @Rule
