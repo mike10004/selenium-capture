@@ -98,6 +98,7 @@ public class CollectionTestBase {
         }
     }
 
+    @SuppressWarnings("UnusedReturnValue")
     protected HarContent testTrafficCollector(WebDriverFactory webDriverFactory) throws IOException {
         int port = getPort();
         System.out.format("testing collector on port %d with %s%n", port, webDriverFactory);
