@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.github.mike10004</groupId>
     <artifactId>selenium-help</artifactId>
-    <version>0.16</version>
+    <version>0.17</version>
     <name>selenium-help</name>
     <description>Library that helps you use Selenium WebDriver in Java</description>
     <url>https://github.com/mike10004/selenium-help</url>
@@ -37,6 +37,7 @@
         <test.log.level>info</test.log.level>
         <selenium.version>3.4.0</selenium.version>
         <jetty.version>9.4.3.v20170317</jetty.version>
+        <!--suppress CheckTagEmptyBody -->
         <selenium-help.test.proxy.http></selenium-help.test.proxy.http>
     </properties>
     <profiles>
@@ -161,6 +162,11 @@
                 <version>2.23</version>
             </dependency>
             <dependency>
+                <!--
+                     we have to keep this at 21.0 until browsermob-proxy releases a new version
+                     compatible with guava 22.0; as of version 2.1.4, BMP uses some deprecated
+                     guava methods, e.g. HostAndPort.getHostText(), that are removed in release 22.0
+                -->
                 <groupId>com.google.guava</groupId>
                 <artifactId>guava</artifactId>
                 <version>21.0</version>
@@ -250,7 +256,7 @@
         <dependency>
             <groupId>net.lightbody.bmp</groupId>
             <artifactId>browsermob-core</artifactId>
-            <version>2.1.2</version>
+            <version>2.1.4</version>
         </dependency>
         <dependency>
             <groupId>org.seleniumhq.selenium</groupId>
