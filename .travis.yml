@@ -7,7 +7,7 @@ addons:
     packages:
     - chromium-browser
     - sqlite3
-  firefox: "49.0"
+  firefox: "latest"
 before_install:
   - dpkg-query -l xvfb chromium-browser sqlite3
 install: true
