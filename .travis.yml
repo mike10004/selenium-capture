@@ -7,6 +7,7 @@ addons:
     packages:
     - chromium-browser
     - sqlite3
+    - netpbm
   firefox: "latest"
 before_install:
   - dpkg-query -l xvfb chromium-browser sqlite3
