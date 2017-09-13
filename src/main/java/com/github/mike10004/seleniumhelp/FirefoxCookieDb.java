@@ -193,7 +193,7 @@ public abstract class FirefoxCookieDb {
         }
 
         protected File resolveSqlite3Executable() throws IOException {
-            Optional<File> file = Whicher.gnu().which("sqlite3");
+            java.util.Optional<File> file = Whicher.gnu().which("sqlite3");
             if (file.isPresent()) {
                 return file.get();
             }
