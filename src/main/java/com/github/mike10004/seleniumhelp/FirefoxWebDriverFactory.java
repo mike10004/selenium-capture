@@ -57,6 +57,15 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
 
     @Override
     public WebDriver createWebDriver(BrowserMobProxy proxy, @Nullable CertificateAndKeySource certificateAndKeySource) throws IOException {
+        return createWebDriverMaybeWithProxy(proxy, certificateAndKeySource);
+    }
+
+    public WebDriver unproxied() throws IOException {
+        return createWebDriverMaybeWithProxy(null, null);
+    }
+
+    private WebDriver createWebDriverMaybeWithProxy(@Nullable BrowserMobProxy proxy,
+                                                    @Nullable CertificateAndKeySource certificateAndKeySource) throws IOException {
         List<ProfileAction> actions = new ArrayList<>(2);
         List<DeserializableCookie> cookies_ = getCookies();
         if (!cookies.isEmpty()) {
@@ -67,22 +76,24 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
             actions.add(new CertificateSupplementingProfileAction(certificateDbByteSource));
         }
         FirefoxProfile profile = new SupplementingFirefoxProfile(actions);
-        // https://stackoverflow.com/questions/2887978/webdriver-and-proxy-server-for-firefox
-        profile.setPreference("network.proxy.type", 1);
-        profile.setPreference("network.proxy.http", "localhost");
-        profile.setPreference("network.proxy.http_port", proxy.getPort());
-        profile.setPreference("network.proxy.ssl", "localhost");
-        profile.setPreference("network.proxy.ssl_port", proxy.getPort());
-        profile.setPreference("network.proxy.no_proxies_on", ""); // no host bypassing; collector should get all traffic
-        profile.setPreference("browser.search.geoip.url", "");
-        profile.setPreference("network.prefetch-next", false);
-        profile.setPreference("network.http.speculative-parallel-limit", 0);
         profile.setPreference("browser.aboutHomeSnippets.updateUrl", "");
         profile.setPreference("extensions.getAddons.cache.enabled", false);
         profile.setPreference("media.gmp-gmpopenh264.enabled", false);
         profile.setPreference("browser.newtabpage.enabled", false);
         profile.setPreference("app.update.url", "");
         profile.setPreference("browser.safebrowsing.provider.mozilla.updateURL", "");
+        if (proxy != null) {
+            // https://stackoverflow.com/questions/2887978/webdriver-and-proxy-server-for-firefox
+            profile.setPreference("network.proxy.type", 1);
+            profile.setPreference("network.proxy.http", "localhost");
+            profile.setPreference("network.proxy.http_port", proxy.getPort());
+            profile.setPreference("network.proxy.ssl", "localhost");
+            profile.setPreference("network.proxy.ssl_port", proxy.getPort());
+            profile.setPreference("network.proxy.no_proxies_on", ""); // no host bypassing; collector should get all traffic
+            profile.setPreference("browser.search.geoip.url", "");
+            profile.setPreference("network.prefetch-next", false);
+            profile.setPreference("network.http.speculative-parallel-limit", 0);
+        }
         applyAdditionalPreferences(profilePreferences, proxy, certificateAndKeySource, profile);
         FirefoxBinary binary = binarySupplier.get();
         Map<String, String> environment = environmentSupplier.get();
@@ -90,8 +101,17 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
         return driver;
     }
 
-    protected void applyAdditionalPreferences(Map<String, Object> profilePreferences, BrowserMobProxy proxy,
-          @Nullable CertificateAndKeySource certificateAndKeySource, FirefoxProfile profile) {
+    /**
+     * Applies additional preferences, drawn from a map, to a profile. Subclasses may overr
+     * @param profilePreferences
+     * @param proxy
+     * @param certificateAndKeySource
+     * @param profile
+     */
+    @SuppressWarnings("unused")
+    protected void applyAdditionalPreferences(Map<String, Object> profilePreferences,
+              @Nullable BrowserMobProxy proxy,
+              @Nullable CertificateAndKeySource certificateAndKeySource, FirefoxProfile profile) {
         for (String key : profilePreferences.keySet()) {
             Object value = profilePreferences.get(key);
             if (value instanceof String) {

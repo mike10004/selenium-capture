@@ -43,14 +43,28 @@ public class ChromeWebDriverFactory extends EnvironmentWebDriverFactory {
 
     @Override
     public WebDriver createWebDriver(BrowserMobProxy proxy, @Nullable CertificateAndKeySource certificateAndKeySource) throws IOException {
+        return createWebDriverMaybeWithProxy(proxy, certificateAndKeySource);
+    }
+
+    private WebDriver createWebDriverMaybeWithProxy(@Nullable BrowserMobProxy proxy, @Nullable CertificateAndKeySource certificateAndKeySource) throws IOException {
         cookiePreparer.supplementOptions(chromeOptions);
         DesiredCapabilities capabilities = toCapabilities(chromeOptions);
-        Proxy seleniumProxy = ClientUtil.createSeleniumProxy(proxy);
-        capabilities.setCapability(CapabilityType.PROXY, seleniumProxy);
+        if (proxy != null) {
+            configureProxy(capabilities, proxy, certificateAndKeySource);
+        }
         capabilities.merge(capabilitiesOverrides);
         ChromeDriver driver = WebDriverSupport.chromeInEnvironment(environmentSupplier.get()).create(capabilities);
         cookiePreparer.prepareCookies(driver);
         return driver;
+    }
+
+    public WebDriver unproxied() throws IOException {
+        return createWebDriverMaybeWithProxy(null, null);
+    }
+
+    protected void configureProxy(DesiredCapabilities capabilities, BrowserMobProxy proxy, @Nullable CertificateAndKeySource certificateAndKeySource) {
+        Proxy seleniumProxy = ClientUtil.createSeleniumProxy(proxy);
+        capabilities.setCapability(CapabilityType.PROXY, seleniumProxy);
     }
 
     protected DesiredCapabilities toCapabilities(ChromeOptions chromeOptions) {
