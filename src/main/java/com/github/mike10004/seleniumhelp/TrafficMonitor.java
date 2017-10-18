@@ -1,6 +1,7 @@
 package com.github.mike10004.seleniumhelp;
 
 import io.netty.handler.codec.http.HttpObject;
+import org.littleshoot.proxy.HttpFiltersSource;
 
 /**
  * Interface for classes that passively listen to HTTP requests and responses generated during
@@ -18,5 +19,19 @@ public interface TrafficMonitor {
      * @see TrafficMonitorFilter
      */
     void responseReceived(ImmutableHttpRequest httpRequest, ImmutableHttpResponse httpResponse);
+
+    /**
+     * @see HttpFiltersSource#getMaximumRequestBufferSizeInBytes()
+     */
+    default int getMaximumRequestBufferSizeInBytes() {
+        return 0;
+    }
+
+    /**
+     * @see HttpFiltersSource#getMaximumResponseBufferSizeInBytes()
+     */
+    default int getMaximumResponseBufferSizeInBytes() {
+        return 0;
+    }
 
 }

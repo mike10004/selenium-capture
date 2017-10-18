@@ -44,8 +44,10 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -126,7 +128,6 @@ public class TrafficMonitorFilter extends HttpsAwareFiltersAdapter {
      */
     public TrafficMonitorFilter(HttpRequest originalRequest, ChannelHandlerContext ctx, TrafficMonitor trafficMonitor) {
         super(originalRequest, ctx);
-        net.lightbody.bmp.filters.HarCaptureFilter.class.getName();
         if (ProxyUtils.isCONNECT(originalRequest)) {
             throw new IllegalArgumentException("Attempted traffic listener capture for HTTP CONNECT request");
         }
@@ -176,18 +177,39 @@ public class TrafficMonitorFilter extends HttpsAwareFiltersAdapter {
     }
 
     @Override
+    public HttpObject proxyToClientResponse(HttpObject httpObject) {
+        accumulateResponse(httpObject);
+        return super.proxyToClientResponse(httpObject);
+    }
+
+    private final Set<HttpObject> responseObjectsAccumulated = new HashSet<>();
+    private transient final Object responseObjectsLock = new Object();
+
+    private void accumulateResponse(HttpObject httpObject) {
+        synchronized (responseObjectsLock) {
+            if (responseObjectsAccumulated.contains(httpObject)) {
+                return;
+            }
+            responseObjectsAccumulated.add(httpObject);
+            // if a ServerResponseCaptureFilter is configured, delegate to it to collect the server's response. if it is not
+            // configured, we still need to capture basic information (timings, HTTP status, etc.), just not content.
+            responseCaptureFilter.serverToProxyResponse(httpObject);
+            if (httpObject instanceof HttpResponse) {
+                HttpResponse httpResponse = (HttpResponse) httpObject;
+                captureResponse(httpResponse, normalHarResponse);
+            }
+            if (httpObject instanceof LastHttpContent) {
+                captureResponseContent(responseCaptureFilter.getHttpResponse(), responseCaptureFilter.getFullResponseContents(), normalHarResponse);
+                sendResponseNotification(normalHarResponse);
+            }
+
+
+        }
+    }
+
+    @Override
     public HttpObject serverToProxyResponse(HttpObject httpObject) {
-        // if a ServerResponseCaptureFilter is configured, delegate to it to collect the server's response. if it is not
-        // configured, we still need to capture basic information (timings, HTTP status, etc.), just not content.
-        responseCaptureFilter.serverToProxyResponse(httpObject);
-        if (httpObject instanceof HttpResponse) {
-            HttpResponse httpResponse = (HttpResponse) httpObject;
-            captureResponse(httpResponse, normalHarResponse);
-        }
-        if (httpObject instanceof LastHttpContent) {
-            captureResponseContent(responseCaptureFilter.getHttpResponse(), responseCaptureFilter.getFullResponseContents(), normalHarResponse);
-            sendResponseNotification(normalHarResponse);
-        }
+        accumulateResponse(httpObject);
         return super.serverToProxyResponse(httpObject);
     }
 
@@ -410,6 +432,7 @@ public class TrafficMonitorFilter extends HttpsAwareFiltersAdapter {
             serverIpAddress = (resolvedAddress.getHostAddress());
         }
     }
+
     @Override
     public void proxyToServerRequestSending() {
         // if the hostname was not resolved (and thus the IP address populated in the har) during this request, populate the IP address from the cache
