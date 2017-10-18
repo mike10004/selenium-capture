@@ -62,7 +62,16 @@ public class ChromeWebDriverFactory extends EnvironmentWebDriverFactory {
         return createWebDriverMaybeWithProxy(null, null);
     }
 
-    protected void configureProxy(DesiredCapabilities capabilities, BrowserMobProxy proxy, @Nullable CertificateAndKeySource certificateAndKeySource) {
+    /**
+     * Configures a capabilities instance to use the given proxy. The certificate and key source
+     * is not used because Chrome in webdriver mode appears to be fine with untrusted certificates,
+     * which is good because we don't know how to install custom certificates.
+     * @param capabilities the capabilities instance
+     * @param proxy the proxy
+     * @param certificateAndKeySource the certificate and key source (unused)
+     */
+    protected void configureProxy(DesiredCapabilities capabilities, BrowserMobProxy proxy,
+                                  @SuppressWarnings("unused") @Nullable CertificateAndKeySource certificateAndKeySource) {
         Proxy seleniumProxy = ClientUtil.createSeleniumProxy(proxy);
         capabilities.setCapability(CapabilityType.PROXY, seleniumProxy);
     }
