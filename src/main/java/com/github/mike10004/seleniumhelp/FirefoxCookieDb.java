@@ -1,6 +1,7 @@
 package com.github.mike10004.seleniumhelp;
 
 import com.github.mike10004.nativehelper.Program;
+import com.github.mike10004.nativehelper.Program.Builder;
 import com.github.mike10004.nativehelper.ProgramWithOutputStrings;
 import com.github.mike10004.nativehelper.ProgramWithOutputStringsResult;
 import com.github.mike10004.nativehelper.Whicher;
@@ -14,8 +15,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -25,20 +26,59 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 @SuppressWarnings({"Guava", "Convert2Lambda"})
 public abstract class FirefoxCookieDb {
 
-    private FirefoxCookieDb() {}
+    protected final CookieTransferConfig config;
+
+    private FirefoxCookieDb(CookieTransferConfig config) {
+        this.config = checkNotNull(config);
+    }
+
+    public static class CookieTransferConfig {
+
+        @Nullable
+        public String sqlite3Pathname;
+        public String sqlite3ExecutableName = "sqlite3";
+
+        boolean isSqlite3Available() {
+            if (sqlite3Pathname != null) {
+                File sqlite3ExecutableFile = new File(sqlite3Pathname);
+                if (sqlite3ExecutableFile.isFile() && sqlite3ExecutableFile.canExecute()) {
+                    return true;
+                }
+            }
+            return Whicher.gnu().which(sqlite3ExecutableName).isPresent();
+        }
+
+        public Builder sqlite3Builder() {
+            if (sqlite3Pathname == null) {
+                return Program.running(sqlite3ExecutableName);
+            } else {
+                return Program.running(new File(sqlite3Pathname));
+            }
+        }
+    }
 
     public static Importer getImporter() {
-        return new Sqlite3ProgramImporter();
+        return getImporter(new CookieTransferConfig());
     }
 
     public static Exporter getExporter() {
-        return new Sqlite3ProgramExporter();
+        return getExporter(new CookieTransferConfig());
     }
 
+    public static Importer getImporter(CookieTransferConfig config) {
+        return new Sqlite3ProgramImporter(config);
+    }
+
+    public static Exporter getExporter(CookieTransferConfig config) {
+        return new Sqlite3ProgramExporter(config);
+    }
+
+    @VisibleForTesting
     static final ImmutableList<String> sqliteColumnNames = ImmutableList.of(
             "id",
             "baseDomain",
@@ -59,10 +99,6 @@ public abstract class FirefoxCookieDb {
 
     private static final Logger log = LoggerFactory.getLogger(FirefoxCookieDb.class);
 
-    protected static boolean isSqlite3PresentOnSystemPath() {
-        return Whicher.gnu().which("sqlite3").isPresent();
-    }
-
     public interface Exporter {
         List<DeserializableCookie> exportCookies(File sqliteDbFile) throws SQLException, IOException;
     }
@@ -72,19 +108,36 @@ public abstract class FirefoxCookieDb {
     }
 
     @VisibleForTesting
-    static class Sqlite3ProgramExporter implements Exporter {
+    static class Sqlite3ProgramExporter extends FirefoxCookieDb implements Exporter {
+
+        public Sqlite3ProgramExporter(CookieTransferConfig config) {
+            super(config);
+        }
 
         @Override
         public List<DeserializableCookie> exportCookies(File sqliteDbFile) throws SQLException, IOException {
-            throw new UnsupportedOperationException("not yet supported");
+            List<Map<String, String>> cookiesDbRows = dumpRows(sqliteDbFile);
+            return cookiesDbRows.stream().map(this::makeCookie).collect(ImmutableList.toImmutableList());
+        }
+
+        /**
+         * Creates a cookie from the data in a map that represents a row of the
+         * Firefox cookies database.
+         * @param row the row of the database, mapping field names to field values
+         * @return a cookie
+         */
+        protected DeserializableCookie makeCookie(Map<String, String> row) {
+            // TODO construct DeserializableCookie from map
+            throw new UnsupportedOperationException("not yet supported: convert instance of "
+                    + row.getClass() + " to instance of " + DeserializableCookie.class);
         }
 
         public List<Map<String, String>> dumpRows(File sqliteDbFile) throws SQLException, IOException {
             String sql = "SELECT * FROM " + TABLE_NAME + " WHERE 1";
-            if (!isSqlite3PresentOnSystemPath()) {
+            if (!config.isSqlite3Available()) {
                 throw new SQLException("no sqlite3 executable found in search of PATH");
             }
-            ProgramWithOutputStringsResult result = Program.running("sqlite3").arg("-csv").arg("-header").arg(sqliteDbFile.getAbsolutePath()).arg(sql).outputToStrings().execute();
+            ProgramWithOutputStringsResult result = config.sqlite3Builder().arg("-csv").arg("-header").arg(sqliteDbFile.getAbsolutePath()).arg(sql).outputToStrings().execute();
             if (result.getExitCode() != 0) {
                 log.warn("sqlite3 exited with code {}; stderr: {}", result.getExitCode(), result.getStderrString());
                 throw new SQLException("sqlite3 exited with code " + result.getExitCode() + "; " + StringUtils.abbreviate(result.getStderrString(), 256));
@@ -97,7 +150,11 @@ public abstract class FirefoxCookieDb {
     private static final String DEFAULT_SQLITE_CELL_VALUE = "";
 
     @VisibleForTesting
-    static class Sqlite3ProgramImporter implements Importer {
+    static class Sqlite3ProgramImporter extends FirefoxCookieDb implements Importer {
+
+        protected Sqlite3ProgramImporter(CookieTransferConfig config) {
+            super(config);
+        }
 
         @Override
         public void importCookies(Iterable<DeserializableCookie> cookies, File sqliteDbFile) throws SQLException, IOException {
@@ -124,7 +181,7 @@ public abstract class FirefoxCookieDb {
             // sqlite3 3.11 allows multiple sql statement arguments, but
             // version 3.8 requires executing once per statement argument
             for (String stmt : CREATE_TABLE_SQL) {
-                ProgramWithOutputStrings createTableProgram = Program.running(resolveSqlite3Executable())
+                ProgramWithOutputStrings createTableProgram = config.sqlite3Builder()
                         .arg(sqliteDbFile.getAbsolutePath())
                         .arg(stmt)
                         .outputToStrings();
@@ -134,7 +191,7 @@ public abstract class FirefoxCookieDb {
         }
 
         private List<String> queryTableNames(File sqliteDbFile) throws SQLException, IOException {
-            ProgramWithOutputStringsResult result = Program.running(resolveSqlite3Executable())
+            ProgramWithOutputStringsResult result = config.sqlite3Builder()
                     .arg(sqliteDbFile.getAbsolutePath())
                     .arg(".tables")
                     .outputToStrings()
@@ -147,7 +204,7 @@ public abstract class FirefoxCookieDb {
         @SuppressWarnings("SameParameterValue")
         private Optional<Integer> findMaxValue(File sqliteDbFile, String columnName) throws SQLException, IOException {
             checkArgument(columnName.matches("[_A-Za-z]\\w*"), "illegal column name: %s", columnName);
-            ProgramWithOutputStringsResult result = Program.running(resolveSqlite3Executable())
+            ProgramWithOutputStringsResult result = config.sqlite3Builder()
                     .arg("-csv")
                     .arg(sqliteDbFile.getAbsolutePath())
                     .arg("SELECT MAX(" + columnName + ") FROM " + TABLE_NAME + " WHERE 1")
@@ -164,7 +221,7 @@ public abstract class FirefoxCookieDb {
 
         private void doImportRows(Iterable<Map<String, String>> rows, File sqliteDbFile) throws SQLException, IOException {
             String stdin = Csvs.writeRowMapsToString(sqliteColumnNames, rows, DEFAULT_SQLITE_CELL_VALUE, Csvs.UnknownKeyStrategy.IGNORE);
-            ProgramWithOutputStrings program = Program.running(resolveSqlite3Executable())
+            ProgramWithOutputStrings program = config.sqlite3Builder()
                     .reading(stdin)
                     .arg("-csv")
                     .arg(sqliteDbFile.getAbsolutePath())
@@ -190,14 +247,6 @@ public abstract class FirefoxCookieDb {
                 row.put("id", String.valueOf(idFactory.incrementAndGet()));
             }
             doImportRows(rowsWithIds, sqliteDbFile);
-        }
-
-        protected File resolveSqlite3Executable() throws IOException {
-            java.util.Optional<File> file = Whicher.gnu().which("sqlite3");
-            if (file.isPresent()) {
-                return file.get();
-            }
-            throw new FileNotFoundException("sqlite3 executable");
         }
 
     }

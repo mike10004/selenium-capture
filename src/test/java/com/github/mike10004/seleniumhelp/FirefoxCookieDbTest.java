@@ -1,32 +1,24 @@
 package com.github.mike10004.seleniumhelp;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.io.CharSource;
 import com.google.common.io.Files;
 import com.google.common.io.Resources;
-import org.apache.commons.lang3.time.DateUtils;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
 import java.io.IOException;
-import java.math.BigInteger;
 import java.sql.SQLException;
-import java.util.AbstractMap.SimpleImmutableEntry;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
 
 @SuppressWarnings("Guava")
 public class FirefoxCookieDbTest {
@@ -45,6 +37,14 @@ public class FirefoxCookieDbTest {
     }
 
     @Test
+    @org.junit.Ignore // still on the to-do list
+    public void exporter_exportCookies() throws Exception {
+        File cookieDbFile = new File(getClass().getResource("/firefox-cookies-db-with-google-cookie.sqlite").toURI());
+        List<DeserializableCookie> cookies = FirefoxCookieDb.getExporter().exportCookies(cookieDbFile);
+        assertFalse("empty cookies list", cookies.isEmpty());
+    }
+
+    @Test
     public void Sqlite3ProgramImporter_importRows() throws Exception {
         Map<String, String> cookieFieldMap = Iterables.getOnlyElement(Csvs.readRowMaps(CharSource.wrap(ExampleCookieSource.csvText), Csvs.headersFromFirstRow()));
         Map<String, String> export1 = importAndCheck(cookieFieldMap);
@@ -53,10 +53,11 @@ public class FirefoxCookieDbTest {
     }
 
     private Map<String, String> importAndCheck(Map<String, String> cookieFieldMap) throws IOException, SQLException {
-        FirefoxCookieDb.Sqlite3ProgramImporter importer = new FirefoxCookieDb.Sqlite3ProgramImporter();
+        FirefoxCookieDb.CookieTransferConfig config = new FirefoxCookieDb.CookieTransferConfig();
+        FirefoxCookieDb.Sqlite3ProgramImporter importer = new FirefoxCookieDb.Sqlite3ProgramImporter(config);
         File dbFile = tmp.newFile();
         importer.importRows(ImmutableList.of(cookieFieldMap), dbFile);
-        Map<String, String> exportedCookieFieldMap = Iterables.getOnlyElement(new FirefoxCookieDb.Sqlite3ProgramExporter().dumpRows(dbFile));
+        Map<String, String> exportedCookieFieldMap = Iterables.getOnlyElement(new FirefoxCookieDb.Sqlite3ProgramExporter(config).dumpRows(dbFile));
         assertThat("field map", exportedCookieFieldMap, new MapMatcher<String, String>(cookieFieldMap) {
             @Override
             protected boolean isIgnoreValueEquality(Object key, Object expectedValue, Object actualValue) {
@@ -66,14 +67,13 @@ public class FirefoxCookieDbTest {
         return exportedCookieFieldMap;
     }
 
-
-
     @Test
     public void Sqlite3ProgramExporter_dumpRows() throws Exception {
         File dbFile = tmp.newFile();
         Resources.asByteSource(getClass().getResource("/firefox-cookies-db-with-google-cookie.sqlite"))
                 .copyTo(Files.asByteSink(dbFile));
-        FirefoxCookieDb.Sqlite3ProgramExporter exporter = new FirefoxCookieDb.Sqlite3ProgramExporter();
+        FirefoxCookieDb.CookieTransferConfig config = new FirefoxCookieDb.CookieTransferConfig();
+        FirefoxCookieDb.Sqlite3ProgramExporter exporter = new FirefoxCookieDb.Sqlite3ProgramExporter(config);
         List<Map<String, String>> rowMaps = exporter.dumpRows(dbFile);
         assertEquals("rowMaps.size", 1, rowMaps.size());
         Map<String, String> rowMap = rowMaps.iterator().next();
