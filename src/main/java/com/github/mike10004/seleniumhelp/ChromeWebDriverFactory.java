@@ -157,7 +157,7 @@ public class ChromeWebDriverFactory extends EnvironmentWebDriverFactory {
 
         public ChromeWebDriverFactory build() {
             if (headless) {
-                chromeOptions.addArguments("--headless");
+                chromeOptions.addArguments("--headless", "--disable-gpu");
             }
             return new ChromeWebDriverFactory(this);
         }
