@@ -1,6 +1,8 @@
 package com.github.mike10004.seleniumhelp;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.io.ByteStreams;
+import com.jcraft.jzlib.GZIPInputStream;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.HttpContent;
@@ -11,6 +13,7 @@ import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.LastHttpContent;
 import net.lightbody.bmp.filters.ServerResponseCaptureFilter;
 import net.lightbody.bmp.util.BrowserMobHttpUtil;
+import org.apache.commons.lang3.StringUtils;
 import org.brotli.dec.BrotliInputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,6 +22,10 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Brotli-aware server response capture filter. Copied from {@link net.lightbody.bmp.filters.ServerResponseCaptureFilter}
@@ -64,9 +71,9 @@ public class BrAwareServerResponseCaptureFilter  extends ServerResponseCaptureFi
     private volatile boolean decompressionSuccessful;
 
     /**
-     * Populated when processing the LastHttpContent.
+     * Content-encoding header values, added as they are encountered.
      */
-    private volatile String contentEncoding;
+    private final List<String> contentEncodings = new ArrayList<>(4);
 
     /**
      * User option indicating compressed content should be uncompressed.
@@ -106,6 +113,10 @@ public class BrAwareServerResponseCaptureFilter  extends ServerResponseCaptureFi
         return httpObject;
     }
 
+    private boolean isContentEncodingSpecified() {
+        return !contentEncodings.isEmpty();
+    }
+
     @Override
     protected void captureFullResponseContents() {
         // start by setting fullResponseContent to the raw, (possibly) compressed byte stream. replace it
@@ -115,7 +126,7 @@ public class BrAwareServerResponseCaptureFilter  extends ServerResponseCaptureFi
         // if the content is compressed, we need to decompress it. but don't use
         // the netty HttpContentCompressor/Decompressor in the pipeline because we don't actually want it to
         // change the message sent to the client
-        if (contentEncoding != null) {
+        if (isContentEncodingSpecified()) {
             responseCompressed = true;
 
             if (decompressEncodedContent) {
@@ -129,38 +140,92 @@ public class BrAwareServerResponseCaptureFilter  extends ServerResponseCaptureFi
         }
     }
 
-    protected byte[] decompressBrotliContents(byte[] brotliCompressedBytes) throws IOException {
+    protected interface DecompressionFilter {
+        InputStream openStream(InputStream compressedDataStream) throws IOException;
+
+        DecompressionFilter IDENTITY = input -> input;
+
+        static DecompressionFilter concatenate(Iterable<DecompressionFilter> filters) {
+            return new DecompressionFilter() {
+                @Override
+                public InputStream openStream(InputStream compressedDataStream) throws IOException {
+                    for (DecompressionFilter filter : filters) {
+                        compressedDataStream = filter.openStream(compressedDataStream);
+                    }
+                    return compressedDataStream;
+                }
+            };
+        }
+    }
+
+    protected byte[] decompressContents(byte[] brotliCompressedBytes, DecompressionFilter decompressor) throws IOException {
         byte[] decompressed;
-        try (InputStream in = new BrotliInputStream(new ByteArrayInputStream(brotliCompressedBytes))) {
+        try (InputStream in = decompressor.openStream(new ByteArrayInputStream(brotliCompressedBytes))) {
             decompressed = ByteStreams.toByteArray(in);
         }
         return decompressed;
     }
 
+    /**
+     * Explodes a content-encoding value into one or more individual token values.
+     * This means that {@code gzip,br} is broken into a list {@code [gzip, br]}.
+     * @param value the content-encoding header value
+     * @return one or more non-multiple tokens representing the original value
+     */
+    protected Stream<String> explodeContentEncoding(String value) {
+        return Stream.of(value.split(",\\s*"));
+    }
+
+    static class UnsupportedContentEncodingException extends IOException {
+        public UnsupportedContentEncodingException(String encoding) {
+            super(StringUtils.abbreviate(encoding, 32));
+        }
+    }
+
+    protected DecompressionFilter createDecompressor(String singleEncoding) throws UnsupportedContentEncodingException {
+        switch (singleEncoding) {
+            case HttpHeaders.Values.GZIP:
+                return GZIPInputStream::new;
+            case HEADER_VALUE_BROTLI_ENCODING:
+                return BrotliInputStream::new;
+            case "identity":
+                return DecompressionFilter.IDENTITY;
+            default:
+                throw new UnsupportedContentEncodingException(singleEncoding);
+        }
+    }
+
+    protected DecompressionFilter createDecompressor(List<String> contentEncodings) throws UnsupportedContentEncodingException {
+        List<String> singleEncodings = contentEncodings.stream().flatMap(this::explodeContentEncoding).collect(Collectors.toList());
+        List<DecompressionFilter> stages = new ArrayList<>(singleEncodings.size());
+        for (String singleEncoding : singleEncodings) {
+            stages.add(createDecompressor(singleEncoding));
+        }
+        return DecompressionFilter.concatenate(stages);
+    }
+
     @Override
     protected void decompressContents() {
-        if (contentEncoding.equals(HttpHeaders.Values.GZIP)) {
+        ImmutableList<String> contentEncodings = ImmutableList.copyOf(this.contentEncodings);
+        if (!contentEncodings.isEmpty()) {
             try {
-                fullResponseContents = BrowserMobHttpUtil.decompressContents(getRawResponseContents());
-                decompressionSuccessful = true;
-            } catch (RuntimeException e) {
-                log.warn("Failed to decompress response with encoding type " + contentEncoding + " when decoding request from " + originalRequest.getUri(), e);
-            }
-        } else if (contentEncoding != null && contentEncoding.equalsIgnoreCase(HEADER_VALUE_BROTLI_ENCODING)) {
-            try {
-                fullResponseContents = decompressBrotliContents(getRawResponseContents());
+                DecompressionFilter decompressor = createDecompressor(contentEncodings);
+                fullResponseContents = decompressContents(getRawResponseContents(), decompressor);
                 decompressionSuccessful = true;
             } catch (RuntimeException | IOException e) {
-                log.warn("Failed to decompress response with encoding type " + contentEncoding + " when decoding request from " + originalRequest.getUri(), e);
+                log.warn("Failed to decompress response with encodings " + contentEncodings + " when decoding request from " + originalRequest.getUri(), e);
             }
         } else {
-            log.warn("Cannot decode unsupported content encoding type {}", contentEncoding);
+            log.warn("Cannot decode unsupported content encoding type {}", contentEncodings);
         }
     }
 
     @Override
     protected void captureContentEncoding(HttpResponse httpResponse) {
-        contentEncoding = HttpHeaders.getHeader(httpResponse, HttpHeaders.Names.CONTENT_ENCODING);
+        String value = HttpHeaders.getHeader(httpResponse, HttpHeaders.Names.CONTENT_ENCODING);
+        if (value != null) {
+            contentEncodings.add(value);
+        }
     }
 
     @Override
@@ -171,7 +236,7 @@ public class BrAwareServerResponseCaptureFilter  extends ServerResponseCaptureFi
         if (trailingHeaders != null) {
             String trailingContentEncoding = trailingHeaders.get(HttpHeaders.Names.CONTENT_ENCODING);
             if (trailingContentEncoding != null) {
-                contentEncoding = trailingContentEncoding;
+                contentEncodings.add(trailingContentEncoding);
             }
         }
 
@@ -239,7 +304,10 @@ public class BrAwareServerResponseCaptureFilter  extends ServerResponseCaptureFi
 
     @Override
     public String getContentEncoding() {
-        return contentEncoding;
+        return mergeEncodings(contentEncodings);
     }
 
+    protected String mergeEncodings(Iterable<String> contentEncodings) {
+        return String.join(", ", contentEncodings);
+    }
 }

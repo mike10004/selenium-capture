@@ -148,8 +148,9 @@ public class CollectionTestBase {
         TrafficCollector collector = tcBuilder.build();
         HarPlus<String> collection = collector.collect(driver -> {
             driver.get(url.toString());
-            String currentUrl = driver.getCurrentUrl(), pageSource = driver.getPageSource(), title = driver.getTitle();
-            System.out.format("%s: '%s' (length=%d)%n", currentUrl, StringEscapeUtils.escapeJava(title), pageSource.length());
+            String currentUrl = driver.getCurrentUrl(), pageSource = driver.getPageSource();
+            String title = StringEscapeUtils.escapeJava(Strings.nullToEmpty(driver.getTitle()));
+            System.out.format("%s: '%s' (length=%d)%n", currentUrl, title.isEmpty() ? "[untitled]" : title, pageSource.length());
             return driver.getPageSource();
         });
         List<HarEntry> entries = ImmutableList.copyOf(collection.har.getLog().getEntries());

@@ -8,4 +8,12 @@ class HttpInteraction {
         this.request = request;
         this.response = response;
     }
+
+    public ImmutableHttpRequest getRequest() {
+        return request;
+    }
+
+    public ImmutableHttpResponse getResponse() {
+        return response;
+    }
 }

@@ -19,6 +19,8 @@ import java.nio.file.Path;
 import java.util.Collection;
 import java.util.function.Supplier;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 public class ChromeWebDriverFactory extends EnvironmentWebDriverFactory {
 
     private final ChromeOptions chromeOptions;
@@ -128,26 +130,35 @@ public class ChromeWebDriverFactory extends EnvironmentWebDriverFactory {
         private CookiePreparer cookiePreparer = cookielessPreparer;
         private Capabilities capabilitiesOverrides = new DesiredCapabilities();
         private ChromeOptions chromeOptions = new ChromeOptions();
+        private boolean headless;
 
         private Builder() {
         }
 
+        public Builder headless() {
+            headless = true;
+            return this;
+        }
+
         public Builder chromeOptions(ChromeOptions val) {
-            chromeOptions = val;
+            chromeOptions = checkNotNull(val);
             return this;
         }
 
         public Builder capabilitiesOverrides(Capabilities val) {
-            capabilitiesOverrides = val;
+            capabilitiesOverrides = checkNotNull(val);
             return this;
         }
 
         public Builder cookiePreparer(CookiePreparer val) {
-            cookiePreparer = val;
+            cookiePreparer = checkNotNull(val);
             return this;
         }
 
         public ChromeWebDriverFactory build() {
+            if (headless) {
+                chromeOptions.addArguments("--headless");
+            }
             return new ChromeWebDriverFactory(this);
         }
     }

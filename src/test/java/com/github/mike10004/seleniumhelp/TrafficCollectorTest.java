@@ -5,9 +5,9 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 import com.google.common.primitives.UnsignedInts;
-import io.github.mike10004.nanoserver.NanoControl;
-import io.github.mike10004.nanoserver.NanoResponse;
-import io.github.mike10004.nanoserver.NanoServer;
+import io.github.mike10004.nanochamp.server.NanoControl;
+import io.github.mike10004.nanochamp.server.NanoResponse;
+import io.github.mike10004.nanochamp.server.NanoServer;
 import io.netty.handler.codec.http.DefaultFullHttpRequest;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpObject;
@@ -117,7 +117,7 @@ public class TrafficCollectorTest {
     @Test
     public void drive() throws Exception {
         String expected = "hello";
-        NanoServer nano = NanoServer.builder().getPath("/hello", NanoResponse.builder(200).plainTextUtf8(expected).build()).build();
+        NanoServer nano = NanoServer.builder().getPath("/hello", NanoResponse.status(200).plainTextUtf8(expected)).build();
         String bodyText;
         try (NanoControl ctrl = nano.startServer()) {
             TrafficCollector collector = TrafficCollector.builder(new JBrowserDriverFactory()).build();

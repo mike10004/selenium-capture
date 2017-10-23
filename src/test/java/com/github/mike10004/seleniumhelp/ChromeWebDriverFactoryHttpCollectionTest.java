@@ -1,7 +1,10 @@
 package com.github.mike10004.seleniumhelp;
 
+import net.lightbody.bmp.core.har.HarContent;
 import org.junit.BeforeClass;
 import org.junit.Test;
+
+import java.net.URL;
 
 public class ChromeWebDriverFactoryHttpCollectionTest extends CollectionTestBase {
 
@@ -26,4 +29,18 @@ public class ChromeWebDriverFactoryHttpCollectionTest extends CollectionTestBase
         testTrafficCollector(webDriverFactory);
     }
 
+    @Test
+    public void http_headless() throws Exception {
+        WebDriverFactory webDriverFactory = ChromeWebDriverFactory.builder()
+                .headless().build();
+        testTrafficCollector(webDriverFactory);
+    }
+
+    @Test
+    public void http_headless_brotli() throws Exception {
+        WebDriverFactory webDriverFactory = ChromeWebDriverFactory.builder()
+                .headless().build();
+        HarContent content = testTrafficCollector(webDriverFactory, new URL("http://httpbin.org/brotli"));
+        System.out.println(content.getText());
+    }
 }
