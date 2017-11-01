@@ -1,7 +1,6 @@
 package com.github.mike10004.seleniumhelp;
 
 import com.github.mike10004.xvfbselenium.WebDriverSupport;
-import net.lightbody.bmp.BrowserMobProxy;
 import net.lightbody.bmp.client.ClientUtil;
 import net.lightbody.bmp.mitm.CertificateAndKeySource;
 import org.openqa.selenium.Capabilities;
@@ -15,6 +14,7 @@ import org.openqa.selenium.remote.DesiredCapabilities;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.function.Supplier;
@@ -44,11 +44,11 @@ public class ChromeWebDriverFactory extends EnvironmentWebDriverFactory {
     }
 
     @Override
-    public WebDriver createWebDriver(BrowserMobProxy proxy, @Nullable CertificateAndKeySource certificateAndKeySource) throws IOException {
-        return createWebDriverMaybeWithProxy(proxy, certificateAndKeySource);
+    public WebDriver createWebDriver(WebDriverConfig config) throws IOException {
+        return createWebDriverMaybeWithProxy(config.getProxyAddress(), config.getCertificateAndKeySource());
     }
 
-    private WebDriver createWebDriverMaybeWithProxy(@Nullable BrowserMobProxy proxy, @Nullable CertificateAndKeySource certificateAndKeySource) throws IOException {
+    private WebDriver createWebDriverMaybeWithProxy(@Nullable InetSocketAddress proxy, @Nullable CertificateAndKeySource certificateAndKeySource) throws IOException {
         cookiePreparer.supplementOptions(chromeOptions);
         DesiredCapabilities capabilities = toCapabilities(chromeOptions);
         if (proxy != null) {
@@ -60,7 +60,11 @@ public class ChromeWebDriverFactory extends EnvironmentWebDriverFactory {
         return driver;
     }
 
-    public WebDriver unproxied() throws IOException {
+    /**
+     * @deprecated use {@link #createWebDriver(WebDriverConfig)} with an empty config
+     */
+    @Deprecated
+    public final WebDriver unproxied() throws IOException {
         return createWebDriverMaybeWithProxy(null, null);
     }
 
@@ -72,8 +76,7 @@ public class ChromeWebDriverFactory extends EnvironmentWebDriverFactory {
      * @param proxy the proxy
      * @param certificateAndKeySource the certificate and key source (unused)
      */
-    protected void configureProxy(DesiredCapabilities capabilities, BrowserMobProxy proxy,
-                                  @SuppressWarnings("unused") @Nullable CertificateAndKeySource certificateAndKeySource) {
+    protected void configureProxy(DesiredCapabilities capabilities, InetSocketAddress proxy, @SuppressWarnings("unused") @Nullable CertificateAndKeySource certificateAndKeySource) {
         Proxy seleniumProxy = ClientUtil.createSeleniumProxy(proxy);
         capabilities.setCapability(CapabilityType.PROXY, seleniumProxy);
     }

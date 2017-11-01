@@ -39,12 +39,19 @@
         <jetty.version>9.4.3.v20170317</jetty.version>
         <!--suppress CheckTagEmptyBody -->
         <selenium-help.test.proxy.http></selenium-help.test.proxy.http>
+        <chrome.headless.tests.disabled>false</chrome.headless.tests.disabled>
     </properties>
     <profiles>
         <profile>
             <id>log-debug</id>
             <properties>
                 <test.log.level>debug</test.log.level>
+            </properties>
+        </profile>
+        <profile>
+            <id>travis</id>
+            <properties>
+                <chrome.headless.tests.disabled>true</chrome.headless.tests.disabled>
             </properties>
         </profile>
     </profiles>
@@ -77,6 +84,7 @@
                             <wdm.targetPath>${project.build.directory}/webdriver</wdm.targetPath>
                             <org.slf4j.simpleLogger.defaultLogLevel>${test.log.level}</org.slf4j.simpleLogger.defaultLogLevel>
                             <selenium-help.test.proxy.http>${selenium-help.test.proxy.http}</selenium-help.test.proxy.http>
+                            <selenium-help.chrome.headless.tests.disabled>${chrome.headless.tests.disabled}</selenium-help.chrome.headless.tests.disabled>
                         </systemPropertyVariables>
                     </configuration>
                 </plugin>

@@ -1,6 +1,7 @@
 package com.github.mike10004.seleniumhelp;
 
 import net.lightbody.bmp.core.har.HarContent;
+import org.junit.Assume;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -31,6 +32,7 @@ public class ChromeWebDriverFactoryHttpCollectionTest extends CollectionTestBase
 
     @Test
     public void http_headless() throws Exception {
+        Assume.assumeFalse("headless tests disabled", UnitTests.isHeadlessChromeTestsDisabled());
         WebDriverFactory webDriverFactory = ChromeWebDriverFactory.builder()
                 .headless().build();
         testTrafficCollector(webDriverFactory);
@@ -38,6 +40,7 @@ public class ChromeWebDriverFactoryHttpCollectionTest extends CollectionTestBase
 
     @Test
     public void http_headless_brotli() throws Exception {
+        Assume.assumeFalse("headless tests disabled", UnitTests.isHeadlessChromeTestsDisabled());
         WebDriverFactory webDriverFactory = ChromeWebDriverFactory.builder()
                 .headless().build();
         HarContent content = testTrafficCollector(webDriverFactory, new URL("http://httpbin.org/brotli"));

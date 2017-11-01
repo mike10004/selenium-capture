@@ -74,6 +74,10 @@ public class UnitTests {
         return getRecommendedGeckodriverVersion(firefoxVersion);
     }
 
+    public static boolean isHeadlessChromeTestsDisabled() {
+        return Boolean.parseBoolean(System.getProperty("selenium-help.chrome.headless.tests.disabled", "false"));
+    }
+
     @SuppressWarnings("unused")
     static class VersionMagicException extends RuntimeException {
         public VersionMagicException(String message) {

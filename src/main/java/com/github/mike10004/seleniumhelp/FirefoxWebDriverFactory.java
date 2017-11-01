@@ -10,7 +10,6 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.io.ByteSource;
 import com.google.common.io.Files;
-import net.lightbody.bmp.BrowserMobProxy;
 import net.lightbody.bmp.mitm.CertificateAndKeySource;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.firefox.FirefoxBinary;
@@ -20,6 +19,7 @@ import org.openqa.selenium.firefox.FirefoxProfile;
 import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -56,15 +56,19 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
     }
 
     @Override
-    public WebDriver createWebDriver(BrowserMobProxy proxy, @Nullable CertificateAndKeySource certificateAndKeySource) throws IOException {
-        return createWebDriverMaybeWithProxy(proxy, certificateAndKeySource);
+    public WebDriver createWebDriver(WebDriverConfig config) throws IOException {
+        return createWebDriverMaybeWithProxy(config.getProxyAddress(), config.getCertificateAndKeySource());
     }
 
-    public WebDriver unproxied() throws IOException {
+    /**
+     * @deprecated use {@link #createWebDriver(WebDriverConfig)} with an empty config
+     */
+    @Deprecated
+    public final WebDriver unproxied() throws IOException {
         return createWebDriverMaybeWithProxy(null, null);
     }
 
-    private WebDriver createWebDriverMaybeWithProxy(@Nullable BrowserMobProxy proxy,
+    private WebDriver createWebDriverMaybeWithProxy(@Nullable InetSocketAddress proxy,
                                                     @Nullable CertificateAndKeySource certificateAndKeySource) throws IOException {
         List<ProfileAction> actions = new ArrayList<>(2);
         List<DeserializableCookie> cookies_ = getCookies();
@@ -110,7 +114,7 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
      */
     @SuppressWarnings("unused")
     protected void applyAdditionalPreferences(Map<String, Object> profilePreferences,
-              @Nullable BrowserMobProxy proxy,
+              @Nullable InetSocketAddress proxy,
               @Nullable CertificateAndKeySource certificateAndKeySource, FirefoxProfile profile) {
         for (String key : profilePreferences.keySet()) {
             Object value = profilePreferences.get(key);

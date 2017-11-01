@@ -2,11 +2,8 @@ package com.github.mike10004.seleniumhelp;
 
 import com.google.common.collect.Iterables;
 import com.google.common.net.HttpHeaders;
-import org.apache.http.cookie.Cookie;
 import org.apache.http.cookie.CookieOrigin;
 import org.apache.http.cookie.CookieSpec;
-import org.apache.http.impl.cookie.BestMatchSpec;
-import org.apache.http.impl.cookie.BrowserCompatSpec;
 import org.apache.http.impl.cookie.DefaultCookieSpecProvider;
 import org.apache.http.impl.cookie.NetscapeDraftSpec;
 import org.apache.http.impl.cookie.RFC6265LaxSpec;
@@ -18,7 +15,7 @@ import org.junit.Test;
 import java.net.URL;
 import java.util.List;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 @org.junit.Ignore
 public class DeserializableCookieCreatorTest {
@@ -32,13 +29,15 @@ public class DeserializableCookieCreatorTest {
 
     @Test
     public void testApacheParsing_BrowserCompatSpec() throws Exception {
-        CookieSpec spec = new BrowserCompatSpec();
+        @SuppressWarnings("deprecation")
+        CookieSpec spec = new org.apache.http.impl.cookie.BrowserCompatSpec();
         testApacheParsing(spec);
     }
 
     @Test
     public void testApacheParsing_BestMatchSpec() throws Exception {
-        CookieSpec spec = new BestMatchSpec();
+        @SuppressWarnings("deprecation")
+        CookieSpec spec = new org.apache.http.impl.cookie.BestMatchSpec();
         testApacheParsing(spec);
     }
 
