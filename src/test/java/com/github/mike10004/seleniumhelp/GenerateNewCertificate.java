@@ -58,11 +58,12 @@ public class GenerateNewCertificate {
          */
         String keystorePassword = "password";
         String keystoreType = "PKCS12";
-        rootCertificateGenerator.saveRootCertificateAndKey(keystoreType, keystoreFile, "key", keystorePassword);
+        String privateKeyAlias = "key";
+        rootCertificateGenerator.saveRootCertificateAndKey(keystoreType, keystoreFile, privateKeyAlias, keystorePassword);
         System.out.format("keystore: %s (%d bytes)%n", keystoreFile, keystoreFile.length());
         File p12File = new File(keystoreFile.getParentFile(), keystoreFile.getName() + ".pkcs12");
         {
-            ProgramWithOutput program =Program.running("/usr/bin/keytool")
+            ProgramWithOutput program = Program.running("/usr/bin/keytool")
                     .arg("-importkeystore")
                     .args("-srckeystore", keystoreFile.getAbsolutePath())
                     .args("-srcstoretype", "jks")
@@ -134,4 +135,5 @@ public class GenerateNewCertificate {
         } finally {
             proxy.stop();
         }
-    }}
+    }
+}
