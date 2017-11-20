@@ -28,10 +28,11 @@ the MITM proxy, and enabling capture of decrypted traffic.
 You can have a self-signed certificate automatically created by the library, 
 or you can take a look at the [GenerateNewCertificate][generate-new] class 
 in the test sources to see how to create the certificate required by the 
-traffic-capturing proxy. Generating a new certificate takes about 500ms, so
-if it's something you do frequently, you would want to pre-generate the 
-certificate and reuse it. For some examples of reusing a pre-generated 
-certificate, take a look at the unit tests where HTTPS traffic is captured.
+traffic-capturing proxy. Generating a new certificate takes up to 1000ms, so
+if you're frequently generating new certificates with the auto-generator, 
+then you might save time by pre-generating a certificate and reusing it. For 
+some examples of reusing a pre-generated certificate, take a look at the 
+unit tests where HTTPS traffic is captured.
 
 Providing cookies to your browser
 ---------------------------------

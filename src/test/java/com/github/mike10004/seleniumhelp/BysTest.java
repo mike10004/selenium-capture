@@ -1,15 +1,17 @@
 package com.github.mike10004.seleniumhelp;
 
+import com.github.mike10004.xvfbselenium.WebDriverSupport;
+import com.github.mike10004.xvfbtesting.XvfbRule;
 import com.google.common.base.Predicates;
 import com.google.common.collect.ImmutableList;
-import org.junit.After;
-import org.junit.Before;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebDriverException;
 import org.openqa.selenium.WebElement;
-import org.openqa.selenium.htmlunit.HtmlUnitDriver;
 
 import java.net.URL;
 import java.util.List;
@@ -18,15 +20,19 @@ import static org.junit.Assert.assertEquals;
 
 public class BysTest {
 
-    private WebDriver driver;
+    @ClassRule
+    public static final XvfbRule xvfb = XvfbRule.builder().build();
 
-    @Before
-    public void initDriver() {
-        driver = new HtmlUnitDriver();
+    @BeforeClass
+    public static void setUpClass() throws Exception {
+        UnitTests.setupRecommendedChromeDriver();
+        driver = WebDriverSupport.chromeInEnvironment(xvfb.getController().newEnvironment()).create();
     }
 
-    @After
-    public void killDriver() {
+    private static WebDriver driver;
+
+    @AfterClass
+    public static void killDriver() {
         if (driver != null) {
             driver.quit();
         }
