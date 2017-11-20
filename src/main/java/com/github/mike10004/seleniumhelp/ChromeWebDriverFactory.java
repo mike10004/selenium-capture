@@ -1,22 +1,22 @@
 package com.github.mike10004.seleniumhelp;
 
-import com.github.mike10004.xvfbselenium.WebDriverSupport;
+import com.google.common.collect.ImmutableList;
 import net.lightbody.bmp.client.ClientUtil;
 import net.lightbody.bmp.mitm.CertificateAndKeySource;
-import org.openqa.selenium.Capabilities;
 import org.openqa.selenium.Proxy;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebDriverException;
 import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.chrome.ChromeDriverService;
 import org.openqa.selenium.chrome.ChromeOptions;
-import org.openqa.selenium.remote.CapabilityType;
-import org.openqa.selenium.remote.DesiredCapabilities;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.function.Supplier;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -24,8 +24,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class ChromeWebDriverFactory extends EnvironmentWebDriverFactory {
 
     private final ChromeOptions chromeOptions;
-    private final Capabilities capabilitiesOverrides;
     private final CookiePreparer cookiePreparer;
+    private final ImmutableList<DriverServiceBuilderConfigurator> driverServiceBuilderConfigurators;
 
     @SuppressWarnings("unused")
     public ChromeWebDriverFactory() {
@@ -35,7 +35,7 @@ public class ChromeWebDriverFactory extends EnvironmentWebDriverFactory {
     protected ChromeWebDriverFactory(Builder builder) {
         super(builder);
         chromeOptions = builder.chromeOptions;
-        capabilitiesOverrides = builder.capabilitiesOverrides;
+        driverServiceBuilderConfigurators = ImmutableList.copyOf(builder.driverServiceBuilderConfigurators);
         cookiePreparer = builder.cookiePreparer;
     }
 
@@ -50,41 +50,32 @@ public class ChromeWebDriverFactory extends EnvironmentWebDriverFactory {
 
     private WebDriver createWebDriverMaybeWithProxy(@Nullable InetSocketAddress proxy, @Nullable CertificateAndKeySource certificateAndKeySource) throws IOException {
         cookiePreparer.supplementOptions(chromeOptions);
-        DesiredCapabilities capabilities = toCapabilities(chromeOptions);
         if (proxy != null) {
-            configureProxy(capabilities, proxy, certificateAndKeySource);
+            configureProxy(chromeOptions, proxy, certificateAndKeySource);
         }
-        capabilities.merge(capabilitiesOverrides);
-        ChromeDriver driver = WebDriverSupport.chromeInEnvironment(environmentSupplier.get()).create(capabilities);
+        ChromeDriverService.Builder builder = createDriverServiceBuilder();
+        builder.withEnvironment(environmentSupplier.get());
+        driverServiceBuilderConfigurators.forEach(configurator -> configurator.configure(builder));
+        ChromeDriver driver = new ChromeDriver(builder.build(), chromeOptions);
         cookiePreparer.prepareCookies(driver);
         return driver;
     }
 
-    /**
-     * @deprecated use {@link #createWebDriver(WebDriverConfig)} with an empty config
-     */
-    @Deprecated
-    public final WebDriver unproxied() throws IOException {
-        return createWebDriverMaybeWithProxy(null, null);
+    protected ChromeDriverService.Builder createDriverServiceBuilder() {
+        return new ChromeDriverService.Builder().usingAnyFreePort();
     }
 
     /**
      * Configures a capabilities instance to use the given proxy. The certificate and key source
      * is not used because Chrome in webdriver mode appears to be fine with untrusted certificates,
      * which is good because we don't know how to install custom certificates.
-     * @param capabilities the capabilities instance
-     * @param proxy the proxy
+     * @param options the options instance
+     * @param proxySocketAddress the proxy
      * @param certificateAndKeySource the certificate and key source (unused)
      */
-    protected void configureProxy(DesiredCapabilities capabilities, InetSocketAddress proxy, @SuppressWarnings("unused") @Nullable CertificateAndKeySource certificateAndKeySource) {
-        Proxy seleniumProxy = ClientUtil.createSeleniumProxy(proxy);
-        capabilities.setCapability(CapabilityType.PROXY, seleniumProxy);
-    }
-
-    protected DesiredCapabilities toCapabilities(ChromeOptions chromeOptions) {
-        DesiredCapabilities capabilities = DesiredCapabilities.chrome();
-        capabilities.setCapability(ChromeOptions.CAPABILITY, chromeOptions);
-        return capabilities;
+    protected void configureProxy(ChromeOptions options, InetSocketAddress proxySocketAddress, @SuppressWarnings("unused") @Nullable CertificateAndKeySource certificateAndKeySource) {
+        Proxy seleniumProxy = ClientUtil.createSeleniumProxy(proxySocketAddress);
+        options.setProxy(seleniumProxy);
     }
 
     /**
@@ -127,15 +118,24 @@ public class ChromeWebDriverFactory extends EnvironmentWebDriverFactory {
         return new ChromeCookiePreparer(scratchDir, cookiesSupplier);
     }
 
+    public interface DriverServiceBuilderConfigurator {
+        void configure(ChromeDriverService.Builder builder);
+    }
+
     @SuppressWarnings("unused")
     public static final class Builder extends EnvironmentWebDriverFactory.Builder<Builder> {
 
         private CookiePreparer cookiePreparer = cookielessPreparer;
-        private Capabilities capabilitiesOverrides = new DesiredCapabilities();
         private ChromeOptions chromeOptions = new ChromeOptions();
+        private List<DriverServiceBuilderConfigurator> driverServiceBuilderConfigurators = new ArrayList<>();
         private boolean headless;
 
         private Builder() {
+        }
+
+        public Builder driverServiceBuilderConfigurator(DriverServiceBuilderConfigurator configurator) {
+            driverServiceBuilderConfigurators.add(configurator);
+            return this;
         }
 
         public Builder headless() {
@@ -145,11 +145,6 @@ public class ChromeWebDriverFactory extends EnvironmentWebDriverFactory {
 
         public Builder chromeOptions(ChromeOptions val) {
             chromeOptions = checkNotNull(val);
-            return this;
-        }
-
-        public Builder capabilitiesOverrides(Capabilities val) {
-            capabilitiesOverrides = checkNotNull(val);
             return this;
         }
 
