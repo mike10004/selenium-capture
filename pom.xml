@@ -33,7 +33,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <xvfb-manager.version>0.9</xvfb-manager.version>
+        <xvfb-manager.version>0.11</xvfb-manager.version>
         <test.log.level>info</test.log.level>
         <selenium.version>3.7.1</selenium.version>
         <jetty.version>9.4.3.v20170317</jetty.version>
@@ -173,7 +173,7 @@
             <dependency>
                 <groupId>com.google.guava</groupId>
                 <artifactId>guava</artifactId>
-                <version>22.0</version>
+                <version>23.0</version>
             </dependency>
             <!-- selenium 3.4.0 depends on a newer version of jetty (9.4.3.v20170317) than WireMock does,
                  but it doesn't depend on all of the various jetty-* artifacts that WireMock does, so we
@@ -346,12 +346,12 @@
         <dependency>
             <groupId>com.github.mike10004</groupId>
             <artifactId>chrome-cookie-implant-client</artifactId>
-            <version>1.5.6</version>
+            <version>1.5.7</version>
         </dependency>
         <dependency>
             <groupId>com.machinepublishers</groupId>
             <artifactId>jbrowserdriver</artifactId>
-            <version>0.17.3</version>
+            <version>0.17.11</version>
             <scope>test</scope>
             <exclusions>
                 <exclusion>
