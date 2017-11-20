@@ -62,14 +62,6 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
         return createWebDriverMaybeWithProxy(config.getProxyAddress(), config.getCertificateAndKeySource());
     }
 
-    /**
-     * @deprecated use {@link #createWebDriver(WebDriverConfig)} with an empty config
-     */
-    @Deprecated
-    public final WebDriver unproxied() throws IOException {
-        return createWebDriverMaybeWithProxy(null, null);
-    }
-
     private WebDriver createWebDriverMaybeWithProxy(@Nullable InetSocketAddress proxy,
                                                     @Nullable CertificateAndKeySource certificateAndKeySource) throws IOException {
         List<ProfileFolderAction> actions = new ArrayList<>(2);
