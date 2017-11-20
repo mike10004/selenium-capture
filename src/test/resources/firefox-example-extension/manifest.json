@@ -1,0 +1,21 @@
+{
+
+  "manifest_version": 2,
+  "name": "Example Extension",
+  "version": "1.0",
+
+  "description": "Injects some content and adds a red border to all webpages served by *.example.com.",
+
+  "icons": {
+    "48": "icons/icon-48.png"
+  },
+
+  "content_scripts": [
+    {
+      "matches": ["*://*.example.com/*"],
+      "js": ["content-injection.js"],
+      "run_at": "document_start"
+    }
+  ]
+
+}

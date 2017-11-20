@@ -1,7 +1,25 @@
 package com.github.mike10004.seleniumhelp;
 
+import com.github.mike10004.seleniumhelp.FirefoxWebDriverFactory.FirefoxProfileAction;
+import org.apache.commons.io.FileUtils;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.firefox.FirefoxProfile;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.nio.file.Path;
+import java.util.Collection;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
+
+import static org.junit.Assert.assertEquals;
 
 public class FirefoxWebDriverFactoryHttpsCollectionTest extends CollectionTestBase {
 
@@ -26,4 +44,51 @@ public class FirefoxWebDriverFactoryHttpsCollectionTest extends CollectionTestBa
         testTrafficCollector(webDriverFactory);
     }
 
+    @Test
+    public void useWebExtensionsExtensionZip() throws Exception {
+        File zipFile = prepareExtensionZipFile();
+        String display = xvfb.getController().getDisplay();
+        WebDriverFactory webDriverFactory = FirefoxWebDriverFactory.builder()
+                .environment(FirefoxWebDriverFactory.createEnvironmentSupplierForDisplay(display))
+                .profileAction(new AddExtensionProfileAction(zipFile))
+                .build();
+        HarPlus<String> injectedContentCollection = testTrafficCollector(webDriverFactory, driver -> {
+            driver.get("https://www.example.com/");
+            WebElement element = new WebDriverWait(driver, 5)
+                    .until(ExpectedConditions.presenceOfElementLocated(By.id("firefox-webext-content-injection")));
+            return element.getText();
+        });
+        String elementText = injectedContentCollection.result.trim();
+        assertEquals("element text", "Hello, world", elementText);
+    }
+
+    private File prepareExtensionZipFile() throws IOException, URISyntaxException {
+        File directory = new File(getClass().getResource("/firefox-example-extension/manifest.json").toURI()).getParentFile();
+        Collection<File> extensionFiles = FileUtils.listFiles(directory, null, true);
+        File zipFile = File.createTempFile("firefox-example-extension", ".zip");
+        try (ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(zipFile, false))) {
+            for (File extensionFile : extensionFiles) {
+                Path source = extensionFile.toPath();
+                ZipEntry entry = new ZipEntry(directory.toPath().relativize(source).toString());
+                zos.putNextEntry(entry);
+                zos.write(java.nio.file.Files.readAllBytes(source));
+                zos.closeEntry();
+            }
+        }
+        return zipFile;
+    }
+
+    private static class AddExtensionProfileAction implements FirefoxProfileAction {
+
+        private final File zipFile;
+
+        private AddExtensionProfileAction(File zipFile) {
+            this.zipFile = zipFile;
+        }
+
+        @Override
+        public void perform(FirefoxProfile profile) throws IOException {
+            profile.addExtension(zipFile);
+        }
+    }
 }

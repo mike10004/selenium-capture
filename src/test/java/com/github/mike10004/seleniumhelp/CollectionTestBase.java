@@ -125,7 +125,7 @@ public class CollectionTestBase {
         }
     }
 
-    private class TestProxySupplier implements java.util.function.Supplier<InetSocketAddress> {
+    protected class TestProxySupplier implements java.util.function.Supplier<InetSocketAddress> {
 
         @Override
         public InetSocketAddress get() {
@@ -139,20 +139,14 @@ public class CollectionTestBase {
     }
 
     protected HarContent testTrafficCollector(WebDriverFactory webDriverFactory, final URL url) throws IOException {
-        TrafficCollector.Builder tcBuilder = TrafficCollector.builder(webDriverFactory)
-                .upstreamProxy(new TestProxySupplier());
-        if ("https".equals(protocol)) {
-            CertificateAndKeySource certificateAndKeySource = TestCertificateAndKeySource.create();
-            tcBuilder.collectHttps(certificateAndKeySource);
-        }
-        TrafficCollector collector = tcBuilder.build();
-        HarPlus<String> collection = collector.collect(driver -> {
+        TrafficGenerator<String> urlTrafficGenerator = driver -> {
             driver.get(url.toString());
             String currentUrl = driver.getCurrentUrl(), pageSource = driver.getPageSource();
             String title = StringEscapeUtils.escapeJava(Strings.nullToEmpty(driver.getTitle()));
             System.out.format("%s: '%s' (length=%d)%n", currentUrl, title.isEmpty() ? "[untitled]" : title, pageSource.length());
             return driver.getPageSource();
-        });
+        };
+        HarPlus<String> collection = testTrafficCollector(webDriverFactory, urlTrafficGenerator);
         List<HarEntry> entries = ImmutableList.copyOf(collection.har.getLog().getEntries());
         System.out.format("%d request URLs recorded in HAR:%n", entries.size());
         HarContent content = null;
@@ -167,5 +161,17 @@ public class CollectionTestBase {
         }
         assertNotNull("no request for " + url + " in HAR", content);
         return content;
+    }
+
+    protected <T> HarPlus<T> testTrafficCollector(WebDriverFactory webDriverFactory, TrafficGenerator<T> pageSourceTrafficGenerator) throws IOException {
+        TrafficCollector.Builder tcBuilder = TrafficCollector.builder(webDriverFactory)
+                .upstreamProxy(new TestProxySupplier());
+        if ("https".equals(protocol)) {
+            CertificateAndKeySource certificateAndKeySource = TestCertificateAndKeySource.create();
+            tcBuilder.collectHttps(certificateAndKeySource);
+        }
+        TrafficCollector collector = tcBuilder.build();
+        HarPlus<T> collection = collector.collect(pageSourceTrafficGenerator);
+        return collection;
     }
 }
