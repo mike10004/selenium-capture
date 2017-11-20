@@ -1,7 +1,7 @@
 package com.github.mike10004.seleniumhelp;
 
 import com.github.mike10004.seleniumhelp.FirefoxCookieDb.Importer;
-import com.github.mike10004.seleniumhelp.FirefoxWebDriverFactory.SupplementingFirefoxProfile.ProfileAction;
+import com.github.mike10004.seleniumhelp.FirefoxWebDriverFactory.SupplementingFirefoxProfile.ProfileFolderAction;
 import com.github.mike10004.xvfbselenium.WebDriverSupport;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
@@ -36,6 +36,7 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
 
     private final Supplier<FirefoxBinary> binarySupplier;
     private final Map<String, Object> profilePreferences;
+    private final ImmutableList<FirefoxProfileAction> profileActions;
     private final ImmutableList<DeserializableCookie> cookies;
 
     @SuppressWarnings("unused")
@@ -49,6 +50,7 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
         this.profilePreferences = ImmutableMap.copyOf(builder.profilePreferences);
         checkPreferencesValues(this.profilePreferences.values());
         this.cookies = ImmutableList.copyOf(builder.cookies);
+        this.profileActions = ImmutableList.copyOf(builder.profileActions);
     }
 
     protected ImmutableList<DeserializableCookie> getCookies() {
@@ -70,7 +72,7 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
 
     private WebDriver createWebDriverMaybeWithProxy(@Nullable InetSocketAddress proxy,
                                                     @Nullable CertificateAndKeySource certificateAndKeySource) throws IOException {
-        List<ProfileAction> actions = new ArrayList<>(2);
+        List<ProfileFolderAction> actions = new ArrayList<>(2);
         List<DeserializableCookie> cookies_ = getCookies();
         if (!cookies.isEmpty()) {
             actions.add(new CookieInstallingProfileAction(cookies_, FirefoxCookieDb.getImporter()));
@@ -99,6 +101,9 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
             profile.setPreference("network.http.speculative-parallel-limit", 0);
         }
         applyAdditionalPreferences(profilePreferences, proxy, certificateAndKeySource, profile);
+        for (FirefoxProfileAction profileAction : profileActions) {
+            profileAction.perform(profile);
+        }
         FirefoxBinary binary = binarySupplier.get();
         Map<String, String> environment = environmentSupplier.get();
         FirefoxDriver driver = WebDriverSupport.firefoxInEnvironment(environment).create(binary, profile);
@@ -160,7 +165,7 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
         return new Builder();
     }
 
-    private static class CertificateSupplementingProfileAction implements ProfileAction {
+    private static class CertificateSupplementingProfileAction implements ProfileFolderAction {
 
         public static final String CERTIFICATE_DB_FILENAME = "cert8.db";
 
@@ -182,7 +187,7 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
         }
     }
 
-    static class CookieInstallingProfileAction implements ProfileAction {
+    static class CookieInstallingProfileAction implements ProfileFolderAction {
 
         public static final String COOKIES_DB_FILENAME = "cookies.sqlite";
 
@@ -206,15 +211,31 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
 
     }
 
+    /**
+     * Interface defining a method that will be invoked after the profile instance
+     * has been constructed and partially configured. The {@link #perform(FirefoxProfile)}
+     * method of this class is passed the instance of {@link FirefoxProfile} that is used
+     * to construct a {@link org.openqa.selenium.firefox.FirefoxDriver}.
+     */
+    public interface FirefoxProfileAction {
+
+        /**
+         * Configures a Firefox profile instance.
+         * @param profile the profile instance
+         * @throws IOException
+         */
+        void perform(FirefoxProfile profile) throws IOException;
+    }
+
     protected static class SupplementingFirefoxProfile extends org.openqa.selenium.firefox.FirefoxProfile {
 
-        private final ImmutableList<? extends ProfileAction> profileActions;
+        private final ImmutableList<? extends ProfileFolderAction> profileFolderActions;
 
-        protected SupplementingFirefoxProfile(Iterable<? extends ProfileAction> profileActions) {
-            this.profileActions = ImmutableList.copyOf(profileActions);
+        protected SupplementingFirefoxProfile(Iterable<? extends ProfileFolderAction> profileFolderActions) {
+            this.profileFolderActions = ImmutableList.copyOf(profileFolderActions);
         }
 
-        interface ProfileAction {
+        interface ProfileFolderAction {
             void perform(File profileDir);
             @SuppressWarnings("unused")
             class ProfilePreparationException extends IllegalStateException {
@@ -239,7 +260,7 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
         @Override
         public File layoutOnDisk() {
             File profileDir = super.layoutOnDisk();
-            for (ProfileAction action : profileActions) {
+            for (ProfileFolderAction action : profileFolderActions) {
                 action.perform(profileDir);
             }
             return profileDir;
@@ -252,6 +273,7 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
         private Supplier<FirefoxBinary> binarySupplier = FirefoxBinary::new;
         private Map<String, Object> profilePreferences = new LinkedHashMap<>();
         private List<DeserializableCookie> cookies = new ArrayList<>();
+        private List<FirefoxProfileAction> profileActions = new ArrayList<>();
 
         private Builder() {
         }
@@ -328,6 +350,11 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
 
         public Builder preference(String key, String value) {
             profilePreferences.put(key, value);
+            return this;
+        }
+
+        public Builder profileAction(FirefoxProfileAction profileAction) {
+            profileActions.add(profileAction);
             return this;
         }
 

@@ -166,7 +166,11 @@ public class TrafficCollector {
     }
 
     private <R> R invokeGenerate(BrowserMobProxy bmp, TrafficGenerator<R> generator) throws IOException, WebDriverException {
-        WebDriver driver = webDriverFactory.createWebDriver(bmp, certificateAndKeySource);
+        WebDriverConfig config = WebDriverConfig.builder()
+                .proxy(BrowserMobs.getConnectableSocketAddress(bmp))
+                .certificateAndKeySource(certificateAndKeySource)
+                .build();
+        WebDriver driver = webDriverFactory.createWebDriver(config);
         try {
             return generator.generate(driver);
         } finally {
