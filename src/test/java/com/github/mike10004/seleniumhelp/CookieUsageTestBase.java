@@ -28,8 +28,10 @@ import static org.junit.Assert.assertFalse;
 
 public abstract class CookieUsageTestBase {
 
+    private static final boolean SHOW_BROWSER = false;
+
     @Rule
-    public XvfbRule xvfb = XvfbRule.builder().disabledOnWindows().build();
+    public XvfbRule xvfb = XvfbRule.builder().disabled(SHOW_BROWSER).disabledOnWindows().build();
 
     protected abstract WebDriverFactory createCookielessWebDriverFactory(XvfbController xvfbController);
 
