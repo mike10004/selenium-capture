@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.github.mike10004</groupId>
     <artifactId>selenium-help</artifactId>
-    <version>0.22</version>
+    <version>0.23-SNAPSHOT</version>
     <name>selenium-help</name>
     <description>Library that helps you use Selenium WebDriver in Java</description>
     <url>https://github.com/mike10004/selenium-help</url>
@@ -35,7 +35,7 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <xvfb-manager.version>0.9</xvfb-manager.version>
         <test.log.level>info</test.log.level>
-        <selenium.version>3.5.3</selenium.version>
+        <selenium.version>3.7.1</selenium.version>
         <jetty.version>9.4.3.v20170317</jetty.version>
         <!--suppress CheckTagEmptyBody -->
         <selenium-help.test.proxy.http></selenium-help.test.proxy.http>
@@ -81,6 +81,7 @@
                     <version>2.19.1</version>
                     <configuration>
                         <systemPropertyVariables>
+                            <java.io.tmpdir>${project.build.directory}</java.io.tmpdir>
                             <wdm.targetPath>${project.build.directory}/webdriver</wdm.targetPath>
                             <org.slf4j.simpleLogger.defaultLogLevel>${test.log.level}</org.slf4j.simpleLogger.defaultLogLevel>
                             <selenium-help.test.proxy.http>${selenium-help.test.proxy.http}</selenium-help.test.proxy.http>
@@ -345,7 +346,7 @@
         <dependency>
             <groupId>com.github.mike10004</groupId>
             <artifactId>chrome-cookie-implant-client</artifactId>
-            <version>1.5.3</version>
+            <version>1.5.6</version>
         </dependency>
         <dependency>
             <groupId>com.machinepublishers</groupId>
@@ -381,6 +382,10 @@
             <version>1.10</version>
             <scope>test</scope>
         </dependency>
-
+        <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+            <version>2.6</version>
+        </dependency>
     </dependencies>
 </project>
