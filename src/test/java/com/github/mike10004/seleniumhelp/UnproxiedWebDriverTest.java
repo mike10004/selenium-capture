@@ -60,14 +60,16 @@ public class UnproxiedWebDriverTest {
         ChromeWebDriverFactory factory = ChromeWebDriverFactory.builder()
                 .chromeOptions(options)
                 .build();
-        testUnproxied(factory::unproxied);
+        testUnproxied(() -> factory.createWebDriver(EMPTY_WEBDRIVER_CONFIG));
     }
+
+    private static final WebDriverConfig EMPTY_WEBDRIVER_CONFIG = WebDriverConfig.builder().build();
 
     @Test
     public void testFirefox() throws Exception {
         UnitTests.setupRecommendedGeckoDriver();
         FirefoxWebDriverFactory factory = FirefoxWebDriverFactory.builder().environment(xvfbRule.getController().newEnvironment()).build();
-        testUnproxied(factory::unproxied);
+        testUnproxied(() -> factory.createWebDriver(EMPTY_WEBDRIVER_CONFIG));
     }
 
     private interface ExceptingSupplier<T, X extends Throwable> {
