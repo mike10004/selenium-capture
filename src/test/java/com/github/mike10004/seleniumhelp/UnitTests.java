@@ -35,11 +35,11 @@ public class UnitTests {
      * of Chrome installed on the build system. Otherwise we're just hoping that
      * the latest version of Chrome is installed.
      */
-    private static final String DEFAULT_RECOMMENDED_CHROMEDRIVER_VERSION = "2.30";
+    private static final String DEFAULT_RECOMMENDED_CHROMEDRIVER_VERSION = "2.33";
 
     private UnitTests() {}
 
-    private static final String DEFAULT_RECOMMENDED_GECKODRIVER_VERSION = "0.18.0";
+    private static final String DEFAULT_RECOMMENDED_GECKODRIVER_VERSION = "0.19.1";
 
     /**
      * Downloads and configures the JVM for use of a recommended version of ChromeDriver.
