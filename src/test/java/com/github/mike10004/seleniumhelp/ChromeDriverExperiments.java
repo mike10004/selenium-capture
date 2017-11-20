@@ -1,12 +1,20 @@
 package com.github.mike10004.seleniumhelp;
 
+import com.github.mike10004.chromecookieimplant.ChromeCookie;
+import com.github.mike10004.chromecookieimplant.ChromeCookieImplanter;
+import com.github.mike10004.chromecookieimplant.ChromeCookieImplanter.ResultExaminer;
+import com.github.mike10004.chromecookieimplant.CookieImplantResult;
 import com.google.common.io.ByteSource;
+import com.google.common.io.ByteStreams;
 import com.google.common.io.Resources;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import io.github.mike10004.crxtool.BasicCrxParser;
+import io.github.mike10004.crxtool.CrxMetadata;
+import io.github.mike10004.crxtool.CrxParser;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DateUtils;
@@ -15,26 +23,41 @@ import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.chrome.ChromeDriverService;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
 import javax.annotation.Nullable;
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Base64;
 import java.util.Calendar;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Enumeration;
+import java.util.List;
 import java.util.Optional;
 import java.util.Random;
+import java.util.function.Function;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
 import static com.google.common.base.Preconditions.checkState;
 
+@SuppressWarnings("unused")
 public class ChromeDriverExperiments {
 
     @SuppressWarnings("SameParameterValue")
@@ -63,7 +86,7 @@ public class ChromeDriverExperiments {
     private static class EditThisCookieDoer extends Doer<String> {
 
         @Override
-        public String doStuff(WebDriver driver) {
+        public String doStuff(ChromeDriver driver) {
             String preCookieGet = null, postCookieGet;
             URI url = URI.create("https://httprequestecho.appspot.com/");
             driver.get("chrome-extension://fngmhnnpilhplaeedifhccceomclgfbg/popup.html?url=" + url + "&incognito=false");
@@ -92,7 +115,7 @@ public class ChromeDriverExperiments {
         public void prepare(File tmpDir, ChromeOptions options) throws IOException {
         }
 
-        public T doStuff(WebDriver driver) throws IOException {
+        public T doStuff(ChromeDriver driver) throws IOException {
             return null;
         }
 
@@ -103,13 +126,6 @@ public class ChromeDriverExperiments {
         public boolean isRetainUserDataDir() {
             return false;
         }
-    }
-
-    public static void main(String[] args) throws Exception {
-//        main(new EditThisCookieDoer());
-//        main(new Doer());
-//        main(new CustomExtensionDoer());
-        main(new CookieImplanter());
     }
 
     private static class CustomExtensionDoer extends Doer<Void> {
@@ -123,7 +139,7 @@ public class ChromeDriverExperiments {
         }
 
         @Override
-        public Void doStuff(WebDriver driver) throws IOException {
+        public Void doStuff(ChromeDriver driver) throws IOException {
             driver.get("https://www.example.com/");
             return null;
         }
@@ -133,7 +149,8 @@ public class ChromeDriverExperiments {
 
         private static final String SYSPROP_CRX_FILE = "chromeCookieImplant.crx.file";
         private static final String SYSPROP_CRX_SOURCES = "chromeCookieImplant.crx.sourceDirectory";
-        public static final String EXTENSION_ID = "neiaahbjfbepoclbammdhcailekhmcdm";
+
+        private String extensionId;
 
         private void checkUpToDate(File fileWithRequiredLastModifiedTime, File directoryOfOtherFiles) throws IOException {
             Collection<File> otherFiles = FileUtils.listFiles(directoryOfOtherFiles, null, true);
@@ -146,7 +163,14 @@ public class ChromeDriverExperiments {
         }
 
         protected ByteSource resolveCrxSource() throws IOException {
-            return resolveCrxSourceFromSystemProperty().orElse(Resources.asByteSource(getClass().getResource("/chrome-cookie-implant-1.1.crx")));
+            Optional<ByteSource> crxSource = resolveCrxSourceFromSystemProperty();
+            if (crxSource.isPresent()) {
+                return crxSource.get();
+            }
+            ByteArrayOutputStream baos = new ByteArrayOutputStream(1024);
+            new ChromeCookieImplanter().copyCrxTo(baos);
+            baos.flush();
+            return ByteSource.wrap(baos.toByteArray());
         }
 
         protected Optional<ByteSource> resolveCrxSourceFromSystemProperty() throws IOException {
@@ -170,9 +194,38 @@ public class ChromeDriverExperiments {
             File extensionCrxFile = File.createTempFile("chrome-cookie-implant", ".crx", tmpDir);
             ByteSource crxSource = resolveCrxSource();
             crxSource.copyTo(com.google.common.io.Files.asByteSink(extensionCrxFile));
+            try (InputStream in = new FileInputStream(extensionCrxFile)) {
+                CrxMetadata metadata = new BasicCrxParser().parseMetadata(in);
+                extensionId = metadata.id;
+            }
             options.addExtensions(extensionCrxFile);
         }
 
+        private void provideExtensionAsBase64(ByteSource crxSource, ChromeOptions options) throws IOException {
+            String crxBase64 = Base64.getEncoder().encodeToString(crxSource.read());
+            options.addEncodedExtensions(crxBase64);
+        }
+
+        private void provideExtensionAsLoadExtensionArg(File extensionCrxFile, File tmpDir, ChromeOptions options) throws IOException {
+            Path unpackedCrxDir = java.nio.file.Files.createTempDirectory(tmpDir.toPath(), "chrome-cookie-implant");
+            try (ZipFile zf = new ZipFile(extensionCrxFile)) {
+                Enumeration<? extends ZipEntry> entries = zf.entries();
+                while (entries.hasMoreElements()) {
+                    ZipEntry entry = entries.nextElement();
+                    Path outputFile = unpackedCrxDir.resolve(entry.getName());
+                    if (entry.isDirectory()) {
+                        outputFile.toFile().mkdirs();
+                    } else {
+                        com.google.common.io.Files.createParentDirs(outputFile.toFile());
+                        try (InputStream input = zf.getInputStream(entry);
+                             OutputStream output = new FileOutputStream(outputFile.toFile())) {
+                            ByteStreams.copy(input, output);
+                        }
+                    }
+                }
+            }
+            options.addArguments("--load-extension=" + unpackedCrxDir.toFile().getAbsolutePath());
+        }
 
         private final Random random = new Random();
 
@@ -184,75 +237,60 @@ public class ChromeDriverExperiments {
         }
 
         @Override
-        public Boolean doStuff(WebDriver driver) throws IOException {
+        public Boolean doStuff(ChromeDriver driver) throws IOException {
             String[] cookieJsons = {
-                new Gson().toJson(produceCookieObject(URI.create("https://httprequestecho.appspot.com/"), "httprequestecho.appspot.com", "/", "IMPLANTED_COOKIE", "0123456789")),
+                new Gson().toJson(produceCookieObject(URI.create("https://httprequestecho.appspot.com/"),
+                        "httprequestecho.appspot.com",
+                        "/",
+                        "IMPLANTED_COOKIE",
+                        "0123456789")),
                 new Gson().toJson(produceCookieObject(URI.create("http://www.example.com/"), "www.example.com", "/", "ad", newRandomCookieValue())),
             };
-            URI uri;
+            ChromeCookieImplanter implanter = new ChromeCookieImplanter();
+            ChromeCookie cookie1 = ChromeCookie.builder("https://httprequestecho.appspot.com/")
+                    .domain("httprequestecho.appspot.com")
+                    .path("/")
+                    .name("IMPLANTED_COOKIE")
+                    .value("0123456789")
+                    .build();
             try {
-                URIBuilder uriBuilder = new URIBuilder(URI.create("chrome-extension://" + EXTENSION_ID + "/manage.html"));
-                for (String cookieJson : cookieJsons) {
-                    uriBuilder.addParameter("import", cookieJson);
-                }
-                uri = uriBuilder.build();
-            } catch (URISyntaxException e) {
-                throw new IllegalStateException(e);
+                List<CookieImplantResult> results = implanter.implant(Collections.singletonList(cookie1), driver);
+                results.forEach(System.out::println);
+            } catch (org.openqa.selenium.TimeoutException e) {
+                System.err.println(e.toString());
             }
-            System.out.println("visiting URI:");
-            System.out.println(uri);
-            driver.get(uri.toString());
-            WebElement outputElement = new WebDriverWait(driver, 3)
-                    .until(new java.util.function.Function<WebDriver, WebElement>(){
-                        @Nullable
-                        @Override
-                        public WebElement apply(WebDriver input) {
-                            throw new UnsupportedOperationException("deprecated; use byOutputStatus instance method of CookieImplanter");
-                        }
-                    });
-            String outputJson = outputElement.getText();
-            System.out.format("output json:%n%s%n", StringUtils.abbreviate(new Gson().toJson(new JsonParser().parse(outputJson)), 256));
-            if (outputJson.trim().isEmpty()) {
-                System.out.println("no output?");
-                return false;
-            }
-            JsonObject output = new JsonParser().parse(outputJson).getAsJsonObject();
-            if (output.has("status") && output.get("status").getAsString().equals("all_imports_processed")) {
-                JsonArray imports = output.get("imports").getAsJsonArray();
-                int numFailures = 0;
-                for (JsonElement element : imports) {
-                    JsonObject elementObj = element.getAsJsonObject();
-                    System.out.format("%s %s %s%n", elementObj.get("index"), elementObj.get("success"), elementObj.get("message"));
-                    if (!elementObj.get("success").getAsBoolean()) {
-                        numFailures++;
-                    }
-                }
-                System.out.format("%d cookie imports failed%n", numFailures);
-                if (imports.size() == 0) {
-                    System.out.println("no imported cookies in output");
-                }
-                return imports.size() > 0 && numFailures == 0;
-            } else {
-                System.out.println("output status: " + output.get("status"));
-                return false;
-            }
+            return Boolean.TRUE;
         }
 
         @Override
-        public boolean shouldRemainOpen(Boolean allSuccesses, WebDriver driver) {
-            return allSuccesses;
+        public boolean shouldRemainOpen(Boolean preference, WebDriver driver) {
+            return preference;
         }
+    }
+
+    private static void dumpEchoes(String preCookieGet, String postCookieGet) {
+        System.out.println("pre-cookie implant:");
+        System.out.println(preCookieGet);
+        System.out.println();
+        System.out.println("post-cookie implant:");
+        System.out.println(postCookieGet);
+        System.out.println();
     }
 
     private static <T> void main(Doer<T> doer) throws Exception {
         UnitTests.setupRecommendedChromeDriver();
         File tmpDir = new File(System.getProperty("user.dir"), "target");
         File userDataDir = Files.createTempDirectory(tmpDir.toPath(), "chrome").toFile();
+        System.out.format("user data dir: %s%n", userDataDir);
         try {
             ChromeOptions options = new ChromeOptions();
-            options.addArguments("--user-data-dir=" + userDataDir);
+            options.addArguments("user-data-dir=" + userDataDir);
             doer.prepare(tmpDir, options);
-            ChromeDriver driver = new ChromeDriver(options);
+            ChromeDriverService service = new ChromeDriverService.Builder()
+                    .usingAnyFreePort()
+                    .withVerbose(true)
+                    .build();
+            ChromeDriver driver = new ChromeDriver(service, options);
             try {
                 try (BufferedReader reader = new BufferedReader(new InputStreamReader(System.in))) {
                     T stuff = doer.doStuff(driver);
@@ -289,12 +327,11 @@ public class ChromeDriverExperiments {
         }
     }
 
-    private static void dumpEchoes(String preCookieGet, String postCookieGet) {
-        System.out.println("pre-cookie implant:");
-        System.out.println(preCookieGet);
-        System.out.println();
-        System.out.println("post-cookie implant:");
-        System.out.println(postCookieGet);
-        System.out.println();
+    public static void main(String[] args) throws Exception {
+//        main(new EditThisCookieDoer());
+//        main(new Doer());
+//        main(new CustomExtensionDoer());
+        main(new CookieImplanter());
     }
+
 }
