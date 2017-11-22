@@ -5,7 +5,7 @@ addons:
     - chromium-browser
     - sqlite3
     - netpbm
-  firefox: "latest"
+    - firefox
 before_install:
   - dpkg-query -l xvfb chromium-browser sqlite3 firefox
 notifications:
