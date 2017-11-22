@@ -2,7 +2,6 @@ package com.github.mike10004.seleniumhelp;
 
 import com.github.mike10004.seleniumhelp.FirefoxCookieDb.Importer;
 import com.github.mike10004.seleniumhelp.FirefoxWebDriverFactory.SupplementingFirefoxProfile.ProfileFolderAction;
-import com.github.mike10004.xvfbselenium.WebDriverSupport;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -14,7 +13,9 @@ import net.lightbody.bmp.mitm.CertificateAndKeySource;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.firefox.FirefoxBinary;
 import org.openqa.selenium.firefox.FirefoxDriver;
+import org.openqa.selenium.firefox.FirefoxOptions;
 import org.openqa.selenium.firefox.FirefoxProfile;
+import org.openqa.selenium.firefox.GeckoDriverService;
 
 import javax.annotation.Nullable;
 import java.io.File;
@@ -98,7 +99,13 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
         }
         FirefoxBinary binary = binarySupplier.get();
         Map<String, String> environment = environmentSupplier.get();
-        FirefoxDriver driver = WebDriverSupport.firefoxInEnvironment(environment).create(binary, profile);
+        FirefoxOptions options = new FirefoxOptions();
+        options.setProfile(profile);
+        GeckoDriverService service = new GeckoDriverService.Builder()
+                .withEnvironment(environment)
+                .usingFirefoxBinary(binary)
+                .build();
+        FirefoxDriver driver =  new FirefoxDriver(service, options);
         return driver;
     }
 

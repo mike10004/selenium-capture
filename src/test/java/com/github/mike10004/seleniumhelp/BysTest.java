@@ -1,6 +1,5 @@
 package com.github.mike10004.seleniumhelp;
 
-import com.github.mike10004.xvfbselenium.WebDriverSupport;
 import com.github.mike10004.xvfbtesting.XvfbRule;
 import com.google.common.base.Predicates;
 import com.google.common.collect.ImmutableList;
@@ -12,6 +11,8 @@ import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebDriverException;
 import org.openqa.selenium.WebElement;
+import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.chrome.ChromeDriverService;
 
 import java.net.URL;
 import java.util.List;
@@ -26,7 +27,7 @@ public class BysTest {
     @BeforeClass
     public static void setUpClass() throws Exception {
         UnitTests.setupRecommendedChromeDriver();
-        driver = WebDriverSupport.chromeInEnvironment(xvfb.getController().newEnvironment()).create();
+        driver = new ChromeDriver(new ChromeDriverService.Builder().withEnvironment(xvfb.getController().newEnvironment()).build());
     }
 
     private static WebDriver driver;
