@@ -1,12 +1,13 @@
 package com.github.mike10004.seleniumhelp;
 
-import com.github.mike10004.seleniumhelp.FirefoxWebDriverFactory.FirefoxProfileAction;
+import io.github.mike10004.extensibleffdriver.AddonInstallRequest;
+import io.github.mike10004.extensibleffdriver.AddonPersistence;
+import io.github.mike10004.extensibleffdriver.ExtensibleFirefoxDriver;
 import org.apache.commons.io.FileUtils;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
-import org.openqa.selenium.firefox.FirefoxProfile;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
@@ -50,8 +51,11 @@ public class FirefoxWebDriverFactoryHttpsCollectionTest extends CollectionTestBa
         String display = xvfb.getController().getDisplay();
         WebDriverFactory webDriverFactory = FirefoxWebDriverFactory.builder()
                 .environment(FirefoxWebDriverFactory.createEnvironmentSupplierForDisplay(display))
-                .profileAction(new AddExtensionProfileAction(zipFile))
-                .build();
+                .constructor((service, options) -> {
+                    ExtensibleFirefoxDriver driver = new ExtensibleFirefoxDriver(service, options);
+                    driver.installAddon(new AddonInstallRequest(zipFile, AddonPersistence.TEMPORARY));
+                    return driver;
+                }).build();
         HarPlus<String> injectedContentCollection = testTrafficCollector(webDriverFactory, driver -> {
             driver.get("https://www.example.com/");
             WebElement element = new WebDriverWait(driver, 5)
@@ -78,17 +82,5 @@ public class FirefoxWebDriverFactoryHttpsCollectionTest extends CollectionTestBa
         return zipFile;
     }
 
-    private static class AddExtensionProfileAction implements FirefoxProfileAction {
 
-        private final File zipFile;
-
-        private AddExtensionProfileAction(File zipFile) {
-            this.zipFile = zipFile;
-        }
-
-        @Override
-        public void perform(FirefoxProfile profile) throws IOException {
-            profile.addExtension(zipFile);
-        }
-    }
 }

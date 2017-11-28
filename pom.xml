@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.github.mike10004</groupId>
     <artifactId>selenium-help</artifactId>
-    <version>0.25</version>
+    <version>0.26-SNAPSHOT</version>
     <name>selenium-help</name>
     <description>Library that helps you use Selenium WebDriver in Java</description>
     <url>https://github.com/mike10004/selenium-help</url>
@@ -33,7 +33,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <xvfb-manager.version>0.11</xvfb-manager.version>
+        <xvfb-manager.version>0.14</xvfb-manager.version>
         <test.log.level>info</test.log.level>
         <selenium.version>3.7.1</selenium.version>
         <!--suppress CheckTagEmptyBody -->
@@ -314,6 +314,12 @@
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
             <version>2.6</version>
+        </dependency>
+        <dependency>
+            <groupId>com.github.mike10004</groupId>
+            <artifactId>extensible-firefox-webdriver</artifactId>
+            <version>${selenium.version}x1-SNAPSHOT</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 </project>

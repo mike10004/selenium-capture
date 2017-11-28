@@ -65,7 +65,7 @@ public class CollectionTestBase {
     }
 
     @Rule
-    public XvfbRule xvfb = XvfbRule.builder().disabledOnWindows().build();
+    public XvfbRule xvfb = XvfbRule.builder().build();
 
     @Before
     public void waitForDisplay() throws InterruptedException {

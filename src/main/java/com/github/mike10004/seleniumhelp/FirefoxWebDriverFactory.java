@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -39,6 +40,7 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
     private final Map<String, Object> profilePreferences;
     private final ImmutableList<FirefoxProfileAction> profileActions;
     private final ImmutableList<DeserializableCookie> cookies;
+    private final InstanceConstructor<? extends WebDriver> constructor;
 
     @SuppressWarnings("unused")
     public FirefoxWebDriverFactory() {
@@ -52,6 +54,7 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
         checkPreferencesValues(this.profilePreferences.values());
         this.cookies = ImmutableList.copyOf(builder.cookies);
         this.profileActions = ImmutableList.copyOf(builder.profileActions);
+        this.constructor = Objects.requireNonNull(builder.instanceConstructor);
     }
 
     protected ImmutableList<DeserializableCookie> getCookies() {
@@ -105,7 +108,7 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
                 .withEnvironment(environment)
                 .usingFirefoxBinary(binary)
                 .build();
-        FirefoxDriver driver =  new FirefoxDriver(service, options);
+        WebDriver driver = constructor.construct(service, options);
         return driver;
     }
 
@@ -266,6 +269,10 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
         }
     }
 
+    public interface InstanceConstructor<T> {
+        T construct(GeckoDriverService geckoDriverService, FirefoxOptions options) throws IOException;
+    }
+
     @SuppressWarnings("unused")
     public static class Builder extends EnvironmentWebDriverFactory.Builder<Builder> {
 
@@ -273,8 +280,14 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
         private Map<String, Object> profilePreferences = new LinkedHashMap<>();
         private List<DeserializableCookie> cookies = new ArrayList<>();
         private List<FirefoxProfileAction> profileActions = new ArrayList<>();
+        private InstanceConstructor<? extends WebDriver> instanceConstructor = FirefoxDriver::new;
 
         private Builder() {
+        }
+
+        public Builder constructor(InstanceConstructor<? extends WebDriver> constructor) {
+            this.instanceConstructor = Objects.requireNonNull(constructor);
+            return this;
         }
 
         public Builder binary(FirefoxBinary binary) {
