@@ -36,6 +36,9 @@ public class CollectionTestBase {
 
     private static HostAndPort upstreamProxyHostAndPort_ = null;
 
+    @Rule
+    public XvfbRule xvfb = XvfbRule.builder().disabled().build();
+
     private final @Nullable HostAndPort upstreamProxyHostAndPort;
     protected final String protocol;
 
@@ -63,9 +66,6 @@ public class CollectionTestBase {
             LoggerFactory.getLogger(CollectionTestBase.class).info("this test is much more valuable if you set system or maven property " + SYSPROP_TEST_PROXY + " to an available HTTP proxy that does not have the same external IP address as the JVM's network interface");
         }
     }
-
-    @Rule
-    public XvfbRule xvfb = XvfbRule.builder().build();
 
     @Before
     public void waitForDisplay() throws InterruptedException {

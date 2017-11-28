@@ -15,7 +15,7 @@ import static org.junit.Assert.assertNotNull;
 public class CookieStorageTest {
 
     @Rule
-    public XvfbRule xvfb = XvfbRule.builder().disabledOnWindows().build();
+    public XvfbRule xvfb = XvfbRule.builder().build();
 
     @Test
     public void testFirefox() throws Exception {

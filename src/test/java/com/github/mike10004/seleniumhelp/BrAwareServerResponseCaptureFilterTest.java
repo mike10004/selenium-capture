@@ -39,7 +39,7 @@ public class BrAwareServerResponseCaptureFilterTest {
     }
 
     @Rule
-    public final XvfbRule xvfb = XvfbRule.builder().disabledOnWindows().build();
+    public final XvfbRule xvfb = XvfbRule.builder().build();
 
     @Test(timeout = 10000L)
     public void endToEnd_chrome() throws Exception {
@@ -65,7 +65,7 @@ public class BrAwareServerResponseCaptureFilterTest {
         String pageText;
         String url;
         try (NanoControl ctrl = server.startServer()) {
-            url = ctrl.buildUri().build().toString();
+            url = ctrl.baseUri().toString();
             TrafficGenerator<String> generator = driver -> {
                 driver.get(url);
                 WebElement body = driver.findElement(By.tagName("body"));

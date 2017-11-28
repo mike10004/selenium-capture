@@ -301,7 +301,7 @@
         <dependency>
             <groupId>com.github.mike10004</groupId>
             <artifactId>nanohttpd-server</artifactId>
-            <version>0.5</version>
+            <version>0.6</version>
             <scope>test</scope>
         </dependency>
         <dependency>

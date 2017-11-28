@@ -16,6 +16,7 @@ import net.lightbody.bmp.core.har.HarEntry;
 import net.lightbody.bmp.core.har.HarRequest;
 import net.lightbody.bmp.mitm.CertificateAndKeySource;
 import net.lightbody.bmp.mitm.manager.ImpersonatingMitmManager;
+import org.apache.http.client.utils.URIBuilder;
 import org.junit.Test;
 import org.littleshoot.proxy.MitmManager;
 import org.openqa.selenium.By;
@@ -123,7 +124,7 @@ public class TrafficCollectorTest {
             TrafficCollector collector = TrafficCollector.builder(new JBrowserDriverFactory()).build();
             bodyText = collector.drive(driver -> {
                 try {
-                    driver.get(ctrl.buildUri().setPath("/hello").build().toString());
+                    driver.get(new URIBuilder(ctrl.baseUri()).setPath("/hello").build().toString());
                     return driver.findElement(By.tagName("body")).getText();
                 } catch (URISyntaxException e) {
                     throw new RuntimeException(e);

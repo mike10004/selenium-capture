@@ -53,9 +53,10 @@ public class FirefoxWebDriverFactoryHttpsCollectionTest extends CollectionTestBa
                 .environment(FirefoxWebDriverFactory.createEnvironmentSupplierForDisplay(display))
                 .constructor((service, options) -> {
                     ExtensibleFirefoxDriver driver = new ExtensibleFirefoxDriver(service, options);
-                    driver.installAddon(new AddonInstallRequest(zipFile, AddonPersistence.TEMPORARY));
+                    driver.installAddon(AddonInstallRequest.fromFile(zipFile, AddonPersistence.TEMPORARY));
                     return driver;
                 }).build();
+        // Using a local HTTP server seems to cause some trouble here, so we visit example.com instead
         HarPlus<String> injectedContentCollection = testTrafficCollector(webDriverFactory, driver -> {
             driver.get("https://www.example.com/");
             WebElement element = new WebDriverWait(driver, 5)

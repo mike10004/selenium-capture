@@ -31,7 +31,7 @@ public abstract class CookieUsageTestBase {
     private static final boolean SHOW_BROWSER = false;
 
     @Rule
-    public XvfbRule xvfb = XvfbRule.builder().disabled(SHOW_BROWSER).disabledOnWindows().build();
+    public XvfbRule xvfb = XvfbRule.builder().disabled(SHOW_BROWSER).build();
 
     protected abstract WebDriverFactory createCookielessWebDriverFactory(XvfbController xvfbController);
 
