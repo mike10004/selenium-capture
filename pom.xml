@@ -318,7 +318,7 @@
         <dependency>
             <groupId>com.github.mike10004</groupId>
             <artifactId>extensible-firefox-webdriver</artifactId>
-            <version>${selenium.version}x1-SNAPSHOT</version>
+            <version>${selenium.version}x1</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
