@@ -29,6 +29,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
 
 public class CollectionTestBase {
 
@@ -37,7 +38,7 @@ public class CollectionTestBase {
     private static HostAndPort upstreamProxyHostAndPort_ = null;
 
     @Rule
-    public XvfbRule xvfb = XvfbRule.builder().disabled().build();
+    public XvfbRule xvfb = XvfbRule.builder().build();
 
     private final @Nullable HostAndPort upstreamProxyHostAndPort;
     protected final String protocol;
@@ -49,12 +50,21 @@ public class CollectionTestBase {
     }
 
     @BeforeClass
-    public static void checkClasspath() throws ClassNotFoundException {
+    public static void checkClasspath() {
         /*
          * The htmlunit driver depends on an older version of selenium-remote-driver,
          * so this checks that our pom requires the later version to be used.
          */
-        Class.forName("org.openqa.selenium.io.CircularOutputStream");
+        String requiredClassname = "org.openqa.selenium.io.CircularOutputStream";
+        try {
+            Class.forName(requiredClassname);
+        } catch (ClassNotFoundException e) {
+            fail("pom must declare dependency on newer version of selenium-remote-driver that " +
+                    "contains class " + requiredClassname + ", but this class does not exist on " +
+                    "the classpath, which probably means that the htmlunit driver's dependency on " +
+                    "the older version is taking precedence; revise the pom to require the newer " +
+                    "version of selenium-remote-driver");
+        }
     }
 
     @BeforeClass
