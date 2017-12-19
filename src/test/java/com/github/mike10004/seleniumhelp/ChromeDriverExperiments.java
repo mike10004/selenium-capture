@@ -2,23 +2,17 @@ package com.github.mike10004.seleniumhelp;
 
 import com.github.mike10004.chromecookieimplant.ChromeCookie;
 import com.github.mike10004.chromecookieimplant.ChromeCookieImplanter;
-import com.github.mike10004.chromecookieimplant.ChromeCookieImplanter.ResultExaminer;
 import com.github.mike10004.chromecookieimplant.CookieImplantResult;
 import com.google.common.io.ByteSource;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Resources;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-import io.github.mike10004.crxtool.BasicCrxParser;
 import io.github.mike10004.crxtool.CrxMetadata;
 import io.github.mike10004.crxtool.CrxParser;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DateUtils;
-import org.apache.http.client.utils.URIBuilder;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
@@ -28,7 +22,6 @@ import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
-import javax.annotation.Nullable;
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -40,7 +33,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Base64;
@@ -51,7 +43,6 @@ import java.util.Enumeration;
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
-import java.util.function.Function;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -195,7 +186,7 @@ public class ChromeDriverExperiments {
             ByteSource crxSource = resolveCrxSource();
             crxSource.copyTo(com.google.common.io.Files.asByteSink(extensionCrxFile));
             try (InputStream in = new FileInputStream(extensionCrxFile)) {
-                CrxMetadata metadata = new BasicCrxParser().parseMetadata(in);
+                CrxMetadata metadata = CrxParser.getDefault().parseMetadata(in);
                 extensionId = metadata.id;
             }
             options.addExtensions(extensionCrxFile);
