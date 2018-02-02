@@ -33,9 +33,11 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <xvfb-manager.version>0.14</xvfb-manager.version>
+        <slf4j.version>1.7.25</slf4j.version>
+        <xvfb-manager.version>0.15</xvfb-manager.version>
         <test.log.level>info</test.log.level>
         <selenium.version>3.7.1</selenium.version>
+        <common-helper.version>8.0.2</common-helper.version>
         <!--suppress CheckTagEmptyBody -->
         <selenium-help.test.proxy.http></selenium-help.test.proxy.http>
         <chrome.headless.tests.disabled>false</chrome.headless.tests.disabled>
@@ -172,7 +174,7 @@
             <dependency>
                 <groupId>com.google.guava</groupId>
                 <artifactId>guava</artifactId>
-                <version>23.0</version>
+                <version>23.6-jre</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
@@ -235,12 +237,17 @@
         <dependency>
             <groupId>com.github.mike10004</groupId>
             <artifactId>native-helper</artifactId>
-            <version>7.0.0</version>
+            <version>${common-helper.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.github.mike10004</groupId>
+            <artifactId>native-helper-legacy</artifactId>
+            <version>${common-helper.version}</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-simple</artifactId>
-            <version>1.7.12</version>
+            <version>${slf4j.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -257,7 +264,7 @@
         <dependency>
             <groupId>io.github.bonigarcia</groupId>
             <artifactId>webdrivermanager</artifactId>
-            <version>1.6.2</version>
+            <version>2.1.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -301,7 +308,7 @@
         <dependency>
             <groupId>com.github.mike10004</groupId>
             <artifactId>nanohttpd-server</artifactId>
-            <version>0.6</version>
+            <version>0.9</version>
             <scope>test</scope>
         </dependency>
         <dependency>
