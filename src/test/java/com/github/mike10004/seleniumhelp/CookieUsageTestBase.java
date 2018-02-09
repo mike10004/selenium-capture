@@ -28,7 +28,7 @@ import static org.junit.Assert.assertFalse;
 
 public abstract class CookieUsageTestBase {
 
-    private static final boolean SHOW_BROWSER = false;
+    private static final boolean SHOW_BROWSER = true;
 
     @Rule
     public XvfbRule xvfb = XvfbRule.builder().disabled(SHOW_BROWSER).build();

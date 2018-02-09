@@ -1,12 +1,18 @@
 package com.github.mike10004.seleniumhelp;
 
+import com.github.mike10004.seleniumhelp.FirefoxCookieDb.CookieTransferConfig;
+import com.github.mike10004.seleniumhelp.FirefoxCookieDb.Sqlite3ProgramExporter;
 import com.github.mike10004.seleniumhelp.FirefoxWebDriverFactory.CookieInstallingProfileAction;
 import com.github.mike10004.seleniumhelp.FirefoxWebDriverFactory.FirefoxProfileFolderAction;
+import com.github.mike10004.seleniumhelp.FirefoxWebDriverFactory.SupplementingFirefoxProfile;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.io.Files;
 import com.google.common.io.Resources;
 import com.google.common.net.HttpHeaders;
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringExclude;
@@ -23,14 +29,20 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.firefox.FirefoxOptions;
 import org.openqa.selenium.firefox.FirefoxProfile;
+import org.openqa.selenium.io.Zip;
+import org.openqa.selenium.remote.NewSessionPayload;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.StringWriter;
 import java.nio.file.Path;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.StreamSupport;
@@ -39,6 +51,7 @@ import static com.google.common.base.Preconditions.checkState;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 @SuppressWarnings("Duplicates")
 public class FirefoxProfileExperiment {
@@ -49,43 +62,10 @@ public class FirefoxProfileExperiment {
     @Rule
     public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
-    @org.junit.Ignore
-    @Test
-    public void doSomething() throws Exception {
-        Path scratchDir = FileUtils.getTempDirectory().toPath();
-        WebDriverConfig config = WebDriverConfig.builder()
-                .certificateAndKeySource(new AutoCertificateAndKeySource(scratchDir)).build();
-        WebDriver driver = FirefoxWebDriverFactory
-                .builder()
-                .build().createWebDriver(config);
-        try {
-            driver.get("http://example.com/");
-        } finally {
-            driver.quit();
-        }
-    }
-
     @Test
     public void provideProfileDirWithCookiesDbFile() throws Exception {
         AtomicInteger counter = new AtomicInteger();
-        String cookieJson = "{\n" +
-                "    \"name\": \"echo_cookie\",\n" +
-                "    \"value\": \"3c73dfc224354c9389d5de350e93d9d3\",\n" +
-                "    \"attribs\": {\n" +
-                "      \"domain\": \"httprequestecho.appspot.com\",\n" +
-                "      \"version\": \"1\",\n" +
-                "      \"path\": \"/\",\n" +
-                "      \"max-age\": \"2592000\"\n" +
-                "    },\n" +
-                "    \"cookieDomain\": \"httprequestecho.appspot.com\",\n" +
-                "    \"cookieExpiryDate\": \"Mar 4, 2018 2:31:41 PM\",\n" +
-                "    \"cookiePath\": \"/\",\n" +
-                "    \"isSecure\": false,\n" +
-                "    \"cookieVersion\": 0,\n" +
-                "    \"creationDate\": \"Feb 2, 2018 2:31:41 PM\",\n" +
-                "    \"httpOnly\": false\n" +
-                "  }";
-        DeserializableCookie cookie = new Gson().fromJson(cookieJson, DeserializableCookie.class);
+        DeserializableCookie cookie = createCookie();
         File profileDir = temporaryFolder.newFolder();
         File sqliteDbFile = new File(profileDir, "cookies.sqlite");
         Resources.asByteSource(getClass().getResource("/empty-firefox-cookies-db.sqlite")).copyTo(Files.asByteSink(sqliteDbFile));
@@ -123,24 +103,7 @@ public class FirefoxProfileExperiment {
 
     @Test
     public void webdriverfactory_modifyCookiesDbInProfileDir() throws Exception {
-        String cookieJson = "{\n" +
-                "    \"name\": \"echo_cookie\",\n" +
-                "    \"value\": \"3c73dfc224354c9389d5de350e93d9d3\",\n" +
-                "    \"attribs\": {\n" +
-                "      \"domain\": \"httprequestecho.appspot.com\",\n" +
-                "      \"version\": \"1\",\n" +
-                "      \"path\": \"/\",\n" +
-                "      \"max-age\": \"2592000\"\n" +
-                "    },\n" +
-                "    \"cookieDomain\": \"httprequestecho.appspot.com\",\n" +
-                "    \"cookieExpiryDate\": \"Mar 4, 2018 2:31:41 PM\",\n" +
-                "    \"cookiePath\": \"/\",\n" +
-                "    \"isSecure\": false,\n" +
-                "    \"cookieVersion\": 0,\n" +
-                "    \"creationDate\": \"Feb 2, 2018 2:31:41 PM\",\n" +
-                "    \"httpOnly\": false\n" +
-                "  }";
-        DeserializableCookie cookie = new Gson().fromJson(cookieJson, DeserializableCookie.class);
+        DeserializableCookie cookie = createCookie();
         WebDriverConfig config = WebDriverConfig.builder()
                 .certificateAndKeySource(new AutoCertificateAndKeySource(temporaryFolder.getRoot().toPath())).build();
         AtomicInteger pfaPerformCount = new AtomicInteger(0);
@@ -160,23 +123,39 @@ public class FirefoxProfileExperiment {
                         }
                     }
                 });
-        AtomicReference<String> zipBase64Ref = new AtomicReference<>();
+        List<String> zipBase64s = new ArrayList<>();
         FirefoxWebDriverFactory factory = new FirefoxWebDriverFactory(builder) {
             @Override
             protected SupplementingFirefoxProfile createFirefoxProfile(List<FirefoxProfileFolderAction> actions) {
                 return new SupplementingFirefoxProfile(actions) {
                     @Override
                     public String toJson() throws IOException {
-                        String json = super.toJson();
-                        zipBase64Ref.set(json);
-                        return json;
+                        File file = layoutOnDisk();
+                        if (!file.isDirectory()) {
+                            throw new FileNotFoundException(file.getAbsolutePath());
+                        }
+                        try {
+                            String zipBase64 = Zip.zip(file);
+                            zipBase64s.add(zipBase64);
+                            return zipBase64;
+                        } finally {
+                            clean(file);
+                        }
+                    }
+
+                    @Override
+                    public File layoutOnDisk() {
+                        File laidOut = super.layoutOnDisk();
+                        checkState(laidOut.isDirectory(), "expected to exist: %s", laidOut);
+                        return laidOut;
                     }
                 };
             }
         };
-        WebDriver webdriver = factory.createWebDriver(config);
+        FirefoxDriver webdriver = (FirefoxDriver) factory.createWebDriver(config);
         HttpRequestEchoContent content;
         try {
+            webdriver.get("data:,");
             webdriver.get("https://httprequestecho.appspot.com/get");
             String pageText = webdriver.getPageSource();
             pageText = removeHtmlTags(pageText);
@@ -186,21 +165,32 @@ public class FirefoxProfileExperiment {
             webdriver.quit();
         }
         System.out.println();
-        String zipBase64 = zipBase64Ref.get();
-        byte[] zipBytes = Base64.getDecoder().decode(zipBase64);
-        File zipFile = temporaryFolder.newFile();
-        Files.write(zipBytes, zipFile);
-        Unzippage unzippage = Unzippage.unzip(zipFile);
-        unzippage.fileEntries().forEach(System.out::println);
-        String cookiesEntry = StreamSupport.stream(unzippage.fileEntries().spliterator(), false).filter(e -> e.contains("cookies.sqlite")).findFirst().orElse(null);
-        assertNotNull(cookiesEntry);
-        byte[] cookiesDbBytes = unzippage.getFileBytes(cookiesEntry).read();
-//        File
+        zipBase64s.forEach(this::checkZip);
         assertNotNull("headers", content.headers);
         List<String> cookieValues = content.headers.get(HttpHeaders.COOKIE);
         assertNotNull("cookieValues", cookieValues);
         assertFalse("nonempty cookies list", cookieValues.isEmpty());
-//        System.out.format("laid outs: %s%n", laidOut);
+    }
+
+    private void checkZip(String zipBase64) {
+        try {
+            byte[] zipBytes = Base64.getDecoder().decode(zipBase64);
+            File zipFile = temporaryFolder.newFile();
+            Files.write(zipBytes, zipFile);
+            Unzippage unzippage = Unzippage.unzip(zipFile);
+            unzippage.fileEntries().forEach(System.out::println);
+            String cookiesEntry = StreamSupport.stream(unzippage.fileEntries().spliterator(), false).filter(e -> e.contains("cookies.sqlite")).findFirst().orElse(null);
+            assertNotNull(cookiesEntry);
+            File dbFile = File.createTempFile("cookies", ".sqlite", temporaryFolder.getRoot());
+            unzippage.getFileBytes(cookiesEntry).copyTo(Files.asByteSink(dbFile));
+            System.out.format("cookies.sqlite: %s%n", dbFile);
+            List<Map<String, String>> cookieMaps = new Sqlite3ProgramExporter(CookieTransferConfig.createDefault())
+                    .dumpRows(dbFile);
+            System.out.format("%s has %s%n", dbFile, cookieMaps);
+            assertEquals("cookies in sqlite db in zip", 1, cookieMaps.size());
+        } catch (IOException | SQLException e) {
+            e.printStackTrace(System.err);
+        }
     }
 
     private static String removeHtmlTags(String pageHtml) {
@@ -208,5 +198,58 @@ public class FirefoxProfileExperiment {
         Element element = els.first();
         String text = element.text();
         return StringUtils.removeEnd(text, "</plaintext></div></body></html>");
+    }
+
+    private static DeserializableCookie createCookie() {
+        String cookieJson = "{\n" +
+                "    \"name\": \"echo_cookie\",\n" +
+                "    \"value\": \"3c73dfc224354c9389d5de350e93d9d3\",\n" +
+                "    \"attribs\": {\n" +
+                "      \"domain\": \"httprequestecho.appspot.com\",\n" +
+                "      \"version\": \"1\",\n" +
+                "      \"path\": \"/\",\n" +
+                "      \"max-age\": \"2592000\"\n" +
+                "    },\n" +
+                "    \"cookieDomain\": \"httprequestecho.appspot.com\",\n" +
+                "    \"cookieExpiryDate\": \"Mar 4, 2018 2:31:41 PM\",\n" +
+                "    \"cookiePath\": \"/\",\n" +
+                "    \"isSecure\": false,\n" +
+                "    \"cookieVersion\": 0,\n" +
+                "    \"creationDate\": \"Feb 2, 2018 2:31:41 PM\",\n" +
+                "    \"httpOnly\": false\n" +
+                "  }";
+        DeserializableCookie cookie = new Gson().fromJson(cookieJson, DeserializableCookie.class);
+        return cookie;
+    }
+
+    @Test
+    public void createNewSessionPayload() throws Exception {
+        FirefoxOptions options = new FirefoxOptions();
+        FirefoxCookieDb.Importer cookieImporter = FirefoxCookieDb.getImporter();
+        DeserializableCookie cookie = createCookie();
+        AtomicInteger layoutOnDiskInvocations = new AtomicInteger(0);
+        SupplementingFirefoxProfile profile = new SupplementingFirefoxProfile(ImmutableList.of(new CookieInstallingProfileAction(Collections.singletonList(cookie), cookieImporter))) {
+            @Override
+            public File layoutOnDisk() {
+                File d =super.layoutOnDisk();
+                layoutOnDiskInvocations.incrementAndGet();
+                return d;
+            }
+        };
+        options.setProfile(profile);
+        String writtenPayload;
+        try (NewSessionPayload payload = NewSessionPayload.create(options);
+             StringWriter sw = new StringWriter()) {
+            payload.writeTo(sw);
+            sw.flush();
+            writtenPayload = sw.toString();
+        }
+        System.out.println(StringUtils.abbreviateMiddle(writtenPayload, "\n[...]\n", 1024));
+        JsonObject payloadObj = new JsonParser().parse(writtenPayload).getAsJsonObject();
+        JsonObject capsObj = payloadObj.getAsJsonObject("desiredCapabilities");
+        String profileZipBase64 = capsObj.get("firefox_profile").getAsString();
+        checkZip(profileZipBase64);
+        System.out.format("layoutOnDisk invocations: %s%n", layoutOnDiskInvocations.get());
+        assertTrue(layoutOnDiskInvocations.get() > 0);
     }
 }
