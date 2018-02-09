@@ -1,15 +1,15 @@
 package com.github.mike10004.seleniumhelp;
 
-import com.github.mike10004.nativehelper.Program;
-import com.github.mike10004.nativehelper.Program.Builder;
-import com.github.mike10004.nativehelper.ProgramWithOutputStrings;
-import com.github.mike10004.nativehelper.ProgramWithOutputStringsResult;
 import com.github.mike10004.nativehelper.Whicher;
+import com.github.mike10004.nativehelper.subprocess.ProcessResult;
+import com.github.mike10004.nativehelper.subprocess.ScopedProcessTracker;
+import com.github.mike10004.nativehelper.subprocess.Subprocess;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Converter;
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
+import com.google.common.io.ByteSource;
 import com.google.common.io.CharSource;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -18,6 +18,7 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -53,11 +54,11 @@ public abstract class FirefoxCookieDb {
             return Whicher.gnu().which(sqlite3ExecutableName).isPresent();
         }
 
-        public Builder sqlite3Builder() {
+        public Subprocess.Builder sqlite3Builder() {
             if (sqlite3Pathname == null) {
-                return Program.running(sqlite3ExecutableName);
+                return Subprocess.running(sqlite3ExecutableName);
             } else {
-                return Program.running(new File(sqlite3Pathname));
+                return Subprocess.running(new File(sqlite3Pathname));
             }
         }
     }
@@ -137,14 +138,35 @@ public abstract class FirefoxCookieDb {
             if (!config.isSqlite3Available()) {
                 throw new SQLException("no sqlite3 executable found in search of PATH");
             }
-            ProgramWithOutputStringsResult result = config.sqlite3Builder().arg("-csv").arg("-header").arg(sqliteDbFile.getAbsolutePath()).arg(sql).outputToStrings().execute();
-            if (result.getExitCode() != 0) {
-                log.warn("sqlite3 exited with code {}; stderr: {}", result.getExitCode(), result.getStderrString());
-                throw new SQLException("sqlite3 exited with code " + result.getExitCode() + "; " + StringUtils.abbreviate(result.getStderrString(), 256));
+            Subprocess subprocess = config.sqlite3Builder().arg("-csv").arg("-header").arg(sqliteDbFile.getAbsolutePath()).arg(sql).build();
+            ProcessResult<String, String> result = FirefoxCookieDb.executeOrPropagateInterruption(subprocess, null);
+            if (result.exitCode() != 0) {
+                log.warn("sqlite3 exited with code {}; stderr: {}", result.exitCode(), result.content().stderr());
+                throw new SQLException("sqlite3 exited with code " + result.exitCode() + "; " + StringUtils.abbreviate(result.content().stderr(), 256));
             }
-            return Csvs.readRowMaps(CharSource.wrap(result.getStdoutString()), Csvs.headersFromFirstRow());
+            return Csvs.readRowMaps(CharSource.wrap(result.content().stdout()), Csvs.headersFromFirstRow());
         }
 
+    }
+
+    private static class ProcessWaitingInterruptedException extends RuntimeException {
+        public ProcessWaitingInterruptedException(Subprocess subprocess, InterruptedException e) {
+            super("waiting for " + subprocess + " to finish was interrupted", e);
+        }
+    }
+
+    private static final Charset SQLITE3_CHARSET = Charset.defaultCharset();
+
+    private static ProcessResult<String, String> executeOrPropagateInterruption(Subprocess subprocess, @Nullable String stdin) throws ProcessWaitingInterruptedException {
+        ByteSource stdinSource = null;
+        if (stdin != null) {
+            stdinSource = CharSource.wrap(stdin).asByteSource(SQLITE3_CHARSET);
+        }
+        try {
+            return Subprocesses.executeAndWait(subprocess, SQLITE3_CHARSET, stdinSource);
+        } catch (InterruptedException e) {
+            throw new ProcessWaitingInterruptedException(subprocess, e);
+        }
     }
 
     private static final String DEFAULT_SQLITE_CELL_VALUE = "";
@@ -170,48 +192,48 @@ public abstract class FirefoxCookieDb {
                 "CREATE INDEX moz_basedomain ON moz_cookies (baseDomain, originAttributes);"
         );
 
-        private static void checkResult(ProgramWithOutputStringsResult result) throws SQLException {
-            if (result.getExitCode() != 0) {
-                log.error("sqlite3 exited with code {}; stderr: {}", result.getExitCode(), result.getStderrString());
-                throw new SQLException("sqlite3 exited with code " + result.getExitCode() + "; " + StringUtils.abbreviate(result.getStderrString(), 256));
+        private static void checkResult(ProcessResult<String, String> result) throws SQLException {
+            if (result.exitCode() != 0) {
+                log.error("sqlite3 exited with code {}; stderr: {}", result.exitCode(), result.content().stderr());
+                throw new SQLException("sqlite3 exited with code " + result.exitCode() + "; " + StringUtils.abbreviate(result.content().stderr(), 256));
             }
         }
 
-        private void createTable(File sqliteDbFile) throws SQLException, IOException {
+        private void createTable(File sqliteDbFile) throws SQLException {
             // sqlite3 3.11 allows multiple sql statement arguments, but
             // version 3.8 requires executing once per statement argument
             for (String stmt : CREATE_TABLE_SQL) {
-                ProgramWithOutputStrings createTableProgram = config.sqlite3Builder()
+                Subprocess createTableProgram = config.sqlite3Builder()
                         .arg(sqliteDbFile.getAbsolutePath())
                         .arg(stmt)
-                        .outputToStrings();
-                ProgramWithOutputStringsResult createTableResult = createTableProgram.execute();
+                        .build();
+                ProcessResult<String, String> createTableResult = FirefoxCookieDb.executeOrPropagateInterruption(createTableProgram, null);
                 checkResult(createTableResult);
             }
         }
 
         private List<String> queryTableNames(File sqliteDbFile) throws SQLException, IOException {
-            ProgramWithOutputStringsResult result = config.sqlite3Builder()
+            Subprocess subprocess = config.sqlite3Builder()
                     .arg(sqliteDbFile.getAbsolutePath())
                     .arg(".tables")
-                    .outputToStrings()
-                    .execute();
+                    .build();
+            ProcessResult<String, String> result = FirefoxCookieDb.executeOrPropagateInterruption(subprocess, null);
             checkResult(result);
-            List<String> tableNames = CharSource.wrap(result.getStdoutString()).readLines();
+            List<String> tableNames = CharSource.wrap(result.content().stdout()).readLines();
             return tableNames;
         }
 
         @SuppressWarnings("SameParameterValue")
-        private Optional<Integer> findMaxValue(File sqliteDbFile, String columnName) throws SQLException, IOException {
+        private Optional<Integer> findMaxValue(File sqliteDbFile, String columnName) throws SQLException {
             checkArgument(columnName.matches("[_A-Za-z]\\w*"), "illegal column name: %s", columnName);
-            ProgramWithOutputStringsResult result = config.sqlite3Builder()
+            Subprocess subprocess = config.sqlite3Builder()
                     .arg("-csv")
                     .arg(sqliteDbFile.getAbsolutePath())
                     .arg("SELECT MAX(" + columnName + ") FROM " + TABLE_NAME + " WHERE 1")
-                    .outputToStrings()
-                    .execute();
+                    .build();
+            ProcessResult<String, String> result = FirefoxCookieDb.executeOrPropagateInterruption(subprocess, null);
             checkResult(result);
-            String output = result.getStdoutString().trim();
+            String output = result.content().stdout().trim();
             if (output.isEmpty()) {
                 return Optional.absent();
             } else {
@@ -221,13 +243,12 @@ public abstract class FirefoxCookieDb {
 
         private void doImportRows(Iterable<Map<String, String>> rows, File sqliteDbFile) throws SQLException, IOException {
             String stdin = Csvs.writeRowMapsToString(sqliteColumnNames, rows, DEFAULT_SQLITE_CELL_VALUE, Csvs.UnknownKeyStrategy.IGNORE);
-            ProgramWithOutputStrings program = config.sqlite3Builder()
-                    .reading(stdin)
+            Subprocess program = config.sqlite3Builder()
                     .arg("-csv")
                     .arg(sqliteDbFile.getAbsolutePath())
                     .args(".import /dev/stdin " + TABLE_NAME)
-                    .outputToStrings();
-            ProgramWithOutputStringsResult result = program.execute();
+                    .build();
+            ProcessResult<String, String> result = FirefoxCookieDb.executeOrPropagateInterruption(program, stdin);
             checkResult(result);
         }
 

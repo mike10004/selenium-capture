@@ -12,10 +12,6 @@ import org.junit.rules.TemporaryFolder;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.security.KeyManagementException;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.cert.CertificateException;
 import java.util.Base64;
 import java.util.Random;
 
@@ -45,7 +41,7 @@ public class AutoCertificateAndKeySourceTest {
         return file;
     }
 
-    private void testCertificateUsage(Path scratchDir) throws IOException, CertificateException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
+    private void testCertificateUsage(Path scratchDir) throws IOException, InterruptedException {
         try (AutoCertificateAndKeySource certificateAndKeySource = new AutoCertificateAndKeySource(scratchDir, random)) {
             SerializableForm serializableForm = certificateAndKeySource.createSerializableForm();
             File keystoreFile = createTempPathname(scratchDir, ".keystore");

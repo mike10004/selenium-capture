@@ -1,9 +1,8 @@
 package com.github.mike10004.seleniumhelp;
 
-import com.github.mike10004.nativehelper.Program;
-import com.github.mike10004.nativehelper.ProgramWithOutputResult;
-import com.github.mike10004.nativehelper.ProgramWithOutputStrings;
-import com.github.mike10004.nativehelper.ProgramWithOutputStringsResult;
+import com.github.mike10004.nativehelper.subprocess.ProcessResult;
+import com.github.mike10004.nativehelper.subprocess.ScopedProcessTracker;
+import com.github.mike10004.nativehelper.subprocess.Subprocess;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.io.ByteSource;
 import com.google.common.io.Files;
@@ -17,11 +16,13 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Objects;
 import java.util.Random;
+import java.util.function.Function;
 
 import static com.google.common.base.Preconditions.checkState;
 
@@ -63,6 +64,10 @@ public class AutoCertificateAndKeySource implements CertificateAndKeySource, jav
         }
     }
 
+    protected void passwordGenerated(String password) {
+        // no op
+    }
+
     private void generateIfNecessary() {
         synchronized (generationLock) {
             checkState(!closed, "this source is closed");
@@ -71,6 +76,7 @@ public class AutoCertificateAndKeySource implements CertificateAndKeySource, jav
                     byte[] bytes = new byte[32];
                     random.nextBytes(bytes);
                     String password = Base64.getEncoder().encodeToString(bytes);
+                    passwordGenerated(password);
                     onDemandSource = generate(password);
                 } catch (IOException e) {
                     throw new CertificateGenerationException(e);
@@ -132,6 +138,10 @@ public class AutoCertificateAndKeySource implements CertificateAndKeySource, jav
         return new SerializableForm(Base64.getEncoder().encodeToString(onDemandSource.keystoreBytes), onDemandSource.keystorePassword);
     }
 
+    protected void keystoreBytesGenerated(ByteSource byteSource) {
+        // no op
+    }
+
     protected MemoryKeyStoreCertificateSource generate(String keystorePassword) throws IOException {
         File keystoreFile = File.createTempFile("dynamically-generated-certificate", ".keystore", scratchDir.toFile());
         try {
@@ -140,6 +150,7 @@ public class AutoCertificateAndKeySource implements CertificateAndKeySource, jav
             rootCertificateGenerator.saveRootCertificateAndKey(KEYSTORE_TYPE, keystoreFile, KEYSTORE_PRIVATE_KEY_ALIAS, keystorePassword);
             log.debug("saved keystore to {} ({} bytes)%n", keystoreFile, keystoreFile.length());
             byte[] keystoreBytes = Files.toByteArray(keystoreFile);
+            keystoreBytesGenerated(ByteSource.wrap(keystoreBytes));
             return new MemoryKeyStoreCertificateSource(KEYSTORE_TYPE, keystoreBytes, KEYSTORE_PRIVATE_KEY_ALIAS, keystorePassword);
         } finally {
             FileUtils.forceDelete(keystoreFile);
@@ -165,14 +176,14 @@ public class AutoCertificateAndKeySource implements CertificateAndKeySource, jav
      * </pre>
      * <p>The contents of `exported-keystore.pem` will be in PEM format.
      */
-    public void createPKCS12File(File p12File) throws IOException {
+    public void createPKCS12File(File p12File) throws IOException, InterruptedException {
         generateIfNecessary();
         File keystoreFile = File.createTempFile("AutoCertificateAndKeySource", ".keystore", scratchDir.toFile());
         try {
             Files.write(onDemandSource.keystoreBytes, keystoreFile);
             String keystorePassword = onDemandSource.keystorePassword;
             {
-                ProgramWithOutputStrings program = Program.running(getKeytoolExecutableName())
+                Subprocess program = Subprocess.running(getKeytoolExecutableName())
                         .arg("-importkeystore")
                         .args("-srckeystore", keystoreFile.getAbsolutePath())
                         .args("-srcstoretype", "jks")
@@ -180,13 +191,10 @@ public class AutoCertificateAndKeySource implements CertificateAndKeySource, jav
                         .args("-destkeystore", p12File.getAbsolutePath())
                         .args("-deststoretype", "pkcs12")
                         .args("-deststorepass", keystorePassword)
-                        .outputToStrings();
-                ProgramWithOutputStringsResult keytoolResult = program.execute();
-                if (keytoolResult.getExitCode() != 0) {
-                    log.error("stderr {}", StringUtils.abbreviateMiddle(keytoolResult.getStderrString(), "[...]", 256));
-                    log.error("stdout {}", StringUtils.abbreviateMiddle(keytoolResult.getStdoutString(), "[...]", 256));
-                    throw new CertificateGenerationException("nonzero exit from keytool or invalid pkcs12 file length: " + keytoolResult.getExitCode());
-                }
+                        .build();
+                executeSubprocessAndCheckResult(program, keytoolResult -> {
+                    throw new CertificateGenerationException("nonzero exit from keytool or invalid pkcs12 file length: " + keytoolResult.exitCode());
+                });
                 if (p12File.length() <= 0) {
                     throw new CertificateGenerationException("pkcs12 file has invalid length: " + p12File.length());
                 }
@@ -201,24 +209,33 @@ public class AutoCertificateAndKeySource implements CertificateAndKeySource, jav
         return "openssl";
     }
 
-    public void createPemFile(File pkcs12File, File pemFile) throws IOException {
+    public void createPemFile(File pkcs12File, File pemFile) throws IOException, InterruptedException {
         generateIfNecessary();
         String keystorePassword = onDemandSource.keystorePassword;
         {
-            ProgramWithOutputStrings program = Program.running(getOpensslExecutableName())
+            Subprocess subprocess = Subprocess.running(getOpensslExecutableName())
                     .arg("pkcs12")
                     .args("-in", pkcs12File.getAbsolutePath())
                     .args("-passin", "pass:" + keystorePassword)
                     .args("-out", pemFile.getAbsolutePath())
                     .args("-passout", "pass:")
-                    .outputToStrings();
-
-            ProgramWithOutputResult opensslResult = program.execute();
-            if (opensslResult.getExitCode() != 0) {
-                log.error("nonzero openssl {}", opensslResult);
-                throw new CertificateGenerationException("nonzero exit from openssl: " + opensslResult.getExitCode());
-            }
+                    .build();
+            executeSubprocessAndCheckResult(subprocess, opensslResult -> {
+                return new CertificateGenerationException("nonzero exit from openssl: " + opensslResult.exitCode());
+            });
         }
         log.debug("pem: {} ({} bytes)", pemFile, pemFile.length());
+    }
+
+    private void executeSubprocessAndCheckResult(Subprocess subprocess, Function<ProcessResult<String, String>, ? extends RuntimeException> nonzeroExitReaction) throws IOException, InterruptedException {
+        ProcessResult<String, String> result = Subprocesses.executeAndWait(subprocess, Charset.defaultCharset(), null);
+        if (result.exitCode() != 0) {
+            log.error("stderr {}", StringUtils.abbreviateMiddle(result.content().stderr(), "[...]", 256));
+            log.error("stdout {}", StringUtils.abbreviateMiddle(result.content().stdout(), "[...]", 256));
+            RuntimeException ex = nonzeroExitReaction.apply(result);
+            if (ex != null) {
+                throw ex;
+            }
+        }
     }
 }

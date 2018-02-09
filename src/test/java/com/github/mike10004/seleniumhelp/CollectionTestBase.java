@@ -1,7 +1,6 @@
 package com.github.mike10004.seleniumhelp;
 
 import com.github.mike10004.xvfbtesting.XvfbRule;
-import com.google.common.base.CharMatcher;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -11,6 +10,7 @@ import net.lightbody.bmp.core.har.HarContent;
 import net.lightbody.bmp.core.har.HarEntry;
 import net.lightbody.bmp.mitm.CertificateAndKeySource;
 import org.apache.commons.lang3.StringEscapeUtils;
+import org.apache.commons.validator.routines.InetAddressValidator;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Rule;
@@ -121,12 +121,18 @@ public class CollectionTestBase {
         return content;
     }
 
+    private static boolean isIpAddressAlreadyResolved(String expectedOrigin) {
+        return InetAddressValidator.getInstance().isValid(expectedOrigin);
+    }
+
     protected void checkResponseData(URL url, HttpBinGetResponseData responseData) throws UnknownHostException {
         System.out.format("checking %s%n", responseData);
         assertEquals("url", url.toString(), responseData.url);
         if (upstreamProxyHostAndPort != null) {
             String expectedOrigin = upstreamProxyHostAndPort.getHost();
-            if (CharMatcher.javaLetter().matchesAnyOf(expectedOrigin)) {
+            // This is not IPv6 compatible
+            //noinspection deprecation
+            if (!isIpAddressAlreadyResolved(expectedOrigin)) {
                 InetAddress ipAddress = InetAddress.getByName(expectedOrigin);
                 expectedOrigin = ipAddress.getHostAddress();
             }

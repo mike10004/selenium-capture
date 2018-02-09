@@ -1,7 +1,8 @@
 package com.github.mike10004.seleniumhelp;
 
-import com.github.mike10004.nativehelper.Program;
-import com.github.mike10004.nativehelper.ProgramWithOutputStringsResult;
+import com.github.mike10004.nativehelper.subprocess.ProcessResult;
+import com.github.mike10004.nativehelper.subprocess.ScopedProcessTracker;
+import com.github.mike10004.nativehelper.subprocess.Subprocess;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableRangeMap;
 import com.google.common.collect.Range;
@@ -11,9 +12,11 @@ import io.github.bonigarcia.wdm.FirefoxDriverManager;
 import org.apache.commons.lang3.StringUtils;
 import org.openqa.selenium.firefox.FirefoxBinary;
 
+import javax.annotation.Nullable;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.function.Supplier;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
@@ -101,19 +104,26 @@ public class UnitTests {
                 .build();
 
         public static Version detectFirefoxVersion() {
-            String executablePath = System.getenv("FIREFOX_BIN");
+            String executablePath = getFirefoxExecutablePath();
             if (executablePath == null) {
                 executablePath = "firefox";
             }
-            ProgramWithOutputStringsResult result = Program.running(executablePath)
-                    .arg("--version")
-                    .outputToStrings()
-                    .execute();
-            if (result.getExitCode() != 0) {
-                System.err.println(result.getStderr());
-                throw new VersionMagicException("firefox --version exited with code " + result.getExitCode());
+            ProcessResult<String, String> result;
+            try (ScopedProcessTracker processTracker = new ScopedProcessTracker()) {
+                result = Subprocess.running(executablePath)
+                        .arg("--version")
+                        .build()
+                        .launcher(processTracker)
+                        .outputStrings(Charset.defaultCharset())
+                        .launch().await();
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
             }
-            String versionString = parseVersionStringFromVersionOutput(result.getStdoutString());
+            if (result.exitCode() != 0) {
+                System.err.println(result.content().stderr());
+                throw new VersionMagicException("firefox --version exited with code " + result.content().stderr());
+            }
+            String versionString = parseVersionStringFromVersionOutput(result.content().stdout());
             Version version = Version.parseVersion(versionString);
             return version;
         }
@@ -128,8 +138,17 @@ public class UnitTests {
         }
     }
 
+    @Nullable
+    private static String getFirefoxExecutablePath() {
+        String executablePath = Strings.emptyToNull(System.getProperty(SYSPROP_FIREFOX_EXECUTABLE_PATH));
+        if (executablePath == null) {
+            executablePath = System.getenv("FIREFOX_BIN");
+        }
+        return executablePath;
+    }
+
     public static Supplier<FirefoxBinary> createFirefoxBinarySupplier() throws IOException {
-        String executablePath = System.getProperty(SYSPROP_FIREFOX_EXECUTABLE_PATH);
+        String executablePath = getFirefoxExecutablePath();
         if (Strings.isNullOrEmpty(executablePath)) {
             return FirefoxBinary::new;
         } else {

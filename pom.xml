@@ -243,11 +243,6 @@
             <version>${common-helper.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.github.mike10004</groupId>
-            <artifactId>native-helper-legacy</artifactId>
-            <version>${common-helper.version}</version>
-        </dependency>
-        <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-simple</artifactId>
             <version>${slf4j.version}</version>
@@ -329,6 +324,12 @@
             <groupId>com.github.mike10004</groupId>
             <artifactId>extensible-firefox-webdriver</artifactId>
             <version>${selenium.version}x1</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>commons-validator</groupId>
+            <artifactId>commons-validator</artifactId>
+            <version>1.6</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
