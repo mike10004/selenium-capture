@@ -2,7 +2,6 @@ package com.github.mike10004.seleniumhelp;
 
 import com.github.mike10004.nativehelper.Whicher;
 import com.github.mike10004.nativehelper.subprocess.ProcessResult;
-import com.github.mike10004.nativehelper.subprocess.ScopedProcessTracker;
 import com.github.mike10004.nativehelper.subprocess.Subprocess;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Converter;
@@ -41,8 +40,22 @@ public abstract class FirefoxCookieDb {
     public static class CookieTransferConfig {
 
         @Nullable
-        public String sqlite3Pathname;
-        public String sqlite3ExecutableName = "sqlite3";
+        private final String sqlite3Pathname;
+        private final String sqlite3ExecutableName;
+
+        private CookieTransferConfig(@Nullable String sqlite3Pathname, String sqlite3ExecutableName) {
+            this.sqlite3Pathname = sqlite3Pathname;
+            this.sqlite3ExecutableName = sqlite3ExecutableName;
+            checkArgument(sqlite3Pathname != null || sqlite3ExecutableName != null);
+        }
+
+        public static CookieTransferConfig forSqlite3Executable(File executable) {
+            return new CookieTransferConfig(executable.getAbsolutePath(), "sqlite3");
+        }
+
+        public static CookieTransferConfig createDefault() {
+            return new CookieTransferConfig(null, "sqlite3");
+        }
 
         boolean isSqlite3Available() {
             if (sqlite3Pathname != null) {
@@ -64,11 +77,11 @@ public abstract class FirefoxCookieDb {
     }
 
     public static Importer getImporter() {
-        return getImporter(new CookieTransferConfig());
+        return getImporter(CookieTransferConfig.createDefault());
     }
 
     public static Exporter getExporter() {
-        return getExporter(new CookieTransferConfig());
+        return getExporter(CookieTransferConfig.createDefault());
     }
 
     public static Importer getImporter(CookieTransferConfig config) {
