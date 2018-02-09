@@ -1,7 +1,6 @@
 package com.github.mike10004.seleniumhelp;
 
 import com.github.mike10004.nativehelper.subprocess.ProcessResult;
-import com.github.mike10004.nativehelper.subprocess.ScopedProcessTracker;
 import com.github.mike10004.nativehelper.subprocess.Subprocess;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.io.ByteSource;
@@ -64,7 +63,7 @@ public class AutoCertificateAndKeySource implements CertificateAndKeySource, jav
         }
     }
 
-    protected void passwordGenerated(String password) {
+    protected void keystorePasswordGenerated(String password) {
         // no op
     }
 
@@ -76,7 +75,7 @@ public class AutoCertificateAndKeySource implements CertificateAndKeySource, jav
                     byte[] bytes = new byte[32];
                     random.nextBytes(bytes);
                     String password = Base64.getEncoder().encodeToString(bytes);
-                    passwordGenerated(password);
+                    keystorePasswordGenerated(password);
                     onDemandSource = generate(password);
                 } catch (IOException e) {
                     throw new CertificateGenerationException(e);
@@ -110,7 +109,7 @@ public class AutoCertificateAndKeySource implements CertificateAndKeySource, jav
     private static final String KEYSTORE_TYPE = "PKCS12";
     private static final String KEYSTORE_PRIVATE_KEY_ALIAS = "key";
 
-    private static class MemoryKeyStoreCertificateSource extends KeyStoreStreamCertificateSource {
+    protected static class MemoryKeyStoreCertificateSource extends KeyStoreStreamCertificateSource {
 
         public final byte[] keystoreBytes;
         public final String keystorePassword;

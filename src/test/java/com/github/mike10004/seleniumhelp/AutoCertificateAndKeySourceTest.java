@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Base64;
 import java.util.Random;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -29,6 +30,16 @@ public class AutoCertificateAndKeySourceTest {
         testCertificateUsage(scratchDir.toPath());
     }
 
+    @Test
+    public void invokeLoadTwice() throws Exception {
+        Path scratchDir = temporaryFolder.getRoot().toPath();
+        try (CountingAutoCertificateAndKeySource certificateAndKeySource = new CountingAutoCertificateAndKeySource(scratchDir, random)) {
+            certificateAndKeySource.load();
+            certificateAndKeySource.load();
+            assertEquals("num generate invocations", 1, certificateAndKeySource.generateInvocations.get());
+        }
+    }
+
     private static Random random = new Random(AutoCertificateAndKeySourceTest.class.getName().hashCode());
 
     private File createTempPathname(Path scratchDir, String suffix) throws IOException {
@@ -41,8 +52,23 @@ public class AutoCertificateAndKeySourceTest {
         return file;
     }
 
+    private static class CountingAutoCertificateAndKeySource extends AutoCertificateAndKeySource {
+
+        private final AtomicInteger generateInvocations = new AtomicInteger();
+
+        public CountingAutoCertificateAndKeySource(Path scratchDir, Random random) {
+            super(scratchDir, random);
+        }
+
+        @Override
+        protected MemoryKeyStoreCertificateSource generate(String keystorePassword) throws IOException {
+            generateInvocations.incrementAndGet();
+            return super.generate(keystorePassword);
+        }
+    }
+
     private void testCertificateUsage(Path scratchDir) throws IOException, InterruptedException {
-        try (AutoCertificateAndKeySource certificateAndKeySource = new AutoCertificateAndKeySource(scratchDir, random)) {
+        try (CountingAutoCertificateAndKeySource certificateAndKeySource = new CountingAutoCertificateAndKeySource(scratchDir, random)) {
             SerializableForm serializableForm = certificateAndKeySource.createSerializableForm();
             File keystoreFile = createTempPathname(scratchDir, ".keystore");
             File pkcs12File = createTempPathname(scratchDir, ".p12");
@@ -65,6 +91,8 @@ public class AutoCertificateAndKeySourceTest {
                     .orElse(null);
             assertNotNull("response in har", response);
             assertEquals("response status", 200, response.getStatus());
+            assertEquals("num generate() invocations", 1, certificateAndKeySource.generateInvocations.get());
         }
+
     }
 }
