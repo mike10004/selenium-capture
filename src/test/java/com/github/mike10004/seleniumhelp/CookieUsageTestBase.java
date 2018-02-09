@@ -49,7 +49,7 @@ public abstract class CookieUsageTestBase {
         return cookies;
     }
 
-    private void checkOurCookies(Iterable<DeserializableCookie> cookies) {
+    protected void checkOurCookies(Iterable<DeserializableCookie> cookies) {
         for (DeserializableCookie c : cookies) {
             checkArgument(c.getExpiryDate() != null, "null expiry: %s", c);
         }
@@ -95,6 +95,10 @@ public abstract class CookieUsageTestBase {
                 cookieHeaderValues.putAll(request.url.toString(), request.getHeaderValues(HttpHeaders.COOKIE).collect(Collectors.toList()));
             }).har;
         }
+        browsingFinished(cookieHeaderValues, cookieGetUrl, har, cookiesSetByServer);
+    }
+
+    protected void browsingFinished(Multimap<String, String> cookieHeaderValues, URL cookieGetUrl, Har har, List<DeserializableCookie> cookiesSetByServer) {
         System.out.format("cookie header values for paths %s: %s%n", cookieHeaderValues.keySet(), cookieHeaderValues);
         Stream<HarEntry> entries = har.getLog().getEntries().stream().filter(harEntry -> cookieGetUrl.toString().equals(harEntry.getRequest().getUrl()));
         List<String> cookiesSent = entries.flatMap(entry -> entry.getRequest().getHeaders().stream()).filter(header -> HttpHeaders.COOKIE.equalsIgnoreCase(header.getName())).map(HarNameValuePair::getValue).collect(Collectors.toList());
