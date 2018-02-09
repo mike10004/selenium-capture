@@ -70,7 +70,7 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
         return createWebDriverMaybeWithProxy(config.getProxyAddress(), config.getCertificateAndKeySource());
     }
 
-    protected SupplementingFirefoxProfile createFirefoxProfile(List<FirefoxProfileFolderAction> actions) {
+    private SupplementingFirefoxProfile createFirefoxProfile(List<FirefoxProfileFolderAction> actions) {
         return new SupplementingFirefoxProfile(actions);
     }
 
@@ -268,7 +268,7 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
 
     }
 
-    protected static class SupplementingFirefoxProfile extends org.openqa.selenium.firefox.FirefoxProfile {
+    private static class SupplementingFirefoxProfile extends org.openqa.selenium.firefox.FirefoxProfile {
 
         private final ImmutableList<? extends FirefoxProfileFolderAction> profileFolderActions;
 
