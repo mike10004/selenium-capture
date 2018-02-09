@@ -8,6 +8,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.io.ByteSource;
 import com.google.common.io.Files;
+import com.google.common.io.Resources;
 import net.lightbody.bmp.mitm.CertificateAndKeySource;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.firefox.FirefoxBinary;
@@ -219,6 +220,7 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
         public void perform(File profileDir) {
             File sqliteDbFile = new File(profileDir, COOKIES_DB_FILENAME);
             try {
+                Resources.asByteSource(getClass().getResource("/empty-firefox-cookies-db.sqlite")).copyTo(Files.asByteSink(sqliteDbFile));
                 cookieImporter.importCookies(cookies, sqliteDbFile);
                 log.debug("imported {} cookies into firefox profile sqlite database {}", cookies.size(), sqliteDbFile);
             } catch (SQLException | IOException e) {
