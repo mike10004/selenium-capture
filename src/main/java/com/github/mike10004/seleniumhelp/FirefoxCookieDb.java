@@ -33,7 +33,7 @@ public abstract class FirefoxCookieDb {
 
     protected final CookieTransferConfig config;
 
-    private FirefoxCookieDb(CookieTransferConfig config) {
+    protected FirefoxCookieDb(CookieTransferConfig config) {
         this.config = checkNotNull(config);
     }
 
@@ -170,7 +170,7 @@ public abstract class FirefoxCookieDb {
                 "CREATE INDEX moz_basedomain ON moz_cookies (baseDomain, originAttributes);"
         );
 
-        private static void checkResult(ProgramWithOutputStringsResult result) throws SQLException, IOException {
+        private static void checkResult(ProgramWithOutputStringsResult result) throws SQLException {
             if (result.getExitCode() != 0) {
                 log.error("sqlite3 exited with code {}; stderr: {}", result.getExitCode(), result.getStderrString());
                 throw new SQLException("sqlite3 exited with code " + result.getExitCode() + "; " + StringUtils.abbreviate(result.getStderrString(), 256));
