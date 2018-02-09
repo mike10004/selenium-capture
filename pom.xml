@@ -34,13 +34,15 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <slf4j.version>1.7.25</slf4j.version>
-        <xvfb-manager.version>0.15</xvfb-manager.version>
+        <xvfb-manager.version>0.16</xvfb-manager.version>
         <test.log.level>info</test.log.level>
         <selenium.version>3.7.1</selenium.version>
-        <common-helper.version>8.0.2</common-helper.version>
+        <common-helper.version>8.0.5</common-helper.version>
         <!--suppress CheckTagEmptyBody -->
         <selenium-help.test.proxy.http></selenium-help.test.proxy.http>
         <chrome.headless.tests.disabled>false</chrome.headless.tests.disabled>
+        <!--suppress CheckTagEmptyBody -->
+        <selenium-help.firefox.executable.path></selenium-help.firefox.executable.path>
     </properties>
     <profiles>
         <profile>
@@ -87,6 +89,7 @@
                             <org.slf4j.simpleLogger.defaultLogLevel>${test.log.level}</org.slf4j.simpleLogger.defaultLogLevel>
                             <selenium-help.test.proxy.http>${selenium-help.test.proxy.http}</selenium-help.test.proxy.http>
                             <selenium-help.chrome.headless.tests.disabled>${chrome.headless.tests.disabled}</selenium-help.chrome.headless.tests.disabled>
+                            <selenium-help.firefox.executable.path>${selenium-help.firefox.executable.path}</selenium-help.firefox.executable.path>
                         </systemPropertyVariables>
                     </configuration>
                 </plugin>

@@ -2,25 +2,29 @@ package com.github.mike10004.seleniumhelp;
 
 import com.github.mike10004.nativehelper.Program;
 import com.github.mike10004.nativehelper.ProgramWithOutputStringsResult;
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableRangeMap;
 import com.google.common.collect.Range;
 import com.google.common.collect.RangeMap;
 import io.github.bonigarcia.wdm.ChromeDriverManager;
 import io.github.bonigarcia.wdm.FirefoxDriverManager;
 import org.apache.commons.lang3.StringUtils;
-import org.junit.Test;
+import org.openqa.selenium.firefox.FirefoxBinary;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.util.function.Supplier;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 /**
  * Static constants and utility methods to assist with tests.
  */
 public class UnitTests {
+
+    private static final String SYSPROP_FIREFOX_EXECUTABLE_PATH = "selenium-help.firefox.executable.path";
 
     /**
      * Recommended version of ChromeDriver.
@@ -89,7 +93,7 @@ public class UnitTests {
         }
     }
 
-    private static class FirefoxGeckoVersionMapping {
+    static class FirefoxGeckoVersionMapping {
 
         public static RangeMap<Version, String> ffRangeToGeckoMap = ImmutableRangeMap.<Version, String>builder()
                 .put(Range.atLeast(Version.parseVersion("53.0")), "0.18.0")
@@ -114,7 +118,7 @@ public class UnitTests {
             return version;
         }
 
-        private static String parseVersionStringFromVersionOutput(String versionOutput) throws VersionMagicException {
+        static String parseVersionStringFromVersionOutput(String versionOutput) throws VersionMagicException {
             Pattern patt = Pattern.compile("\\b(?:(?:Firefox)|(?:Iceweasel))\\s+(\\d+(\\.[-\\w]+)*)(\\s+.*)?$");
             Matcher matcher = patt.matcher(versionOutput);
             if (!matcher.find()) {
@@ -124,26 +128,19 @@ public class UnitTests {
         }
     }
 
-    public static class DetectionTest {
-
-        @Test
-        public void detect() {
-            Version version = FirefoxGeckoVersionMapping.detectFirefoxVersion();
-            assertTrue("version > 45", version.getMajorVersion() > 45);
-        }
-
-        @Test
-        public void parseVersionString() throws Exception {
-            String[][] testCases = {
-                    {"Mozilla Firefox 54.0", "54.0"},
-                    {"Mozilla Firefox 54.0.124", "54.0.124"},
-                    {"Iceweasel 54.0", "54.0"},
-                    {"Mozilla Firefox 54.0-nightly", "54.0-nightly"},
-            };
-            for (String[] testCase : testCases) {
-                String input = testCase[0], output = testCase[1];
-                assertEquals("parse", output, FirefoxGeckoVersionMapping.parseVersionStringFromVersionOutput(input));
+    public static Supplier<FirefoxBinary> createFirefoxBinarySupplier() throws IOException {
+        String executablePath = System.getProperty(SYSPROP_FIREFOX_EXECUTABLE_PATH);
+        if (Strings.isNullOrEmpty(executablePath)) {
+            return FirefoxBinary::new;
+        } else {
+            File executableFile = new File(executablePath);
+            if (!executableFile.isFile()) {
+                throw new FileNotFoundException(executablePath);
             }
+            if (!executableFile.canExecute()) {
+                throw new IOException("not executable: " + executableFile);
+            }
+            return () -> new FirefoxBinary(executableFile);
         }
     }
 }

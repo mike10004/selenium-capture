@@ -5,27 +5,20 @@ import com.github.mike10004.xvfbmanager.XvfbController;
 import com.google.common.collect.Multimap;
 import com.google.gson.GsonBuilder;
 import net.lightbody.bmp.core.har.Har;
-import org.apache.commons.io.FileUtils;
 import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Rule;
+import org.junit.ClassRule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URL;
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import static org.junit.Assert.assertEquals;
 
 public class FirefoxCookieUsageTest extends CookieUsageTestBase {
 
-    @BeforeClass
-    public static void prepareGeckodriver() {
-        UnitTests.setupRecommendedGeckoDriver();
-    }
+    @ClassRule
+    public static GeckodriverSetupRule geckodriverSetupRule = new GeckodriverSetupRule();
 
     private ProfileFolderTracker tracker;
 
@@ -35,16 +28,18 @@ public class FirefoxCookieUsageTest extends CookieUsageTestBase {
     }
 
     @Override
-    protected WebDriverFactory createCookielessWebDriverFactory(XvfbController xvfbController) {
+    protected WebDriverFactory createCookielessWebDriverFactory(XvfbController xvfbController) throws IOException {
         return FirefoxWebDriverFactory.builder()
+                .binary(UnitTests.createFirefoxBinarySupplier())
                 .environment(xvfbController::newEnvironment)
                 .profileFolderAction(tracker)
                 .build();
     }
 
     @Override
-    protected WebDriverFactory createCookiefulWebDriverFactory(XvfbController xvfbController, List<DeserializableCookie> cookiesSetByServer) {
+    protected WebDriverFactory createCookiefulWebDriverFactory(XvfbController xvfbController, List<DeserializableCookie> cookiesSetByServer) throws IOException {
         return FirefoxWebDriverFactory.builder()
+                .binary(UnitTests.createFirefoxBinarySupplier())
                 .environment(xvfbController::newEnvironment)
                 .cookies(cookiesSetByServer)
                 .profileFolderAction(tracker)

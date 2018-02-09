@@ -33,7 +33,7 @@ public abstract class CookieUsageTestBase {
     @Rule
     public XvfbRule xvfb = XvfbRule.builder().disabled(SHOW_BROWSER).build();
 
-    protected abstract WebDriverFactory createCookielessWebDriverFactory(XvfbController xvfbController);
+    protected abstract WebDriverFactory createCookielessWebDriverFactory(XvfbController xvfbController) throws IOException;
 
     private List<DeserializableCookie> browseAndSetCookies(URL url, XvfbController xvfbController) throws IOException {
         WebDriverFactory factory = createCookielessWebDriverFactory(xvfbController);
@@ -119,7 +119,7 @@ public abstract class CookieUsageTestBase {
         System.out.println();
     }
 
-    protected abstract WebDriverFactory createCookiefulWebDriverFactory(XvfbController xvfbController, List<DeserializableCookie> cookiesSetByServer);
+    protected abstract WebDriverFactory createCookiefulWebDriverFactory(XvfbController xvfbController, List<DeserializableCookie> cookiesSetByServer) throws IOException;
 
     @SuppressWarnings("SameParameterValue")
     static DeserializableCookie newCookie(String name, String value) {
