@@ -1,5 +1,6 @@
 package com.github.mike10004.seleniumhelp;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import net.lightbody.bmp.client.ClientUtil;
 import net.lightbody.bmp.mitm.CertificateAndKeySource;
@@ -76,6 +77,11 @@ public class ChromeWebDriverFactory extends EnvironmentWebDriverFactory {
     protected void configureProxy(ChromeOptions options, InetSocketAddress proxySocketAddress, @SuppressWarnings("unused") @Nullable CertificateAndKeySource certificateAndKeySource) {
         Proxy seleniumProxy = ClientUtil.createSeleniumProxy(proxySocketAddress);
         options.setProxy(seleniumProxy);
+    }
+
+    @VisibleForTesting
+    ChromeOptions getChromeOptions() {
+        return chromeOptions;
     }
 
     /**
@@ -155,10 +161,13 @@ public class ChromeWebDriverFactory extends EnvironmentWebDriverFactory {
 
         public ChromeWebDriverFactory build() {
             if (headless) {
-                chromeOptions.addArguments("--headless", "--disable-gpu");
+                chromeOptions.addArguments(HEADLESS_ARGS);
             }
             return new ChromeWebDriverFactory(this);
         }
+
+        @VisibleForTesting
+        static final ImmutableList<String> HEADLESS_ARGS = ImmutableList.of("--headless", "--disable-gpu");
     }
 
 }

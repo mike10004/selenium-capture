@@ -55,7 +55,7 @@ public class UnproxiedWebDriverTest {
     @Test
     public void testChrome() throws Exception {
         UnitTests.setupRecommendedChromeDriver();
-        ChromeOptions options = new ChromeOptions();
+        ChromeOptions options = UnitTests.createChromeOptions();
         options.addArguments("--headless");
         ChromeWebDriverFactory factory = ChromeWebDriverFactory.builder()
                 .chromeOptions(options)

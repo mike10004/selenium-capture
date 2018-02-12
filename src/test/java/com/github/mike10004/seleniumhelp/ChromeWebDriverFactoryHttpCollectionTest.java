@@ -25,6 +25,7 @@ public class ChromeWebDriverFactoryHttpCollectionTest extends CollectionTestBase
     public void http() throws Exception {
         String display = xvfb.getController().getDisplay();
         WebDriverFactory webDriverFactory = ChromeWebDriverFactory.builder()
+                .chromeOptions(UnitTests.createChromeOptions())
                 .environment(ChromeWebDriverFactory.createEnvironmentSupplierForDisplay(display))
                 .build();
         testTrafficCollector(webDriverFactory);
@@ -34,7 +35,9 @@ public class ChromeWebDriverFactoryHttpCollectionTest extends CollectionTestBase
     public void http_headless() throws Exception {
         Assume.assumeFalse("headless tests disabled", UnitTests.isHeadlessChromeTestsDisabled());
         WebDriverFactory webDriverFactory = ChromeWebDriverFactory.builder()
-                .headless().build();
+                .chromeOptions(UnitTests.createChromeOptions())
+                .headless()
+                .build();
         testTrafficCollector(webDriverFactory);
     }
 
@@ -42,7 +45,9 @@ public class ChromeWebDriverFactoryHttpCollectionTest extends CollectionTestBase
     public void http_headless_brotli() throws Exception {
         Assume.assumeFalse("headless tests disabled", UnitTests.isHeadlessChromeTestsDisabled());
         WebDriverFactory webDriverFactory = ChromeWebDriverFactory.builder()
-                .headless().build();
+                .chromeOptions(UnitTests.createChromeOptions())
+                .headless()
+                .build();
         HarContent content = testTrafficCollector(webDriverFactory, new URL("http://httpbin.org/brotli"));
         System.out.println(content.getText());
     }

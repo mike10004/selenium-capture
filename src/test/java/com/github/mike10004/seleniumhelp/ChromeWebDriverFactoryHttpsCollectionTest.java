@@ -21,6 +21,7 @@ public class ChromeWebDriverFactoryHttpsCollectionTest extends CollectionTestBas
     public void https() throws Exception {
         String display = xvfb.getController().getDisplay();
         WebDriverFactory webDriverFactory = ChromeWebDriverFactory.builder()
+                .chromeOptions(UnitTests.createChromeOptions())
                 .environment(ChromeWebDriverFactory.createEnvironmentSupplierForDisplay(display))
                 .build();
         testTrafficCollector(webDriverFactory);

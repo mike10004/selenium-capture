@@ -1,14 +1,20 @@
 package com.github.mike10004.seleniumhelp;
 
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.CharMatcher;
+import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableList;
 import io.github.bonigarcia.wdm.ChromeDriverManager;
 import io.github.bonigarcia.wdm.FirefoxDriverManager;
+import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.firefox.FirefoxBinary;
 
 import javax.annotation.Nullable;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.List;
 import java.util.function.Supplier;
 
 /**
@@ -16,6 +22,7 @@ import java.util.function.Supplier;
  */
 public class UnitTests {
 
+    private static final String SYSPROP_CHROME_OPTIONS_EXTRA_ARGS = "chrome.options.extraArgs";
     private static final String SYSPROP_FIREFOX_EXECUTABLE_PATH = "selenium-help.firefox.executable.path";
 
     /**
@@ -81,5 +88,30 @@ public class UnitTests {
             }
             return () -> new FirefoxBinary(executableFile);
         }
+    }
+
+    private static List<String> getChromeOptionsExtraArgs() {
+        String tokensStr = System.getProperty(SYSPROP_CHROME_OPTIONS_EXTRA_ARGS);
+        return getChromeOptionsExtraArgs(tokensStr);
+    }
+
+    private static final Splitter chromeExtraArgSplitter = Splitter.on(CharMatcher.breakingWhitespace()).trimResults().omitEmptyStrings();
+
+    @VisibleForTesting
+    static ImmutableList<String> getChromeOptionsExtraArgs(@Nullable String systemPropertyValue) {
+        if (systemPropertyValue == null) {
+            return ImmutableList.of();
+        }
+        return ImmutableList.copyOf(chromeExtraArgSplitter.split(systemPropertyValue));
+    }
+
+    /**
+     * Creates a Chrome options object suitable for unit tests.
+     * @return
+     */
+    public static ChromeOptions createChromeOptions() {
+        ChromeOptions options = new ChromeOptions();
+        options.addArguments(getChromeOptionsExtraArgs());
+        return options;
     }
 }

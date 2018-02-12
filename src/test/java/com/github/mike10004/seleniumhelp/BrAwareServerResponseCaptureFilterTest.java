@@ -52,6 +52,7 @@ public class BrAwareServerResponseCaptureFilterTest {
          * use xvfb here
          */
         WebDriverFactory webDriverFactory = ChromeWebDriverFactory.builder()
+                .chromeOptions(UnitTests.createChromeOptions())
                 .environment(xvfb.getController().newEnvironment())
                 .build();
         TrafficCollector collector = TrafficCollector.builder(webDriverFactory).build();

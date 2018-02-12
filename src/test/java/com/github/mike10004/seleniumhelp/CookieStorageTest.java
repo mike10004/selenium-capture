@@ -26,7 +26,11 @@ public class CookieStorageTest {
     @Test
     public void testChrome() throws Exception {
         UnitTests.setupRecommendedChromeDriver();
-        testWithDriverFactory(ChromeWebDriverFactory.builder().environment(xvfb.getController()::newEnvironment).build());
+        ChromeWebDriverFactory factory = ChromeWebDriverFactory.builder()
+                .chromeOptions(UnitTests.createChromeOptions())
+                .environment(xvfb.getController()::newEnvironment)
+                .build();
+        testWithDriverFactory(factory);
     }
 
     private void testWithDriverFactory(WebDriverFactory factory) throws IOException, MalformedCookieException {
