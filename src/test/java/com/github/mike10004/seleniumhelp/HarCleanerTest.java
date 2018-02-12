@@ -1,6 +1,7 @@
 package com.github.mike10004.seleniumhelp;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.io.CharSource;
 import com.google.common.io.Resources;
 import com.google.common.net.HttpHeaders;
 import net.lightbody.bmp.core.har.*;
@@ -39,8 +40,28 @@ public class HarCleanerTest {
         }
         System.out.format("%d entries cleaned%n", cleaned.size());
         assertEquals("num cleaned entries", 2, cleaned.size());
-        assertEquals("brotli-decompressed js", plainJs, brotliJsResponse.getContent().getText());
-        assertEquals("brotli-decompressed css", plainCss, brotliCssResponse.getContent().getText());
+        assertEqualsAsText("brotli-decompressed js", plainJs, brotliJsResponse.getContent().getText());
+        assertEqualsAsText("brotli-decompressed css", plainCss, brotliCssResponse.getContent().getText());
+    }
+
+    /**
+     * Compares two text blocks, normalizing line endings.
+     * @param message message
+     * @param expected expected text
+     * @param actual actual text
+     */
+    private static void assertEqualsAsText(String message, String expected, String actual) {
+        if (expected == null || actual == null) {
+            assertEquals(message, expected, actual);
+            return;
+        }
+        try {
+            List<String> expectedLines = CharSource.wrap(expected).readLines();
+            List<String> actualLines = CharSource.wrap(actual).readLines();
+            assertEquals("message", expectedLines, actualLines);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private HarEntry buildEntry(HarRequest request, HarResponse response) {
