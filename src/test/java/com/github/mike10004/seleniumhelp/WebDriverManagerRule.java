@@ -15,7 +15,7 @@ import static java.util.Objects.requireNonNull;
  */
 public class WebDriverManagerRule extends ExternalResource {
 
-    private static final Cache<String, Void> lockManager = CacheBuilder.newBuilder().build();
+    private static final Cache<String, String> lockManager = CacheBuilder.newBuilder().build();
 
     private final Runnable runner;
     private final String identifier;
@@ -27,11 +27,11 @@ public class WebDriverManagerRule extends ExternalResource {
 
     @Override
     protected void before() throws ExecutionException {
-        lockManager.get(identifier, new Callable<Void>() {
+        lockManager.get(identifier, new Callable<String>() {
             @Override
-            public Void call() {
+            public String call() {
                 runner.run();
-                return null;
+                return identifier;
             }
         });
     }
