@@ -56,6 +56,22 @@
             <properties>
                 <chrome.headless.tests.disabled>true</chrome.headless.tests.disabled>
             </properties>
+            <build>
+                <pluginManagement>
+                    <plugins>
+                        <plugin>
+                            <artifactId>maven-surefire-plugin</artifactId>
+                            <version>2.20.1</version>
+                            <configuration>
+                                <systemPropertyVariables>
+                                    <chrome.headless.tests.disabled>${chrome.headless.tests.disabled}</chrome.headless.tests.disabled>
+                                    <chrome.options.extraArgs>--no-sandbox</chrome.options.extraArgs>
+                                </systemPropertyVariables>
+                            </configuration>
+                        </plugin>
+                    </plugins>
+                </pluginManagement>
+            </build>
         </profile>
     </profiles>
     <distributionManagement>
