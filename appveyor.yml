@@ -10,6 +10,8 @@ build_script:
 
     choco install strawberryperl
 
+    c:\Strawberry\c\bin\openssl.exe version
+
     mvn --version
 
-    mvn install --quiet --batch-mode
+    mvn install --quiet --batch-mode -Dopenssl.executable.path=c:/Strawberry/c/bin/openssl.exe

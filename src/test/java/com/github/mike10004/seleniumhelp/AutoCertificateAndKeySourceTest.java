@@ -31,6 +31,7 @@ public class AutoCertificateAndKeySourceTest {
         String path = Strings.emptyToNull(System.getProperty(SYSPROP_OPENSSL_EXECUTABLE));
         if (path != null) {
             File file = new File(path);
+            System.out.format("using openssl executable at %s%n", file);
             return ExecutableConfig.byPathOnly(file);
         }
         return ExecutableConfig.byNameOnly("openssl");
