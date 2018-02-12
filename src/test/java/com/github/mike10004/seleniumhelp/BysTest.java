@@ -13,6 +13,7 @@ import org.openqa.selenium.WebDriverException;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeDriverService;
+import org.openqa.selenium.chrome.ChromeOptions;
 
 import java.net.URL;
 import java.util.List;
@@ -24,10 +25,16 @@ public class BysTest {
     @ClassRule
     public static final XvfbRule xvfb = XvfbRule.builder().build();
 
+    @ClassRule
+    public static WebDriverManagerRule chromedriverSetupRule = WebDriverManagerRule.chromedriver();
+
     @BeforeClass
     public static void setUpClass() throws Exception {
-        UnitTests.setupRecommendedChromeDriver();
-        driver = new ChromeDriver(new ChromeDriverService.Builder().withEnvironment(xvfb.getController().newEnvironment()).build());
+        ChromeOptions options = UnitTests.createChromeOptions();
+        ChromeDriverService driverService = new ChromeDriverService.Builder()
+                .withEnvironment(xvfb.getController().newEnvironment())
+                .build();
+        driver = new ChromeDriver(driverService, options);
     }
 
     private static WebDriver driver;

@@ -20,7 +20,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class FirefoxCookieUsageTest extends CookieUsageTestBase {
 
     @ClassRule
-    public static GeckodriverSetupRule geckodriverSetupRule = new GeckodriverSetupRule();
+    public static WebDriverManagerRule geckodriverSetupRule = WebDriverManagerRule.geckodriver();
 
     @Rule
     public final TemporaryFolder temporaryFolder = new TemporaryFolder();
