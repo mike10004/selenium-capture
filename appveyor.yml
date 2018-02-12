@@ -8,6 +8,8 @@ build_script:
 
     choco install sqlite
 
+    choco install openssl.light
+
     mvn --version
 
     mvn install --quiet --batch-mode

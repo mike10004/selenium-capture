@@ -1,6 +1,7 @@
 package com.github.mike10004.seleniumhelp;
 
 import com.github.mike10004.seleniumhelp.AutoCertificateAndKeySource.SerializableForm;
+import com.google.common.base.Strings;
 import com.google.common.io.BaseEncoding;
 import com.google.common.io.Files;
 import net.lightbody.bmp.core.har.HarEntry;
@@ -21,8 +22,23 @@ import static org.junit.Assert.assertNotNull;
 
 public class AutoCertificateAndKeySourceTest {
 
+    private static final String SYSPROP_OPENSSL_EXECUTABLE = "openssl.executable.path";
+
     @Rule
     public TemporaryFolder temporaryFolder = new TemporaryFolder();
+
+    protected ExecutableConfig makeOpensslConfig() {
+        String path = Strings.emptyToNull(System.getProperty(SYSPROP_OPENSSL_EXECUTABLE));
+        if (path != null) {
+            File file = new File(path);
+            return ExecutableConfig.byPathOnly(file);
+        }
+        return ExecutableConfig.byNameOnly("openssl");
+    }
+
+    protected ExecutableConfig makeKeytoolConfig() {
+        return ExecutableConfig.byNameOnly("keytool");
+    }
 
     @Test
     public void generateAndUseCertificate() throws Exception {
@@ -72,9 +88,9 @@ public class AutoCertificateAndKeySourceTest {
             SerializableForm serializableForm = certificateAndKeySource.createSerializableForm();
             File keystoreFile = createTempPathname(scratchDir, ".keystore");
             File pkcs12File = createTempPathname(scratchDir, ".p12");
-            certificateAndKeySource.createPKCS12File(pkcs12File);
+            certificateAndKeySource.createPKCS12File(makeKeytoolConfig(), pkcs12File);
             File pemFile = File.createTempFile("certificate", ".pem", scratchDir.toFile());
-            certificateAndKeySource.createPemFile(pkcs12File, pemFile);
+            certificateAndKeySource.createPemFile(makeOpensslConfig(), pkcs12File, pemFile);
             Files.write(Base64.getDecoder().decode(serializableForm.keystoreBase64), keystoreFile);
             TrafficCollector collector = TrafficCollector.builder(new JBrowserDriverFactory(pemFile))
                     .collectHttps(certificateAndKeySource)

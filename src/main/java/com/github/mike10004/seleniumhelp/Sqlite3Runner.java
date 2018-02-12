@@ -29,9 +29,9 @@ public abstract class Sqlite3Runner {
 
     private static final Logger log = LoggerFactory.getLogger(Sqlite3Runner.class);
     private static final Charset SQLITE3_CHARSET = Charset.defaultCharset();
-    private final Sqlite3Config config;
+    private final ExecutableConfig config;
 
-    protected Sqlite3Runner(Sqlite3Config config) {
+    protected Sqlite3Runner(ExecutableConfig config) {
         this.config = requireNonNull(config);
     }
 
@@ -43,24 +43,19 @@ public abstract class Sqlite3Runner {
         }
     }
 
-    public interface Sqlite3Config {
-        Subprocess.Builder sqlite3Builder();
-        boolean isSqlite3Available();
-    }
-
     protected void assertSqlite3Available() throws SQLException {
-        if (!config.isSqlite3Available()) {
+        if (!config.isExecutableAvailable()) {
             throw new SQLException("no sqlite3 executable found in search of PATH");
         }
     }
 
     protected Subprocess.Builder getSqlite3Builder() {
-        return config.sqlite3Builder();
+        return config.subprocessBuilder();
     }
 
     static class Sqlite3GenericExporter extends Sqlite3Runner {
 
-        public Sqlite3GenericExporter(Sqlite3Config config) {
+        public Sqlite3GenericExporter(ExecutableConfig config) {
             super(config);
         }
 
@@ -88,7 +83,7 @@ public abstract class Sqlite3Runner {
 
     static class Sqlite3GenericImporter extends Sqlite3Runner {
 
-        protected Sqlite3GenericImporter(Sqlite3Config config) {
+        protected Sqlite3GenericImporter(ExecutableConfig config) {
             super(config);
         }
 

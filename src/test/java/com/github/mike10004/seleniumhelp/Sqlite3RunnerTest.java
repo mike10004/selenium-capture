@@ -38,7 +38,7 @@ public class Sqlite3RunnerTest {
         return new Sqlite3Runner(createConfig()) {};
     }
 
-    private Sqlite3Runner.Sqlite3Config createConfig() {
+    private ExecutableConfig createConfig() {
         return FirefoxCookieDb.CookieTransferConfig.createDefault();
     }
 

@@ -1,6 +1,5 @@
 package com.github.mike10004.seleniumhelp;
 
-import com.github.mike10004.nativehelper.Whicher;
 import com.github.mike10004.nativehelper.subprocess.ProcessResult;
 import com.github.mike10004.nativehelper.subprocess.Subprocess;
 import com.google.common.annotations.VisibleForTesting;
@@ -20,8 +19,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import static com.google.common.base.Preconditions.checkArgument;
 
 @SuppressWarnings({"Convert2Lambda"})
 public class FirefoxCookieDb {
@@ -47,52 +44,23 @@ public class FirefoxCookieDb {
     @VisibleForTesting
     static final String TABLE_NAME = "moz_cookies";
 
-    public static class CookieTransferConfig implements Sqlite3Runner.Sqlite3Config {
+    public static class CookieTransferConfig extends ExecutableConfig.BasicExecutableConfig {
 
         private static final String SQLITE3_EXECUTABLE_NAME = "sqlite3";
 
-        @Nullable
-        private final String sqlite3Pathname;
-        private final String sqlite3ExecutableName;
-
-        private CookieTransferConfig(@Nullable String sqlite3Pathname, String sqlite3ExecutableName) {
-            this.sqlite3Pathname = sqlite3Pathname;
-            this.sqlite3ExecutableName = sqlite3ExecutableName;
-            checkArgument(sqlite3Pathname != null || sqlite3ExecutableName != null);
+        public CookieTransferConfig(@Nullable File executablePathname, String executableFilename) {
+            super(executablePathname, executableFilename);
         }
 
         @SuppressWarnings("unused")
         public static CookieTransferConfig forSqlite3Executable(File executable) {
-            return new CookieTransferConfig(executable.getAbsolutePath(), SQLITE3_EXECUTABLE_NAME);
+            return new CookieTransferConfig(executable, SQLITE3_EXECUTABLE_NAME);
         }
 
         public static CookieTransferConfig createDefault() {
             return new CookieTransferConfig(null, SQLITE3_EXECUTABLE_NAME);
         }
 
-        protected Whicher getWhicher() {
-            return Whicher.gnu();
-        }
-
-        @Override
-        public boolean isSqlite3Available() {
-            if (sqlite3Pathname != null) {
-                File sqlite3ExecutableFile = new File(sqlite3Pathname);
-                if (sqlite3ExecutableFile.isFile() && sqlite3ExecutableFile.canExecute()) {
-                    return true;
-                }
-            }
-            return getWhicher().which(sqlite3ExecutableName).isPresent();
-        }
-
-        @Override
-        public Subprocess.Builder sqlite3Builder() {
-            if (sqlite3Pathname == null) {
-                return Subprocess.running(sqlite3ExecutableName);
-            } else {
-                return Subprocess.running(new File(sqlite3Pathname));
-            }
-        }
     }
 
     public static Importer getImporter() {

@@ -32,6 +32,9 @@ import static com.google.common.base.Preconditions.checkState;
  */
 public class AutoCertificateAndKeySource implements CertificateAndKeySource, java.io.Closeable {
 
+    private static final String EXEC_NAME_KEYTOOL = "keytool";
+    private static final String EXEC_NAME_OPENSSL = "openssl";
+
     private static final Logger log = LoggerFactory.getLogger(AutoCertificateAndKeySource.class);
 
     private volatile MemoryKeyStoreCertificateSource onDemandSource;
@@ -156,8 +159,8 @@ public class AutoCertificateAndKeySource implements CertificateAndKeySource, jav
         }
     }
 
-    protected String getKeytoolExecutableName() {
-        return "keytool";
+    public void createPKCS12File(File p12File) throws IOException, InterruptedException {
+        createPKCS12File(ExecutableConfig.byNameOnly(EXEC_NAME_KEYTOOL), p12File);
     }
 
     /**
@@ -175,14 +178,14 @@ public class AutoCertificateAndKeySource implements CertificateAndKeySource, jav
      * </pre>
      * <p>The contents of `exported-keystore.pem` will be in PEM format.
      */
-    public void createPKCS12File(File p12File) throws IOException, InterruptedException {
+    public void createPKCS12File(ExecutableConfig keytoolConfig, File p12File) throws IOException, InterruptedException {
         generateIfNecessary();
         File keystoreFile = File.createTempFile("AutoCertificateAndKeySource", ".keystore", scratchDir.toFile());
         try {
             Files.write(onDemandSource.keystoreBytes, keystoreFile);
             String keystorePassword = onDemandSource.keystorePassword;
             {
-                Subprocess program = Subprocess.running(getKeytoolExecutableName())
+                Subprocess program = keytoolConfig.subprocessBuilder()
                         .arg("-importkeystore")
                         .args("-srckeystore", keystoreFile.getAbsolutePath())
                         .args("-srcstoretype", "jks")
@@ -204,15 +207,15 @@ public class AutoCertificateAndKeySource implements CertificateAndKeySource, jav
         }
     }
 
-    protected String getOpensslExecutableName() {
-        return "openssl";
+    public void createPemFile(File pkcs12File, File pemFile) throws IOException, InterruptedException {
+        createPemFile(ExecutableConfig.byNameOnly(EXEC_NAME_OPENSSL), pkcs12File, pemFile);
     }
 
-    public void createPemFile(File pkcs12File, File pemFile) throws IOException, InterruptedException {
+    public void createPemFile(ExecutableConfig opensslConfig, File pkcs12File, File pemFile) throws IOException, InterruptedException {
         generateIfNecessary();
         String keystorePassword = onDemandSource.keystorePassword;
         {
-            Subprocess subprocess = Subprocess.running(getOpensslExecutableName())
+            Subprocess subprocess = opensslConfig.subprocessBuilder()
                     .arg("pkcs12")
                     .args("-in", pkcs12File.getAbsolutePath())
                     .args("-passin", "pass:" + keystorePassword)
