@@ -14,4 +14,4 @@ build_script:
 
     mvn --version
 
-    mvn install --quiet --batch-mode -Dopenssl.executable.path=c:/Strawberry/c/bin/openssl.exe
+    mvn install --quiet --batch-mode -Dopenssl.tests.skip=true

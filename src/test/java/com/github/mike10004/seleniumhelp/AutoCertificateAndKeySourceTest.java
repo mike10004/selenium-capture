@@ -6,6 +6,7 @@ import com.google.common.io.BaseEncoding;
 import com.google.common.io.Files;
 import net.lightbody.bmp.core.har.HarEntry;
 import net.lightbody.bmp.core.har.HarResponse;
+import org.junit.Assume;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -22,6 +23,7 @@ import static org.junit.Assert.assertNotNull;
 
 public class AutoCertificateAndKeySourceTest {
 
+    private static final String SYSPROP_OPENSSL_TESTS_SKIP = "openssl.tests.skip";
     private static final String SYSPROP_OPENSSL_EXECUTABLE = "openssl.executable.path";
 
     @Rule
@@ -91,6 +93,7 @@ public class AutoCertificateAndKeySourceTest {
             File pkcs12File = createTempPathname(scratchDir, ".p12");
             certificateAndKeySource.createPKCS12File(makeKeytoolConfig(), pkcs12File);
             File pemFile = File.createTempFile("certificate", ".pem", scratchDir.toFile());
+            assumeOpensslNotSkipped();
             certificateAndKeySource.createPemFile(makeOpensslConfig(), pkcs12File, pemFile);
             Files.write(Base64.getDecoder().decode(serializableForm.keystoreBase64), keystoreFile);
             TrafficCollector collector = TrafficCollector.builder(new JBrowserDriverFactory(pemFile))
@@ -108,8 +111,11 @@ public class AutoCertificateAndKeySourceTest {
                     .orElse(null);
             assertNotNull("response in har", response);
             assertEquals("response status", 200, response.getStatus());
-            assertEquals("num generate() invocations", 1, certificateAndKeySource.generateInvocations.get());
         }
+    }
 
+    private void assumeOpensslNotSkipped() {
+        boolean skipOpenssl = Boolean.parseBoolean(System.getProperty(SYSPROP_OPENSSL_TESTS_SKIP, "false"));
+        Assume.assumeFalse("openssl tests are skipped by property " + SYSPROP_OPENSSL_TESTS_SKIP, skipOpenssl);
     }
 }
