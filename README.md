@@ -1,4 +1,5 @@
-[![Travis build status](https://img.shields.io/travis/mike10004/selenium-help.svg)](https://travis-ci.org/mike10004/selenium-help)
+[![Travis build Status](https://travis-ci.org/mike10004/selenium-help.svg?branch=master)](https://travis-ci.org/mike10004/selenium-help)
+[![AppVeyor build status](https://ci.appveyor.com/api/projects/status/fuk4sjvhjl66or7f?svg=true)](https://ci.appveyor.com/project/mike10004/selenium-help)
 [![Maven Central](https://img.shields.io/maven-central/v/com.github.mike10004/selenium-help.svg)](https://repo1.maven.org/maven2/com/github/mike10004/selenium-help/)
 
 selenium-help
