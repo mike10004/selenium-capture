@@ -10,6 +10,7 @@ import com.google.common.io.ByteSource;
 import com.google.common.io.Files;
 import com.google.common.io.Resources;
 import net.lightbody.bmp.mitm.CertificateAndKeySource;
+import org.apache.commons.io.FileUtils;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.firefox.FirefoxBinary;
 import org.openqa.selenium.firefox.FirefoxDriver;
@@ -23,18 +24,18 @@ import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.nio.file.Path;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
 
@@ -43,6 +44,7 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
     private final ImmutableList<FirefoxProfileAction> profileActions;
     private final ImmutableList<FirefoxProfileFolderAction> profileFolderActions;
     private final ImmutableList<DeserializableCookie> cookies;
+    private final Path scratchDir;
     private final InstanceConstructor<? extends WebDriver> constructor;
 
     @SuppressWarnings("unused")
@@ -52,13 +54,14 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
 
     protected FirefoxWebDriverFactory(Builder builder) {
         super(builder);
-        this.binarySupplier = checkNotNull(builder.binarySupplier);
+        this.scratchDir = requireNonNull(builder.scratchDir);
+        this.binarySupplier = requireNonNull(builder.binarySupplier);
         this.profilePreferences = ImmutableMap.copyOf(builder.profilePreferences);
         checkPreferencesValues(this.profilePreferences.values());
         this.cookies = ImmutableList.copyOf(builder.cookies);
         this.profileActions = ImmutableList.copyOf(builder.profileActions);
         this.profileFolderActions = ImmutableList.copyOf(builder.profileFolderActions);
-        this.constructor = Objects.requireNonNull(builder.instanceConstructor);
+        this.constructor = requireNonNull(builder.instanceConstructor);
     }
 
     protected ImmutableList<DeserializableCookie> getCookies() {
@@ -83,7 +86,7 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
         List<FirefoxProfileFolderAction> actions = new ArrayList<>(2);
         List<DeserializableCookie> cookies_ = getCookies();
         if (!cookies.isEmpty()) {
-            actions.add(new CookieInstallingProfileAction(cookies_, FirefoxCookieDb.getImporter()));
+            actions.add(new CookieInstallingProfileAction(cookies_, FirefoxCookieDb.getImporter(), scratchDir));
         }
         if (certificateAndKeySource instanceof FirefoxCompatibleCertificateSource) {
             ByteSource certificateDbByteSource = ((FirefoxCompatibleCertificateSource)certificateAndKeySource).getFirefoxCertificateDatabase();
@@ -127,10 +130,10 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
 
     /**
      * Applies additional preferences, drawn from a map, to a profile. Subclasses may overr
-     * @param profilePreferences
-     * @param proxy
-     * @param certificateAndKeySource
-     * @param profile
+     * @param profilePreferences map of profile preference settings
+     * @param proxy the proxy socket address
+     * @param certificateAndKeySource the certificate and key source
+     * @param profile the profile
      */
     @SuppressWarnings("unused")
     protected void applyAdditionalPreferences(Map<String, Object> profilePreferences,
@@ -188,7 +191,7 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
 
         private CertificateSupplementingProfileAction(ByteSource certificateDbSource) {
             super();
-            this.certificateDbSource = checkNotNull(certificateDbSource);
+            this.certificateDbSource = requireNonNull(certificateDbSource);
         }
 
         @Override
@@ -210,10 +213,12 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
 
         private final List<DeserializableCookie> cookies;
         private final Importer cookieImporter;
+        private final Path scratchDir;
 
-        CookieInstallingProfileAction(List<DeserializableCookie> cookies, Importer cookieImporter) {
-            this.cookies = checkNotNull(cookies);
-            this.cookieImporter = checkNotNull(cookieImporter);
+        CookieInstallingProfileAction(List<DeserializableCookie> cookies, Importer cookieImporter, Path scratchDir) {
+            this.cookies = requireNonNull(cookies);
+            this.cookieImporter = requireNonNull(cookieImporter);
+            this.scratchDir = requireNonNull(scratchDir);
         }
 
         @Override
@@ -221,7 +226,7 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
             File sqliteDbFile = new File(profileDir, COOKIES_DB_FILENAME);
             try {
                 Resources.asByteSource(getClass().getResource("/empty-firefox-cookies-db.sqlite")).copyTo(Files.asByteSink(sqliteDbFile));
-                cookieImporter.importCookies(cookies, sqliteDbFile);
+                cookieImporter.importCookies(cookies, sqliteDbFile, scratchDir);
                 log.debug("imported {} cookies into firefox profile sqlite database {}", cookies.size(), sqliteDbFile);
             } catch (SQLException | IOException e) {
                 throw new ProfilePreparationException("failed to install cookies into " + sqliteDbFile, e);
@@ -241,7 +246,7 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
         /**
          * Configures a Firefox profile instance.
          * @param profile the profile instance
-         * @throws IOException
+         * @throws IOException if an I/O error occurs
          */
         void perform(FirefoxProfile profile) throws IOException;
     }
@@ -296,6 +301,7 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
         private Supplier<FirefoxBinary> binarySupplier = FirefoxBinary::new;
         private Map<String, Object> profilePreferences = new LinkedHashMap<>();
         private List<DeserializableCookie> cookies = new ArrayList<>();
+        private Path scratchDir = FileUtils.getTempDirectory().toPath();
         private List<FirefoxProfileAction> profileActions = new ArrayList<>();
         private List<FirefoxProfileFolderAction> profileFolderActions = new ArrayList<>();
         private InstanceConstructor<? extends WebDriver> instanceConstructor = FirefoxDriver::new;
@@ -304,7 +310,7 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
         }
 
         public Builder constructor(InstanceConstructor<? extends WebDriver> constructor) {
-            this.instanceConstructor = Objects.requireNonNull(constructor);
+            this.instanceConstructor = requireNonNull(constructor);
             return this;
         }
 
@@ -313,7 +319,7 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
         }
 
         public Builder binary(Supplier<FirefoxBinary> binarySupplier) {
-            this.binarySupplier = checkNotNull(binarySupplier);
+            this.binarySupplier = requireNonNull(binarySupplier);
             return this;
         }
 
@@ -323,7 +329,7 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
          * @return this instance
          */
         public Builder preferences(Map<String, Object> val) {
-            profilePreferences = checkNotNull(val);
+            profilePreferences = requireNonNull(val);
             return this;
         }
 
@@ -341,6 +347,7 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
          * Adds one cookie.
          * @param cookie cookie to add
          * @return this instance
+         * @see #scratchDir(Path)
          */
         public Builder cookie(DeserializableCookie cookie) {
             cookies.add(cookie);
@@ -349,22 +356,24 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
 
         /**
          * Adds a list of cookies.
-         * @param val cookies to add
+         * @param cookies cookies to add
          * @return this instance
+         * @see #scratchDir(Path)
          */
-        public Builder addCookies(Iterable<DeserializableCookie> val) {
-            Iterables.addAll(cookies, val);
+        public Builder addCookies(Iterable<DeserializableCookie> cookies) {
+            Iterables.addAll(this.cookies, cookies);
             return this;
         }
 
         /**
          * Replaces the list of cookies.
-         * @param val cookies
+         * @param cookies cookies
          * @return this instance
+         * @see #scratchDir(Path)
          */
-        public Builder cookies(Iterable<DeserializableCookie> val) {
-            cookies.clear();
-            return addCookies(val);
+        public Builder cookies(Iterable<DeserializableCookie> cookies) {
+            this.cookies.clear();
+            return addCookies(cookies);
         }
 
         @SuppressWarnings("BooleanParameter")
@@ -390,6 +399,11 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
 
         public Builder profileFolderAction(FirefoxProfileFolderAction profileFolderAction) {
             profileFolderActions.add(profileFolderAction);
+            return this;
+        }
+
+        public Builder scratchDir(Path scratchDir) {
+            this.scratchDir = requireNonNull(scratchDir);
             return this;
         }
 

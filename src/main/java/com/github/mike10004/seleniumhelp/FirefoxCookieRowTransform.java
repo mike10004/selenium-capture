@@ -91,7 +91,7 @@ public class FirefoxCookieRowTransform {
 
     public Map<String, String> apply(Map<String, Object> explodedCookie) {
         Map<String, String> sqlRowMap = new TreeMap<>();
-        for (String sqlFieldName : FirefoxCookieDb.sqliteColumnNames) {
+        for (String sqlFieldName : FirefoxCookieDb.SQLITE_COLUMN_NAMES) {
             sqlRowMap.put(sqlFieldName, "");
             Object value = getCookieValueGetterBySqlFieldName(sqlFieldName).apply(explodedCookie);
             if (value != null) {

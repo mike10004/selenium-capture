@@ -55,8 +55,8 @@ public class FirefoxCookieDbTest {
         FirefoxCookieDb.CookieTransferConfig config = FirefoxCookieDb.CookieTransferConfig.createDefault();
         FirefoxCookieDb.Sqlite3ProgramImporter importer = new FirefoxCookieDb.Sqlite3ProgramImporter(config);
         File dbFile = tmp.newFile();
-        importer.importRows(ImmutableList.of(cookieFieldMap), dbFile);
-        Map<String, String> exportedCookieFieldMap = Iterables.getOnlyElement(new FirefoxCookieDb.Sqlite3ProgramExporter(config).dumpRows(dbFile));
+        importer.importRows(ImmutableList.of(cookieFieldMap), dbFile, tmp.getRoot().toPath());
+        Map<String, String> exportedCookieFieldMap = Iterables.getOnlyElement(new FirefoxCookieDb.Sqlite3ProgramExporter(config).dumpRows(FirefoxCookieDb.TABLE_NAME, dbFile));
         assertThat("field map", exportedCookieFieldMap, new MapMatcher<String, String>(cookieFieldMap) {
             @Override
             protected boolean isIgnoreValueEquality(Object key, Object expectedValue, Object actualValue) {
@@ -73,7 +73,7 @@ public class FirefoxCookieDbTest {
                 .copyTo(Files.asByteSink(dbFile));
         FirefoxCookieDb.CookieTransferConfig config = FirefoxCookieDb.CookieTransferConfig.createDefault();
         FirefoxCookieDb.Sqlite3ProgramExporter exporter = new FirefoxCookieDb.Sqlite3ProgramExporter(config);
-        List<Map<String, String>> rowMaps = exporter.dumpRows(dbFile);
+        List<Map<String, String>> rowMaps = exporter.dumpRows(FirefoxCookieDb.TABLE_NAME, dbFile);
         assertEquals("rowMaps.size", 1, rowMaps.size());
         Map<String, String> rowMap = rowMaps.iterator().next();
         Map<String, String> groundTruth = Iterables.getOnlyElement(Csvs.readRowMaps(CharSource.wrap(ExampleCookieSource.csvText), Csvs.headersFromFirstRow()));

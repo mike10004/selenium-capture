@@ -7,7 +7,9 @@ import com.google.gson.GsonBuilder;
 import net.lightbody.bmp.core.har.Har;
 import org.junit.Before;
 import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
 import java.io.IOException;
@@ -19,6 +21,9 @@ public class FirefoxCookieUsageTest extends CookieUsageTestBase {
 
     @ClassRule
     public static GeckodriverSetupRule geckodriverSetupRule = new GeckodriverSetupRule();
+
+    @Rule
+    public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
     private ProfileFolderTracker tracker;
 
@@ -41,6 +46,7 @@ public class FirefoxCookieUsageTest extends CookieUsageTestBase {
         return FirefoxWebDriverFactory.builder()
                 .binary(UnitTests.createFirefoxBinarySupplier())
                 .environment(xvfbController::newEnvironment)
+                .scratchDir(temporaryFolder.getRoot().toPath())
                 .cookies(cookiesSetByServer)
                 .profileFolderAction(tracker)
                 .build();
