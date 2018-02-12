@@ -8,7 +8,7 @@ build_script:
 
     choco install sqlite
 
-    choco install openssl.light
+    choco install strawberryperl
 
     mvn --version
 
