@@ -139,21 +139,30 @@ public abstract class Sqlite3Runner {
             String stdin = Csvs.writeRowMapsToString(sqliteColumnNames, rows, defaultCellValue, Csvs.UnknownKeyStrategy.IGNORE);
             ByteSource stdinSource = CharSource.wrap(stdin).asByteSource(SQLITE3_CHARSET);
             String stdinFilename;
-            if (getPlatform().isWindows()) {
-                File inputFile = File.createTempFile("firefox-cookie-import", ".csv", scratchDir.toFile());
-                stdinSource.copyTo(Files.asByteSink(inputFile));
-                stdinSource = Files.asByteSource(inputFile);
-                stdinFilename = escapeSqlite3Token(inputFile.getAbsolutePath());
-            } else {
-                stdinFilename = "/dev/stdin";
+            File inputFile = null;
+            try {
+                if (getPlatform().isWindows()) {
+                    inputFile = File.createTempFile("firefox-cookie-import", ".csv", scratchDir.toFile());
+                    stdinSource.copyTo(Files.asByteSink(inputFile));
+                    stdinSource = Files.asByteSource(inputFile);
+                    stdinFilename = escapeSqlite3Token(inputFile.getAbsolutePath());
+                } else {
+                    stdinFilename = "/dev/stdin";
+                }
+                Subprocess program = getSqlite3Builder()
+                        .arg("-csv")
+                        .arg(sqliteDbFile.getAbsolutePath())
+                        .arg(String.format(".import \"%s\" %s", stdinFilename, tableName))
+                        .build();
+                ProcessResult<String, String> result = executeOrPropagateInterruption(program, stdinSource);
+                checkResult(result);
+            } finally {
+                if (inputFile != null) {
+                    if (!inputFile.delete()) {
+                        log.warn("failed to delete temporary input file {}", inputFile);
+                    }
+                }
             }
-            Subprocess program = getSqlite3Builder()
-                    .arg("-csv")
-                    .arg(sqliteDbFile.getAbsolutePath())
-                    .arg(String.format(".import \"%s\" %s", stdinFilename, tableName))
-                    .build();
-            ProcessResult<String, String> result = executeOrPropagateInterruption(program, stdinSource);
-            checkResult(result);
         }
 
     }
