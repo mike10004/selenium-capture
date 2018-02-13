@@ -36,7 +36,8 @@
         <slf4j.version>1.7.25</slf4j.version>
         <xvfb-manager.version>0.16</xvfb-manager.version>
         <test.log.level>info</test.log.level>
-        <selenium.version>3.7.1</selenium.version>
+        <selenium.version>3.9.1</selenium.version>
+        <antiprint.version>0.7</antiprint.version>
         <common-helper.version>8.0.5</common-helper.version>
         <!--suppress CheckTagEmptyBody -->
         <selenium-help.test.proxy.http></selenium-help.test.proxy.http>
@@ -295,14 +296,15 @@
         <dependency>
             <groupId>com.github.mike10004</groupId>
             <artifactId>chrome-cookie-implant</artifactId>
-            <version>1.5.9</version>
+            <version>1.5.11</version>
         </dependency>
         <dependency>
             <groupId>com.machinepublishers</groupId>
             <artifactId>jbrowserdriver</artifactId>
-            <version>0.17.11</version>
+            <version>1.0.0-RC1</version>
             <scope>test</scope>
             <exclusions>
+                <!-- jbrowserdriver frequently uses an older version of Selenium -->
                 <exclusion>
                     <groupId>org.seleniumhq.selenium</groupId>
                     <artifactId>*</artifactId>
@@ -339,7 +341,7 @@
         <dependency>
             <groupId>com.github.mike10004</groupId>
             <artifactId>extensible-firefox-webdriver</artifactId>
-            <version>${selenium.version}x1</version>
+            <version>${selenium.version}x${antiprint.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
