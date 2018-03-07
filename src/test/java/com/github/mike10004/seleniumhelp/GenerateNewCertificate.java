@@ -113,8 +113,9 @@ public class GenerateNewCertificate {
         ImpersonatingMitmManager mitmManager = ImpersonatingMitmManager.builder()
                 .rootCertificateSource(rootCertificateGenerator)
                 .build();
+        // changed: don't provide a TrustStrategy because we only want to trust the self-signed cert we specify
         SSLContext customSslContext = SSLContexts.custom()
-                .loadTrustMaterial(keystoreFile, keystorePassword.toCharArray(), new TrustSelfSignedStrategy())
+                .loadTrustMaterial(keystoreFile, keystorePassword.toCharArray(), null)
                 .build();
         String HEADER_NAME = "X-This-Was-Sent-Through-The-Proxy";
         String headerValue = UUID.randomUUID().toString();
