@@ -64,7 +64,11 @@ public class TrafficCollector {
         this.harPostProcessors = ImmutableList.copyOf(harPostProcessors);
     }
 
-    private TrafficCollector(Builder builder) {
+    /**
+     * Constructs an instance of the class from the given builder.
+     * @param builder the builder
+     */
+    protected TrafficCollector(Builder builder) {
         this(builder.webDriverFactory,
                 builder.certificateAndKeySource,
                 builder.upstreamProxyProvider,
