@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.30
+----
+
+* allow TrafficCollector subclasses to call constructor that accepts Builder
+
 0.29
 ----
 
