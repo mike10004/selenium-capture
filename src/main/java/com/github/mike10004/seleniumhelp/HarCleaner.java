@@ -48,7 +48,7 @@ public class HarCleaner {
             String contentEncoding = getHeaderValue(rsp.getHeaders(), HttpHeaders.CONTENT_ENCODING);
             if (HEADER_VALUE_BROTLI_ENCODED.equalsIgnoreCase(contentEncoding) && content != null) {
                 String text = content.getText();
-                if (base64Alphabet().matchesAllOf(text)) {
+                if (text != null && base64Alphabet().matchesAllOf(text)) {
                     return true;
                 }
             }

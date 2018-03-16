@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.io.CharSource;
 import com.google.common.io.Resources;
 import com.google.common.net.HttpHeaders;
+import com.google.common.net.MediaType;
 import net.lightbody.bmp.core.har.*;
 import org.junit.Test;
 
@@ -94,5 +95,18 @@ public class HarCleanerTest {
         List<HarNameValuePair> headers = ImmutableList.of(buildHeader(HttpHeaders.CONTENT_TYPE, contentTypeHeader), buildHeader(HttpHeaders.CONTENT_ENCODING, contentEncodingHeader));
         response.getHeaders().addAll(headers);
         return response;
+    }
+
+    @Test
+    public void clean_entryResponseContentTextNull() throws Exception {
+        Har har = new Har();
+        HarResponse response = buildResponse(MediaType.JAVASCRIPT_UTF_8.toString(), "br", (String)null, "base64");
+        HarEntry entry = new HarEntry();
+        entry.setResponse(response);
+        HarLog log = new HarLog();
+        log.addEntry(entry);
+        har.setLog(log);
+        new HarCleaner().clean(har);
+        assertEquals("num entries after clean", 1, har.getLog().getEntries().size());
     }
 }
