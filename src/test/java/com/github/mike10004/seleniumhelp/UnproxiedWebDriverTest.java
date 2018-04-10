@@ -1,8 +1,8 @@
 package com.github.mike10004.seleniumhelp;
 
 import com.github.mike10004.xvfbtesting.XvfbRule;
-import fi.iki.elonen.NanoHTTPD;
-import fi.iki.elonen.NanoHTTPD.Response.Status;
+import io.github.mike10004.nanochamp.repackaged.fi.iki.elonen.NanoHTTPD;
+import io.github.mike10004.nanochamp.repackaged.fi.iki.elonen.NanoHTTPD.Response.Status;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.After;
 import org.junit.Before;

@@ -4,7 +4,7 @@ import com.github.mike10004.xvfbtesting.XvfbRule;
 import com.google.common.io.Resources;
 import com.google.common.net.HttpHeaders;
 import com.google.common.net.MediaType;
-import fi.iki.elonen.NanoHTTPD;
+import io.github.mike10004.nanochamp.repackaged.fi.iki.elonen.NanoHTTPD;
 import io.github.mike10004.nanochamp.server.NanoControl;
 import io.github.mike10004.nanochamp.server.NanoResponse;
 import io.github.mike10004.nanochamp.server.NanoServer;
