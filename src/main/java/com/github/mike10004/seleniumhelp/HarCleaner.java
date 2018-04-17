@@ -27,6 +27,9 @@ import java.util.stream.Stream;
 
 public class HarCleaner {
 
+    private static final CharMatcher ALPHANUMERIC = CharMatcher.inRange('A', 'Z').or(CharMatcher.inRange('a', 'z')).or(CharMatcher.inRange('0', '9'));
+    private static final CharMatcher BASE_64_ALPHABET = ALPHANUMERIC.or(CharMatcher.anyOf("/+="));
+
     static final String HEADER_VALUE_BROTLI_ENCODED = "br";
 
     public HarCleaner() {
@@ -93,10 +96,12 @@ public class HarCleaner {
             super(message);
         }
 
+        @SuppressWarnings("unused")
         public DecodedContentException(String message, Throwable cause) {
             super(message, cause);
         }
 
+        @SuppressWarnings("unused")
         public DecodedContentException(Throwable cause) {
             super(cause);
         }
@@ -140,11 +145,10 @@ public class HarCleaner {
     }
 
     private static CharMatcher base64Alphabet() {
-        return base64Alphabet;
+        return BASE_64_ALPHABET;
     }
 
-    private static final CharMatcher base64Alphabet = CharMatcher.javaLetterOrDigit().or(CharMatcher.anyOf("/+="));
-
+    @SuppressWarnings("SameParameterValue")
     @Nullable
     private static String getHeaderValue(Iterable<HarNameValuePair> headers, String headerName) {
         for (HarNameValuePair header : headers) {

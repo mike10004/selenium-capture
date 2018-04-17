@@ -36,8 +36,8 @@
         <slf4j.version>1.7.25</slf4j.version>
         <xvfb-manager.version>0.16</xvfb-manager.version>
         <test.log.level>info</test.log.level>
-        <selenium.version>3.9.1</selenium.version>
-        <antiprint.version>0.7</antiprint.version>
+        <selenium.version>3.11.0</selenium.version>
+        <antiprint.version>0.8</antiprint.version>
         <common-helper.version>8.0.5</common-helper.version>
         <!--suppress CheckTagEmptyBody -->
         <selenium-help.test.proxy.http></selenium-help.test.proxy.http>
@@ -296,7 +296,7 @@
         <dependency>
             <groupId>com.github.mike10004</groupId>
             <artifactId>chrome-cookie-implant</artifactId>
-            <version>1.5.11</version>
+            <version>1.5.12</version>
         </dependency>
         <dependency>
             <groupId>com.machinepublishers</groupId>
@@ -324,7 +324,7 @@
         <dependency>
             <groupId>com.github.mike10004</groupId>
             <artifactId>nanohttpd-server</artifactId>
-            <version>0.12</version>
+            <version>0.14</version>
             <scope>test</scope>
         </dependency>
         <dependency>

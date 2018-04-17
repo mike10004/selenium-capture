@@ -118,7 +118,7 @@ public class TrafficCollectorTest {
     @Test
     public void drive() throws Exception {
         String expected = "hello";
-        NanoServer nano = NanoServer.builder().getPath("/hello", NanoResponse.status(200).plainTextUtf8(expected)).build();
+        NanoServer nano = NanoServer.builder().getPath("/hello", session -> NanoResponse.status(200).plainTextUtf8(expected)).build();
         String bodyText;
         try (NanoControl ctrl = nano.startServer()) {
             TrafficCollector collector = TrafficCollector.builder(new JBrowserDriverFactory()).build();

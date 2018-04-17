@@ -62,7 +62,7 @@ public class BrAwareServerResponseCaptureFilterTest {
                 .content(MediaType.PLAIN_TEXT_UTF_8, brotliBytes)
                 .build();
         System.out.format("prepared response with compressed bytes: %s%n", new String(new Hex().encode(brotliBytes)));
-        NanoServer server = NanoServer.builder().get(compressedResponse).build();
+        NanoServer server = NanoServer.builder().get(session -> compressedResponse).build();
         String pageText;
         String url;
         try (NanoControl ctrl = server.startServer()) {
