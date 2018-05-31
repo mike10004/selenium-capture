@@ -213,4 +213,26 @@ public class UnitTests {
         options.addArguments(getChromeOptionsExtraArgs());
         return options;
     }
+
+    public static final String SYSPROP_OPENSSL_TESTS_SKIP = "openssl.tests.skip";
+    private static final String SYSPROP_OPENSSL_EXECUTABLE = "openssl.executable.path";
+
+    public static ExecutableConfig makeOpensslConfig() {
+        String path = Strings.emptyToNull(System.getProperty(SYSPROP_OPENSSL_EXECUTABLE));
+        if (path != null) {
+            File file = new File(path);
+            System.out.format("using openssl executable at %s%n", file);
+            return ExecutableConfig.byPathOnly(file);
+        }
+        return ExecutableConfig.byNameOnly("openssl");
+    }
+
+    public static ExecutableConfig makeKeytoolConfig() {
+        return ExecutableConfig.byNameOnly("keytool");
+    }
+
+    public static boolean isSkipOpensslTests() {
+        return Boolean.parseBoolean(System.getProperty(SYSPROP_OPENSSL_TESTS_SKIP, "false"));
+    }
+
 }

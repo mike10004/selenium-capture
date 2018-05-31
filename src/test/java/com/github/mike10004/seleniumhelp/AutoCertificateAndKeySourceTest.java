@@ -1,7 +1,6 @@
 package com.github.mike10004.seleniumhelp;
 
 import com.github.mike10004.seleniumhelp.AutoCertificateAndKeySource.SerializableForm;
-import com.google.common.base.Strings;
 import com.google.common.io.BaseEncoding;
 import com.google.common.io.Files;
 import net.lightbody.bmp.core.har.HarEntry;
@@ -23,25 +22,8 @@ import static org.junit.Assert.assertNotNull;
 
 public class AutoCertificateAndKeySourceTest {
 
-    private static final String SYSPROP_OPENSSL_TESTS_SKIP = "openssl.tests.skip";
-    private static final String SYSPROP_OPENSSL_EXECUTABLE = "openssl.executable.path";
-
     @Rule
     public TemporaryFolder temporaryFolder = new TemporaryFolder();
-
-    protected ExecutableConfig makeOpensslConfig() {
-        String path = Strings.emptyToNull(System.getProperty(SYSPROP_OPENSSL_EXECUTABLE));
-        if (path != null) {
-            File file = new File(path);
-            System.out.format("using openssl executable at %s%n", file);
-            return ExecutableConfig.byPathOnly(file);
-        }
-        return ExecutableConfig.byNameOnly("openssl");
-    }
-
-    protected ExecutableConfig makeKeytoolConfig() {
-        return ExecutableConfig.byNameOnly("keytool");
-    }
 
     @Test
     public void generateAndUseCertificate() throws Exception {
@@ -63,7 +45,8 @@ public class AutoCertificateAndKeySourceTest {
 
     private File createTempPathname(Path scratchDir, String suffix) throws IOException {
         byte[] bytes = new byte[16];
-        String name = BaseEncoding.base32().encode(bytes) + suffix;
+        random.nextBytes(bytes);
+        String name = BaseEncoding.base16().encode(bytes) + suffix;
         File file = scratchDir.resolve(name).toFile();
         if (file.isFile()) {
             throw new IOException("file already exists: " + file);
@@ -86,15 +69,22 @@ public class AutoCertificateAndKeySourceTest {
         }
     }
 
-    private void testCertificateUsage(Path scratchDir) throws IOException, InterruptedException {
+    private void testCertificateUsage(Path scratchDir) throws IOException {
         try (CountingAutoCertificateAndKeySource certificateAndKeySource = new CountingAutoCertificateAndKeySource(scratchDir, random)) {
+            KeystoreInput keystoreInput = certificateAndKeySource.acquireKeystoreInput();
             SerializableForm serializableForm = certificateAndKeySource.createSerializableForm();
             File keystoreFile = createTempPathname(scratchDir, ".keystore");
             File pkcs12File = createTempPathname(scratchDir, ".p12");
-            certificateAndKeySource.createPKCS12File(makeKeytoolConfig(), pkcs12File);
+            KeystoreFileCreator keystoreFileCreator = new OpensslKeystoreFileCreator(UnitTests.makeKeytoolConfig(), UnitTests.makeOpensslConfig());
+            keystoreFileCreator.createPKCS12File(keystoreInput, pkcs12File);
             File pemFile = File.createTempFile("certificate", ".pem", scratchDir.toFile());
             assumeOpensslNotSkipped();
-            certificateAndKeySource.createPemFile(makeOpensslConfig(), pkcs12File, pemFile);
+            try {
+                keystoreFileCreator.createPemFile(pkcs12File, keystoreInput.getPassword(), pemFile);
+            } catch (KeystoreFileCreator.NonzeroExitFromCertProgramException e) {
+                System.out.println(e.result.content().stderr());
+                throw e;
+            }
             Files.write(Base64.getDecoder().decode(serializableForm.keystoreBase64), keystoreFile);
             TrafficCollector collector = TrafficCollector.builder(new JBrowserDriverFactory(pemFile))
                     .collectHttps(certificateAndKeySource)
@@ -115,7 +105,6 @@ public class AutoCertificateAndKeySourceTest {
     }
 
     private void assumeOpensslNotSkipped() {
-        boolean skipOpenssl = Boolean.parseBoolean(System.getProperty(SYSPROP_OPENSSL_TESTS_SKIP, "false"));
-        Assume.assumeFalse("openssl tests are skipped by property " + SYSPROP_OPENSSL_TESTS_SKIP, skipOpenssl);
+        Assume.assumeFalse("openssl tests are skipped by property " + UnitTests.SYSPROP_OPENSSL_TESTS_SKIP, UnitTests.isSkipOpensslTests());
     }
 }
