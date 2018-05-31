@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.35
+----
+
+* allow factory for cookie comparators in CookieCollection
+
 0.34
 ----
 
