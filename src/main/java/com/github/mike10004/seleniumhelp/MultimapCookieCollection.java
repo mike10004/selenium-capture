@@ -3,18 +3,18 @@ package com.github.mike10004.seleniumhelp;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Strings;
 import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Ordering;
 
 import javax.annotation.Nullable;
+import java.util.Comparator;
 import java.util.Objects;
 
 import static java.util.Objects.requireNonNull;
 
-public class MultimapCookieCollection implements CookieCollection {
+class MultimapCookieCollection implements CookieCollection {
 
     private final ImmutableMultimap<CookieKey, DeserializableCookie> cookies;
 
@@ -22,24 +22,19 @@ public class MultimapCookieCollection implements CookieCollection {
         this.cookies = ImmutableMultimap.copyOf(cookiesByEntry);
     }
 
-    ImmutableCollection<DeserializableCookie> getAllReceived() {
-        return cookies.values();
-    }
-
     static CookieCollection build(Iterable<DeserializableCookie> cookies) {
         return new MultimapCookieCollection(buildCookieKeyMultimap(cookies));
     }
 
     @Override
-    public ImmutableList<DeserializableCookie> makeUltimateCookieList() {
+    public ImmutableList<DeserializableCookie> makeCookieList(Comparator<? super DeserializableCookie> comparator) {
+        requireNonNull(comparator, "comparator");
         ImmutableList.Builder<DeserializableCookie> b = ImmutableList.builder();
         cookies.asMap().forEach((key, cookieList) -> {
-            b.add(COOKIES_BY_CREATION_DATE.max(cookieList));
+            b.add(Ordering.from(comparator).max(cookieList));
         });
         return b.build();
     }
-
-    private static final Ordering<DeserializableCookie> COOKIES_BY_CREATION_DATE = Ordering.natural().onResultOf(DeserializableCookie::getCreationDate);
 
     private static class CookieKey {
         public final String domain;
