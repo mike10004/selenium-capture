@@ -1,6 +1,13 @@
 Changelog
 =========
 
+0.33
+----
+
+* accommodate change in openssl syntax (use -nodes instead of empty password)
+* separate pem file creation code from cert/key source
+* change API for raw cookie parsing
+
 0.30
 ----
 
