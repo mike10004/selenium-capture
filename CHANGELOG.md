@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.36
+----
+
+* make DeserializableCookie string representation more compact
+
 0.35
 ----
 
