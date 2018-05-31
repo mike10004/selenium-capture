@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.34
+----
+
+* allow other orderings of cookies from HarAnalysis/CookieCollection
+
 0.33
 ----
 
