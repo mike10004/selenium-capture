@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Ordering;
 
 import java.util.Comparator;
+import java.util.function.Function;
 
 /**
  * Interface of collections of cookies received while web browsing. Multiple cookies are received
@@ -29,10 +30,14 @@ public interface CookieCollection {
         return Ordering.natural().onResultOf(DeserializableCookie::getCreationDate).nullsFirst();
     }
 
+    default ImmutableList<DeserializableCookie> makeCookieList(Comparator<? super DeserializableCookie> ordering) {
+        return makeCookieList(anykey -> ordering);
+    }
+
     /**
      * Creates a list of cookies with unique domain/name/path fields from a
      * @return
      */
-    ImmutableList<DeserializableCookie> makeCookieList(Comparator<? super DeserializableCookie> ordering);
+    ImmutableList<DeserializableCookie> makeCookieList(Function<? super CookieKey, Comparator<? super DeserializableCookie>> orderingFactory);
 
 }
