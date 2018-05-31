@@ -1,8 +1,7 @@
 package com.github.mike10004.seleniumhelp;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.MoreObjects;
-import com.google.common.collect.Ordering;
-import com.google.common.math.LongMath;
 import com.google.common.net.HttpHeaders;
 import net.lightbody.bmp.core.har.Har;
 import net.lightbody.bmp.core.har.HarEntry;
@@ -10,12 +9,17 @@ import net.lightbody.bmp.core.har.HarNameValuePair;
 import net.lightbody.bmp.core.har.HarPostData;
 import net.lightbody.bmp.core.har.HarRequest;
 import net.lightbody.bmp.core.har.HarResponse;
-import org.apache.commons.lang3.tuple.Pair;
+import org.apache.http.cookie.MalformedCookieException;
 
 import javax.annotation.Nullable;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
-import java.util.function.Function;
+import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
@@ -38,66 +42,30 @@ public class HarAnalysis {
     }
 
     CookieCollection findCookies(final FlexibleCookieSpec cookieSpec) {
-        return findCookies(cookieSpec, HarEntry::getStartedDateTime);
-    }
-
-    public CookieCollection findCookies(Function<HarEntry, Date> creationDateGetter) {
-        return findCookies(FlexibleCookieSpec.getDefault(), creationDateGetter);
-    }
-
-    CookieCollection findCookies(final FlexibleCookieSpec cookieSpec, Function<HarEntry, Date> creationDateGetter) {
         Stream<HarEntry> headerValues = findEntriesWithSetCookieHeaders();
-        return MultimapCookieCollection.build(headerValues, cookieSpec);
-    }
-
-    private static class IndexedEntry {
-
-        public final int index;
-        public final HarEntry entry;
-        public final long sequence;
-
-        public IndexedEntry(int index, HarEntry entry, long sequence) {
-            this.index = index;
-            this.entry = entry;
-            this.sequence = sequence;
-        }
-
-        public static IndexedEntry from(int index, HarEntry entry) {
-            long sequence = Long.MIN_VALUE;
-            Date entryStarted = entry.getStartedDateTime();
-            long entryStartedMs = -1;
-            if (entryStarted != null) {
-                entryStartedMs = entryStarted.getTime();
-            }
-            if (entryStartedMs >= 0) {
-                long entryTimeMs = entry.getTime();
-                if (entryTimeMs > 0) {
-                    sequence = LongMath.saturatedAdd(entryStartedMs, entryTimeMs);
-                }
-            }
-            return new IndexedEntry(index, entry, sequence);
-        }
-
-        private static final Ordering<IndexedEntry> ORDERING_BY_SEQUENCE = Ordering.natural().onResultOf(entry -> entry.sequence);
-
-        public static Ordering<IndexedEntry> orderingBySequence() {
-            return ORDERING_BY_SEQUENCE;
-        }
+        List<DeserializableCookie> cookies = new ArrayList<>();
+        headerValues.forEach(entry -> {
+            cookies.addAll(makeCookiesFromEntry(cookieSpec, entry));
+        });
+        return MultimapCookieCollection.build(cookies);
     }
 
     private Stream<HarEntry> findEntriesWithSetCookieHeaders() {
         Stream<HarEntry> entriesWithCookieHeaders = har.getLog().getEntries().stream()
-                .filter(entryPredicate(any(), input -> input != null && input.getHeaders().stream().anyMatch((hnvp) -> HttpHeaders.SET_COOKIE.equalsIgnoreCase(hnvp.getName()))));
+                .filter(ENTRY_HAS_SET_COOKIE_HEADER_IN_RESPONSE);
         return entriesWithCookieHeaders;
     }
 
-    private static Predicate<HarEntry> entryPredicate(final Predicate<HarRequest> requestPredicate, final Predicate<HarResponse> responsePredicate) {
-        return harEntry -> harEntry != null && requestPredicate.test(harEntry.getRequest()) && responsePredicate.test(harEntry.getResponse());
-    }
-
-    private static <T> Predicate<T> any() {
-        return x -> true;
-    }
+    private static final Predicate<HarEntry> ENTRY_HAS_SET_COOKIE_HEADER_IN_RESPONSE = new Predicate<HarEntry>() {
+        @Override
+        public boolean test(HarEntry entry) {
+            HarResponse input = null;
+            if (entry != null) {
+                input = entry.getResponse();
+            }
+            return input != null && input.getHeaders().stream().anyMatch(header -> HttpHeaders.SET_COOKIE.equalsIgnoreCase(header.getName()));
+        }
+    };
 
     public static String describe(HarRequest request) {
         if (request == null) {
@@ -140,4 +108,37 @@ public class HarAnalysis {
                 .add("mimeType", postData.getMimeType())
                 .toString();
     }
+
+    private static Date getResponseMoment(HarEntry entry) {
+        Instant requestInstant = entry.getStartedDateTime().toInstant();
+        long entryTimeMs = entry.getTime();
+        Instant responseInstant = requestInstant.plus(entryTimeMs, ChronoUnit.MILLIS);
+        return Date.from(responseInstant);
+    }
+
+    @VisibleForTesting
+    static List<DeserializableCookie> makeCookiesFromEntry(final FlexibleCookieSpec cookieSpec, final HarEntry entry) {
+        URL originUrl;
+        Date creationDate = getResponseMoment(entry);
+        try {
+            originUrl = new URL(entry.getRequest().getUrl());
+        } catch (MalformedURLException e) {
+            throw new IllegalArgumentException(e);
+        }
+        Stream<String> headerValues = entry.getResponse().getHeaders().stream()
+                .filter(header -> HttpHeaders.SET_COOKIE.equalsIgnoreCase(header.getName()))
+                .map(HarNameValuePair::getValue);
+        final List<DeserializableCookie> cookies = new ArrayList<>();
+        headerValues.forEach(headerValue -> {
+            try {
+                Stream<DeserializableCookie> cookieStream = cookieSpec.parse(headerValue, originUrl, creationDate).stream()
+                        .map(x -> (DeserializableCookie) x);
+                cookieStream.forEach(cookies::add);
+            } catch (MalformedCookieException e) {
+                throw new IllegalArgumentException(e);
+            }
+        });
+        return cookies;
+    }
+
 }
