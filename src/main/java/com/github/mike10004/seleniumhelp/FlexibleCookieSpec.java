@@ -29,6 +29,7 @@ import java.util.Locale;
 import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 class FlexibleCookieSpec extends CookieSpecBase {
 
@@ -120,8 +121,8 @@ class FlexibleCookieSpec extends CookieSpecBase {
 
         @Override
         public boolean match(final Cookie cookie, final CookieOrigin origin) {
-            Args.notNull(cookie, "Cookie");
-            Args.notNull(origin, "Cookie origin");
+            requireNonNull(cookie, "Cookie");
+            requireNonNull(origin, "Cookie origin");
             final String host = origin.getHost();
             String domain = cookie.getDomain();
             if (domain == null) {

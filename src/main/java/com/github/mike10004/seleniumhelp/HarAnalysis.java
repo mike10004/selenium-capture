@@ -1,6 +1,8 @@
 package com.github.mike10004.seleniumhelp;
 
 import com.google.common.base.MoreObjects;
+import com.google.common.collect.Ordering;
+import com.google.common.math.LongMath;
 import com.google.common.net.HttpHeaders;
 import net.lightbody.bmp.core.har.Har;
 import net.lightbody.bmp.core.har.HarEntry;
@@ -23,7 +25,7 @@ public class HarAnalysis {
 
     private final Har har;
 
-    private HarAnalysis(Har har) {
+    protected HarAnalysis(Har har) {
         this.har = checkNotNull(har);
     }
 
@@ -45,52 +47,56 @@ public class HarAnalysis {
 
     CookieCollection findCookies(final FlexibleCookieSpec cookieSpec, Function<HarEntry, Date> creationDateGetter) {
         Stream<HarEntry> headerValues = findEntriesWithSetCookieHeaders();
-        return CookieCollection.build(headerValues, cookieSpec);
+        return MultimapCookieCollection.build(headerValues, cookieSpec);
     }
 
-    public Stream<HarEntry> findEntriesWithSetCookieHeaders() {
+    private static class IndexedEntry {
+
+        public final int index;
+        public final HarEntry entry;
+        public final long sequence;
+
+        public IndexedEntry(int index, HarEntry entry, long sequence) {
+            this.index = index;
+            this.entry = entry;
+            this.sequence = sequence;
+        }
+
+        public static IndexedEntry from(int index, HarEntry entry) {
+            long sequence = Long.MIN_VALUE;
+            Date entryStarted = entry.getStartedDateTime();
+            long entryStartedMs = -1;
+            if (entryStarted != null) {
+                entryStartedMs = entryStarted.getTime();
+            }
+            if (entryStartedMs >= 0) {
+                long entryTimeMs = entry.getTime();
+                if (entryTimeMs > 0) {
+                    sequence = LongMath.saturatedAdd(entryStartedMs, entryTimeMs);
+                }
+            }
+            return new IndexedEntry(index, entry, sequence);
+        }
+
+        private static final Ordering<IndexedEntry> ORDERING_BY_SEQUENCE = Ordering.natural().onResultOf(entry -> entry.sequence);
+
+        public static Ordering<IndexedEntry> orderingBySequence() {
+            return ORDERING_BY_SEQUENCE;
+        }
+    }
+
+    private Stream<HarEntry> findEntriesWithSetCookieHeaders() {
         Stream<HarEntry> entriesWithCookieHeaders = har.getLog().getEntries().stream()
-                .filter(entryPredicate(anyRequest(), input -> input != null && input.getHeaders().stream().anyMatch((hnvp) -> HttpHeaders.SET_COOKIE.equalsIgnoreCase(hnvp.getName()))));
+                .filter(entryPredicate(any(), input -> input != null && input.getHeaders().stream().anyMatch((hnvp) -> HttpHeaders.SET_COOKIE.equalsIgnoreCase(hnvp.getName()))));
         return entriesWithCookieHeaders;
     }
 
-    public Stream<Pair<HarRequest, Stream<String>>> findCookieHeaderValues() {
-        Stream<HarEntry> entriesWithCookieHeaders = findEntriesWithSetCookieHeaders();
-        Stream<Pair<HarRequest, HarResponse>> interactionsWithCookieHeaders = entriesWithCookieHeaders.map(entryToInteraction());
-        Stream<Pair<HarRequest, Stream<String>>> mappedInteractions = interactionsWithCookieHeaders.map(rightTransform(responseHeaderTransform(HttpHeaders.SET_COOKIE)));
-        return mappedInteractions;
-    }
-
-    public static Function<HarResponse, Stream<String>> responseHeaderTransform(final String requiredHeaderName) {
-        checkNotNull(requiredHeaderName);
-        return input -> {
-            Stream<HarNameValuePair> stream = input.getHeaders().stream().filter(harNameValuePair -> requiredHeaderName.equalsIgnoreCase(harNameValuePair.getName()));
-            return stream.map(HarNameValuePair::getValue);
-        };
-    }
-
-    public static Function<HarEntry, Pair<HarRequest, HarResponse>> entryToInteraction() {
-        return input -> Pair.of(input.getRequest(), input.getResponse());
-    }
-
-    public static Predicate<HarEntry> entryPredicate(final Predicate<HarRequest> requestPredicate, final Predicate<HarResponse> responsePredicate) {
+    private static Predicate<HarEntry> entryPredicate(final Predicate<HarRequest> requestPredicate, final Predicate<HarResponse> responsePredicate) {
         return harEntry -> harEntry != null && requestPredicate.test(harEntry.getRequest()) && responsePredicate.test(harEntry.getResponse());
     }
 
-    public static Predicate<HarRequest> anyRequest() {
-        return harRequest -> true;
-    }
-
-    public static Predicate<HarResponse> anyResponse() {
-        return harResponse -> true;
-    }
-
-    public static <L1, R1, L2, R2> Function<Pair<L1, R1>, Pair<L2, R2>> pairTransform(final Function<L1, L2> left, final Function<R1, R2> right) {
-        return input -> Pair.of(left.apply(input.getLeft()), right.apply(input.getRight()));
-    }
-
-    public static <L, R1, R2> Function<Pair<L, R1>, Pair<L, R2>> rightTransform(final Function<R1, R2> right) {
-        return pairTransform(Function.identity(), right);
+    private static <T> Predicate<T> any() {
+        return x -> true;
     }
 
     public static String describe(HarRequest request) {

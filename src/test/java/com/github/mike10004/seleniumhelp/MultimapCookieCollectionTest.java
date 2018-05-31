@@ -30,7 +30,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
 import static org.junit.Assert.assertEquals;
 
-public class CookieCollectionTest {
+public class MultimapCookieCollectionTest {
 
     @Test
     public void makeUltimateCookieList_simple() throws Exception {
@@ -42,13 +42,13 @@ public class CookieCollectionTest {
         checkState(t2Finish.after(t1Finish));
         long t1Duration = computeDuration(t1Start, t1Finish), t2Duration = computeDuration(t2Start, t2Finish);
         HarEntry h1 = createHarEntry(t1Start, t1Duration), h2 = createHarEntry(t2Start, t2Duration);
-        long response1 = CookieCollection.getEntryResponseInstant(h1), response2 = CookieCollection.getEntryResponseInstant(h2);
+        long response1 = MultimapCookieCollection.getEntryResponseInstant(h1), response2 = MultimapCookieCollection.getEntryResponseInstant(h2);
         checkState(response2 > response1, "expect response1 %s < %s response2 (from %s, %s)", response1, response2, describeTime(h1), describeTime(h2));
         Multimap<HarEntry, DeserializableCookie> mm = ArrayListMultimap.create();
         mm.put(h1, createCookie("example.com", "/", "foo", "bad"));
         mm.put(h2, createCookie("example.com", "/", "foo", "good"));
         checkState(mm.keySet().size() == 2);
-        CookieCollection cc = new CookieCollection(mm);
+        CookieCollection cc = new MultimapCookieCollection(mm);
         List<DeserializableCookie> ultimates = cc.makeUltimateCookieList();
         assertEquals("num ultimates", 1, ultimates.size());
         Set<String> values = ultimates.stream().map(DeserializableCookie::getValue).collect(Collectors.toSet());
@@ -73,7 +73,7 @@ public class CookieCollectionTest {
         mm.put(h2, createCookie("example.com", "/", "foo", "good"));
         mm.put(h3, createCookie("bar.com", "/gaw", "foo", "good"));
         mm.put(h3, createCookie("baz.com", "/", "hello", "good"));
-        CookieCollection cc = new CookieCollection(mm);
+        CookieCollection cc = new MultimapCookieCollection(mm);
         List<DeserializableCookie> ultimates = cc.makeUltimateCookieList();
         assertEquals("num ultimates", 4, ultimates.size());
         Set<String> values = ultimates.stream().map(DeserializableCookie::getValue).collect(Collectors.toSet());
@@ -92,7 +92,7 @@ public class CookieCollectionTest {
         checkState(t2Finish.after(t1Finish) && t3Finish.after(t2Finish));
         long t1Duration = computeDuration(t1Start, t2Finish), t2Duration = computeDuration(t2Start, t2Finish), t3Duration = computeDuration(t3Start, t3Finish);
         HarEntry h1 = createHarEntry(t1Start, t1Duration), h2 = createHarEntry(t2Start, t2Duration), h3 = createHarEntry(t3Start, t3Duration);
-        assertEquals("ordering", ImmutableList.of(h1, h2, h3), CookieCollection.sortHarEntriesByResponseInstant(Stream.of(h1, h2, h3)).collect(Collectors.toList()));
+        assertEquals("ordering", ImmutableList.of(h1, h2, h3), MultimapCookieCollection.sortHarEntriesByResponseInstant(Stream.of(h1, h2, h3)).collect(Collectors.toList()));
     }
 
     private static DeserializableCookie createCookie(String domain, String path, String name, String value) {
@@ -143,7 +143,7 @@ public class CookieCollectionTest {
             HarResponse response = new HarResponse();
             entry.setResponse(response);
             response.getHeaders().add(new HarNameValuePair(HttpHeaders.SET_COOKIE, "foo=bar"));
-            CookieCollection cookies = CookieCollection.build(Stream.of(entry));
+            CookieCollection cookies = MultimapCookieCollection.build(Stream.of(entry));
             List<DeserializableCookie> cookieList = cookies.makeUltimateCookieList();
             assertEquals("cookie count", 1, cookieList.size());
         } finally {
