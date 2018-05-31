@@ -41,7 +41,7 @@ public class CookieStorageTest {
             return (Void) null;
         });
         Har har = collection.har;
-        final FlexibleCookieSpec cookieSpec = FlexibleCookieSpec.getDefault();
+        final SetCookieHeaderParser cookieSpec = SetCookieHeaderParser.create();
         List<DeserializableCookie> harCookies = HarAnalysis.of(har).findCookies(cookieSpec).makeUltimateCookieList();
         if (harCookies.size() > 1) {
             System.out.println("multiple cookies found");

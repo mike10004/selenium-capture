@@ -18,7 +18,6 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Date;
 import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
@@ -38,10 +37,10 @@ public class HarAnalysis {
     }
 
     public CookieCollection findCookies() {
-        return findCookies(FlexibleCookieSpec.getDefault());
+        return findCookies(SetCookieHeaderParser.create());
     }
 
-    CookieCollection findCookies(final FlexibleCookieSpec cookieSpec) {
+    CookieCollection findCookies(final SetCookieHeaderParser cookieSpec) {
         Stream<HarEntry> headerValues = findEntriesWithSetCookieHeaders();
         List<DeserializableCookie> cookies = new ArrayList<>();
         headerValues.forEach(entry -> {
@@ -109,17 +108,17 @@ public class HarAnalysis {
                 .toString();
     }
 
-    private static Date getResponseMoment(HarEntry entry) {
+    private static Instant getResponseMoment(HarEntry entry) {
         Instant requestInstant = entry.getStartedDateTime().toInstant();
         long entryTimeMs = entry.getTime();
         Instant responseInstant = requestInstant.plus(entryTimeMs, ChronoUnit.MILLIS);
-        return Date.from(responseInstant);
+        return responseInstant;
     }
 
     @VisibleForTesting
-    static List<DeserializableCookie> makeCookiesFromEntry(final FlexibleCookieSpec cookieSpec, final HarEntry entry) {
+    static List<DeserializableCookie> makeCookiesFromEntry(final SetCookieHeaderParser cookieSpec, final HarEntry entry) {
         URL originUrl;
-        Date creationDate = getResponseMoment(entry);
+        Instant creationDate = getResponseMoment(entry);
         try {
             originUrl = new URL(entry.getRequest().getUrl());
         } catch (MalformedURLException e) {

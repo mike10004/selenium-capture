@@ -1,33 +1,35 @@
 package com.github.mike10004.seleniumhelp;
 
-import com.google.common.collect.Iterables;
+import com.google.common.collect.ImmutableMap;
 import org.apache.http.FormattedHeader;
 import org.apache.http.Header;
 import org.apache.http.cookie.ClientCookie;
 import org.apache.http.cookie.CommonCookieAttributeHandler;
+import org.apache.http.cookie.Cookie;
 import org.apache.http.cookie.CookieAttributeHandler;
 import org.apache.http.cookie.CookieOrigin;
 import org.apache.http.cookie.MalformedCookieException;
 import org.apache.http.cookie.SM;
 import org.apache.http.message.ParserCursor;
 import org.apache.http.message.TokenParser;
-import org.apache.http.util.Args;
 import org.apache.http.util.CharArrayBuffer;
 
+import javax.annotation.Nullable;
+import java.time.Instant;
 import java.util.BitSet;
-import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+
+import static java.util.Objects.requireNonNull;
 
 /**
  * Cookie Parser based on {@link org.apache.http.impl.cookie.RFC6265CookieSpec}.
  */
-class CookieParser {
+class RFC6265SetCookieHeaderParser implements SetCookieHeaderParser {
     private final static char PARAM_DELIMITER  = ';';
     private final static char EQUAL_CHAR       = '=';
 
@@ -36,35 +38,31 @@ class CookieParser {
     private static final BitSet TOKEN_DELIMS = TokenParser.INIT_BITSET(EQUAL_CHAR, PARAM_DELIMITER);
     private static final BitSet VALUE_DELIMS = TokenParser.INIT_BITSET(PARAM_DELIMITER);
 
-//    private final CookieAttributeHandler[] attribHandlers;
-    private final Map<String, CookieAttributeHandler> attribHandlerMap;
+    private final ImmutableMap<String, CookieAttributeHandler> attribHandlerMap_;
     private final TokenParser tokenParser = TokenParser.INSTANCE;
 
-    public CookieParser(Iterable<CommonCookieAttributeHandler> handlers) {
-        this.attribHandlerMap = new ConcurrentHashMap<>(Iterables.size(handlers));
+    public RFC6265SetCookieHeaderParser(Iterable<CommonCookieAttributeHandler> handlers) {
+        ImmutableMap.Builder<String, CookieAttributeHandler> b = ImmutableMap.builder();
         for (final CommonCookieAttributeHandler handler: handlers) {
-            this.attribHandlerMap.put(handler.getAttributeName().toLowerCase(Locale.ROOT), handler);
+            b.put(handler.getAttributeName().toLowerCase(Locale.ROOT), handler);
         }
+        this.attribHandlerMap_ = b.build();
     }
 
     static String getDefaultDomain(final CookieOrigin origin) {
         return origin.getHost();
     }
 
-    protected DeserializableCookie.Builder buildCookie(CookieOrigin origin, String name, String value, Date creationDate) {
+    protected DeserializableCookie.Builder buildCookie(CookieOrigin origin, String name, String value, @Nullable Instant creationDate) {
         return DeserializableCookie.builder(name, value)
                 .domain(getDefaultDomain(origin))
                 .path(getDefaultPath(origin))
-                .creationDate(creationDate);
+                .creationDate(creationDate == null ? null : Date.from(creationDate));
     }
 
-    protected Date now() {
-        return Calendar.getInstance().getTime();
-    }
-
-    public List<DeserializableCookie> parse(final Header header, final CookieOrigin origin) throws MalformedCookieException {
-        Args.notNull(header, "Header");
-        Args.notNull(origin, "Cookie origin");
+    public List<Cookie> parse(final Header header, final CookieOrigin origin, final @Nullable Instant creationDate) throws MalformedCookieException {
+        requireNonNull(header, "Header");
+        requireNonNull(origin, "Cookie origin");
         if (!header.getName().equalsIgnoreCase(SM.SET_COOKIE)) {
             throw new MalformedCookieException("Unrecognized cookie header: '" + header.toString() + "'");
         }
@@ -98,7 +96,7 @@ class CookieParser {
         if (!cursor.atEnd()) {
             cursor.updatePos(cursor.getPos() + 1);
         }
-        final DeserializableCookie.Builder cookie = buildCookie(origin, name, value, now());
+        final DeserializableCookie.Builder cookie = buildCookie(origin, name, value, creationDate);
 
         final Map<String, String> attribMap = new LinkedHashMap<>();
         while (!cursor.atEnd()) {
@@ -125,7 +123,7 @@ class CookieParser {
         for (final Map.Entry<String, String> entry: attribMap.entrySet()) {
             final String paramName = entry.getKey().toLowerCase(Locale.ROOT);
             final String paramValue = entry.getValue();
-            final CookieAttributeHandler handler = this.attribHandlerMap.get(paramName);
+            final CookieAttributeHandler handler = this.attribHandlerMap_.get(paramName);
             if (handler != null) {
                 handler.parse(cookie, paramValue);
             }

@@ -1,9 +1,8 @@
 package com.github.mike10004.seleniumhelp;
 
 import org.apache.commons.lang3.time.DateUtils;
-import org.apache.http.cookie.CookieSpec;
-import org.apache.http.impl.cookie.DefaultCookieSpecProvider;
-import org.apache.http.protocol.BasicHttpContext;
+import org.apache.http.cookie.CookieOrigin;
+import org.apache.http.impl.cookie.BasicClientCookie;
 import org.junit.Test;
 import org.openqa.selenium.Cookie;
 
@@ -15,7 +14,7 @@ import java.util.function.Predicate;
 
 import static org.junit.Assert.assertEquals;
 
-public class CookieFilterTest {
+public class BasicCookieFilterTest {
 
     @Test
     public void goodWithPublicDomain() throws Exception {
@@ -71,15 +70,31 @@ public class CookieFilterTest {
     }
 
     private void testPredicate(Date now, Cookie cookie, boolean expected, URL url)  {
-        CookieFilter filter = new CookieFilter(newCookieSpec());
+        CookieFilter filter = new BasicCookieFilter();
         Predicate<Cookie> predicate = filter.makeSeleniumPredicate(url, now);
         assertEquals("cookie match", expected, predicate.test(cookie));
     }
 
-    private static CookieSpec newCookieSpec() {
-        return new FlexibleCookieSpec(new DefaultCookieSpecProvider().create(new BasicHttpContext()));
-//        return new RFC6265CookieSpecProvider().create(new BasicHttpContext());
-//        return new org.apache.http.impl.cookie.BrowserCompatSpec();
+    @Test
+    public void match_true() throws Exception {
+        URL url = new java.net.URL("https://www.google.com/");
+        BasicClientCookie cookie = new BasicClientCookie("foo", "bar");
+        cookie.setDomain(".google.com");
+        testMatch(cookie, url, true);
+    }
+
+    @Test
+    public void match_false() throws Exception {
+        URL url = new java.net.URL("https://www.example.com/");
+        BasicClientCookie cookie = new BasicClientCookie("foo", "bar");
+        cookie.setDomain(".google.com");
+        testMatch(cookie, url, false);
+    }
+
+    private void testMatch(org.apache.http.cookie.Cookie cookie, URL url, boolean expected) {
+        CookieFilter filter = new BasicCookieFilter();
+        CookieOrigin origin = CookieUtility.getInstance().buildCookieOrigin(url).getLeft();
+        assertEquals(cookie + " matches " + origin, expected, filter.makeApacheOriginPredicate(origin).test(cookie));
     }
 
 }

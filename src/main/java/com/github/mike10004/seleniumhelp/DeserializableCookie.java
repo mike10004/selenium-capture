@@ -11,7 +11,6 @@ import org.apache.commons.lang3.time.DateUtils;
 import org.apache.http.cookie.ClientCookie;
 import org.apache.http.cookie.SetCookie;
 import org.apache.http.impl.cookie.BasicClientCookie;
-import org.apache.http.util.Args;
 
 import javax.annotation.Nullable;
 import java.util.Calendar;
@@ -21,6 +20,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Class that represents a cookie that's easy to deserialize from json.
@@ -166,7 +166,7 @@ public class DeserializableCookie implements ClientCookie {
      */
     @Override
     public boolean isExpired(final Date now) {
-        Args.notNull(now, "Date");
+        requireNonNull(now, "Date");
         Date cookieExpiryDate_ = this.cookieExpiryDate;
         return cookieExpiryDate_ != null && (cookieExpiryDate_.before(now) || cookieExpiryDate.equals(now));
     }
