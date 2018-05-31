@@ -3,10 +3,12 @@
  */
 package com.github.mike10004.seleniumhelp;
 
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.gson.annotations.JsonAdapter;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DateUtils;
 import org.apache.http.cookie.ClientCookie;
 import org.apache.http.cookie.SetCookie;
@@ -244,20 +246,20 @@ public class DeserializableCookie implements ClientCookie {
 
     @Override
     public String toString() {
-        return "DeserializableCookie{" +
-                "name='" + name + '\'' +
-                ", attribs=" + attribs +
-                ", value='" + value + '\'' +
-                ", cookieComment='" + cookieComment + '\'' +
-                ", cookieDomain='" + cookieDomain + '\'' +
-                ", cookieExpiryDate=" + cookieExpiryDate +
-                ", cookiePath='" + cookiePath + '\'' +
-                ", isSecure=" + isSecure +
-                ", cookieVersion=" + cookieVersion +
-                ", creationDate=" + creationDate +
-                ", lastAccessed=" + lastAccessed +
-                ", httpOnly=" + httpOnly +
-                '}';
+        MoreObjects.ToStringHelper h = MoreObjects.toStringHelper(this);
+        h.add("name", name);
+        if (value != null) h.add("value", StringUtils.abbreviate(value, 36));
+        if (attribs != null) h.add("attribs", attribs);
+        if (cookieComment != null) h.add("cookieComment", cookieComment);
+        if (cookieDomain != null) h.add("cookieDomain", cookieDomain);
+        if (cookieExpiryDate != null) h.add("cookieExpiryDate", cookieExpiryDate);
+        h.add("cookiePath", cookiePath);
+        h.add("isSecure", isSecure);
+        h.add("cookieVersion", cookieVersion);
+        if (creationDate != null) h.add("creationDate", creationDate);
+        if (lastAccessed != null) h.add("lastAccessed", lastAccessed);
+        h.add("httpOnly", httpOnly);
+        return h.toString();
     }
 
     public String getBestDomainProperty() {
