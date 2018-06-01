@@ -35,8 +35,9 @@ public interface CookieCollection {
     }
 
     /**
-     * Creates a list of cookies with unique domain/name/path fields from a
-     * @return
+     * Creates a list of cookies with unique domain/name/path triplets.
+     * @param orderingFactory factory providing comparators for selecting which cookie to return for each domain/name/path triplet.
+     * @return a list of cookies
      */
     ImmutableList<DeserializableCookie> makeCookieList(Function<? super CookieKey, Comparator<? super DeserializableCookie>> orderingFactory);
 

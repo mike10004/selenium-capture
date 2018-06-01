@@ -21,6 +21,8 @@ public interface TrafficMonitor {
     void responseReceived(ImmutableHttpRequest httpRequest, ImmutableHttpResponse httpResponse);
 
     /**
+     * Gets teh max request buffer size.
+     * @return max request buffer size in bytes
      * @see HttpFiltersSource#getMaximumRequestBufferSizeInBytes()
      */
     default int getMaximumRequestBufferSizeInBytes() {
@@ -28,6 +30,8 @@ public interface TrafficMonitor {
     }
 
     /**
+     * Gets the max response buffer size.
+     * @return max response buffer size in bytes
      * @see HttpFiltersSource#getMaximumResponseBufferSizeInBytes()
      */
     default int getMaximumResponseBufferSizeInBytes() {

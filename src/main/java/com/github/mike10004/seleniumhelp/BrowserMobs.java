@@ -14,9 +14,9 @@ public class BrowserMobs {
     }
 
     /**
-     *
-     * @param browserMobProxy
-     * @return
+     * Gets the socket address for the given proxy instance.
+     * @param browserMobProxy the proxy instance
+     * @return the socket address
      * @see ClientUtil#createSeleniumProxy(BrowserMobProxy)
      */
     public static InetSocketAddress getConnectableSocketAddress(BrowserMobProxy browserMobProxy) {

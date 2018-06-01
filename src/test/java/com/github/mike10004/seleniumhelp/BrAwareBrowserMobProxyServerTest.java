@@ -1,15 +1,19 @@
 package com.github.mike10004.seleniumhelp;
 
-import net.lightbody.bmp.BrowserMobProxyServer;
+import com.github.mike10004.xvfbtesting.XvfbRule;
 import net.lightbody.bmp.core.har.HarEntry;
 import net.lightbody.bmp.core.har.HarResponse;
 import org.junit.BeforeClass;
+import org.junit.Rule;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 public class BrAwareBrowserMobProxyServerTest {
+
+    @Rule
+    public XvfbRule xvfbRule = new XvfbRule();
 
     @BeforeClass
     public static void setUpClass() {
@@ -18,7 +22,13 @@ public class BrAwareBrowserMobProxyServerTest {
 
     @Test
     public void decodeDuringHarCapture() throws Exception {
-        TrafficCollector collector = TrafficCollector.builder(new ChromeWebDriverFactory()).build();
+        WebDriverFactory webDriverFactory = ChromeWebDriverFactory.builder()
+                .environment(() -> xvfbRule.getController().newEnvironment())
+                .build();
+        TrafficCollector collector = TrafficCollector.builder(webDriverFactory)
+                // the collector uses the BrAwareBrowserMobProxyServer by default, so there is no need to specify it here
+                .build();
+        // TODO set up a local webserver that servers a brotli page instead of hitting this external one
         String brotliUrl = "https://tools-7.kxcdn.com/css/all.min.css";
         HarPlus<String> collection = collector.collect(driver -> {
             driver.get(brotliUrl);

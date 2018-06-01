@@ -28,7 +28,7 @@ public interface TrafficCollector {
      * @param <R> type of result the generator returns
      * @param monitor a monitor, or null
      * @return the HAR containing all traffic generated
-     * @throws IOException if something I/O related goes awry
+     * @throws IOException on I/O error
      * @throws WebDriverException if the web driver could not be created or the generator throws one
      */
     <R> HarPlus<R> collect(TrafficGenerator<R> generator, @Nullable TrafficMonitor monitor) throws IOException, WebDriverException;
@@ -39,8 +39,8 @@ public interface TrafficCollector {
      * @param monitor the monitor
      * @param <R> generator result type
      * @return the generator result
-     * @throws IOException
-     * @throws WebDriverException
+     * @throws IOException on I/O error
+     * @throws WebDriverException on webdriver error
      */
     <R> R monitor(TrafficGenerator<R> generator, TrafficMonitor monitor) throws IOException, WebDriverException;
 
@@ -49,13 +49,18 @@ public interface TrafficCollector {
      * This is essentially {@link #monitor(TrafficGenerator, TrafficMonitor)} without
      * notifying a monitor of request/response interactions.
      * @param generator the traffic generator
-     * @param <R>
-     * @return
-     * @throws IOException
-     * @throws WebDriverException
+     * @param <R> generator result type
+     * @return the generator result
+     * @throws IOException on I/O error
+     * @throws WebDriverException on webdriver error
      */
     <R> R drive(TrafficGenerator<R> generator) throws IOException, WebDriverException;
 
+    /**
+     * Returns a new builder instance.
+     * @param webDriverFactory the webdriver factory
+     * @return a builder
+     */
     static TrafficCollectorImpl.Builder builder(WebDriverFactory webDriverFactory) {
         return new TrafficCollectorImpl.Builder(webDriverFactory);
     }
