@@ -1,5 +1,6 @@
 package com.github.mike10004.seleniumhelp;
 
+import com.google.common.base.Strings;
 import com.google.common.io.CharSource;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -10,6 +11,7 @@ import io.github.bonigarcia.wdm.FirefoxDriverManager;
 import net.lightbody.bmp.core.har.Har;
 import org.apache.commons.io.FileUtils;
 import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.chrome.ChromeOptions;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -24,8 +26,13 @@ import java.io.Reader;
 import java.io.Writer;
 import java.nio.charset.Charset;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkState;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
+/**
+ * Program that opens a web browser, records the traffic, and closes upon reading "stop" from standard input.
+ */
 public class LightbodyHarCreationUtility {
 
     private final UtilityConfig config;
@@ -35,14 +42,18 @@ public class LightbodyHarCreationUtility {
     }
 
     public static void main(String[] args) throws Exception {
-        File harCreationConfigFile = new File(System.getProperty("user.dir"), "har-creation-config.json");
+        File utilityConfigFile = new File(System.getProperty("user.dir"), "har-creation-config.json");
+        System.out.format("expect config file at %s%n", utilityConfigFile);
         UtilityConfig config;
-        try (Reader reader = new InputStreamReader(new FileInputStream(harCreationConfigFile), UTF_8)) {
+        try (Reader reader = new InputStreamReader(new FileInputStream(utilityConfigFile), UTF_8)) {
             config = new Gson().fromJson(reader, UtilityConfig.class);
         } catch (FileNotFoundException ignore) {
-            config = UtilityConfig.getDefault();
+            config = new UtilityConfig();
         }
-        File harFile = new LightbodyHarCreationUtility(config).createHar();
+        System.out.println(config);
+        config.checkMyself();
+        LightbodyHarCreationUtility utility = new LightbodyHarCreationUtility(config);
+        File harFile = utility.createHar();
         System.out.format("%s written (%d bytes)%n", harFile, harFile.length());
     }
 
@@ -52,21 +63,53 @@ public class LightbodyHarCreationUtility {
 
 
     private static class UtilityConfig {
+
+        public static final BrowserBrand DEFAULT_BROWSER = BrowserBrand.chrome;
+
         public BrowserBrand browserBrand;
-        public String scratchDirPathname;
-        public static UtilityConfig getDefault() {
-            UtilityConfig config = new UtilityConfig();
-            config.browserBrand = BrowserBrand.chrome;
-            config.scratchDirPathname = FileUtils.getTempDirectoryPath();
-            return config;
+        public String scratchDir;
+        public String userDataDir;
+
+        public UtilityConfig() {
+            browserBrand = DEFAULT_BROWSER;
+            scratchDir = FileUtils.getTempDirectoryPath();
+        }
+
+        public void checkMyself() {
+            checkState(browserBrand != null, "browserBrand must be non-null");
+            checkState(!Strings.isNullOrEmpty(scratchDir), "scratchDir must be non-null and nonempty");
+        }
+
+        public String toString() {
+            return new GsonBuilder().setPrettyPrinting().create().toJson(this);
         }
     }
 
-    protected WebDriverFactory createWebDriverFactory() {
+    private static ChromeOptions toChromeOptions(File scratchDir, UtilityConfig config) throws IOException {
+        checkArgument(config.browserBrand == BrowserBrand.chrome, "only applies to BrowserBrand.chrome, not %s", config.browserBrand);
+        ChromeOptions options = new ChromeOptions();
+        File userDataDir;
+        if (config.userDataDir != null) {
+            userDataDir = new File(config.userDataDir);
+            //noinspection ResultOfMethodCallIgnored
+            userDataDir.mkdirs();
+            if (!userDataDir.isDirectory()) {
+                throw new IOException("could not create directory: " + userDataDir);
+            }
+        } else {
+            userDataDir = java.nio.file.Files.createTempDirectory(scratchDir.toPath(), "chrome-user-data").toFile();
+        }
+        options.addArguments("--user-data-dir=" + userDataDir.getAbsolutePath());
+        return options;
+    }
+
+    protected WebDriverFactory createWebDriverFactory(File scratchDir) throws IOException {
         switch (config.browserBrand) {
             case chrome:
                 ChromeDriverManager.getInstance().setup();
-                return ChromeWebDriverFactory.builder().build();
+                return ChromeWebDriverFactory.builder()
+                        .chromeOptions(toChromeOptions(scratchDir, config))
+                        .build();
             case firefox:
                 FirefoxDriverManager.getInstance().setup();
                 return FirefoxWebDriverFactory.builder().build();
@@ -76,10 +119,10 @@ public class LightbodyHarCreationUtility {
     }
 
     public File createHar() throws Exception {
-        WebDriverFactory webDriverFactory = createWebDriverFactory();
-        File scratchDir = new File(config.scratchDirPathname);
+        File scratchDir = new File(config.scratchDir);
         //noinspection ResultOfMethodCallIgnored
         scratchDir.mkdirs();
+        WebDriverFactory webDriverFactory = createWebDriverFactory(scratchDir);
         TrafficCollector collector = TrafficCollector.builder(webDriverFactory)
                 .collectHttps(new AutoCertificateAndKeySource(scratchDir.toPath()))
                 .build();

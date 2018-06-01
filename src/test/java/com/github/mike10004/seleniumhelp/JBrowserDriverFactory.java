@@ -8,8 +8,9 @@ import org.openqa.selenium.WebDriver;
 
 import javax.annotation.Nullable;
 import java.io.File;
-import java.io.IOException;
 import java.net.InetSocketAddress;
+
+import static java.util.Objects.requireNonNull;
 
 public class JBrowserDriverFactory implements WebDriverFactory {
 
@@ -25,12 +26,13 @@ public class JBrowserDriverFactory implements WebDriverFactory {
     }
 
     @Override
-    public WebDriver createWebDriver(WebDriverConfig config) throws IOException {
-        return createWebDriver(config.getProxyAddress(), config.getCertificateAndKeySource());
+    public WebdrivingSession createWebdrivingSession(WebDriverConfig config) {
+        return WebdrivingSession.simple(createWebDriver(config.getProxyAddress(), config.getCertificateAndKeySource()));
     }
 
     private WebDriver createWebDriver(InetSocketAddress proxy,
-              @SuppressWarnings("unused") @Nullable CertificateAndKeySource certificateAndKeySource) throws IOException {
+              @SuppressWarnings("unused") @Nullable CertificateAndKeySource certificateAndKeySource) {
+        requireNonNull(proxy, "proxy");
         ProxyConfig proxyConfig = new ProxyConfig(ProxyConfig.Type.HTTP, "localhost", proxy.getPort());
         Settings.Builder settingsBuilder = Settings.builder()
                 .proxy(proxyConfig);

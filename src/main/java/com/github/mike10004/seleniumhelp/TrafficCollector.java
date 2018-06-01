@@ -14,7 +14,6 @@ import org.littleshoot.proxy.HttpFiltersSource;
 import org.littleshoot.proxy.HttpFiltersSourceAdapter;
 import org.littleshoot.proxy.MitmManager;
 import org.littleshoot.proxy.impl.ProxyUtils;
-import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebDriverException;
 
 import javax.annotation.Nullable;
@@ -174,11 +173,8 @@ public class TrafficCollector {
                 .proxy(BrowserMobs.getConnectableSocketAddress(bmp))
                 .certificateAndKeySource(certificateAndKeySource)
                 .build();
-        WebDriver driver = webDriverFactory.createWebDriver(config);
-        try {
-            return generator.generate(driver);
-        } finally {
-            driver.quit();
+        try (WebdrivingSession session = webDriverFactory.createWebdrivingSession(config)) {
+            return generator.generate(session.getWebDriver());
         }
     }
 

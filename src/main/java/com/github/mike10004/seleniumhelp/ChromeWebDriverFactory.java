@@ -45,8 +45,8 @@ public class ChromeWebDriverFactory extends EnvironmentWebDriverFactory {
     }
 
     @Override
-    public WebDriver createWebDriver(WebDriverConfig config) throws IOException {
-        return createWebDriverMaybeWithProxy(config.getProxyAddress(), config.getCertificateAndKeySource());
+    public WebdrivingSession createWebdrivingSession(WebDriverConfig config) throws IOException {
+        return WebdrivingSession.simple(createWebDriverMaybeWithProxy(config.getProxyAddress(), config.getCertificateAndKeySource()));
     }
 
     private WebDriver createWebDriverMaybeWithProxy(@Nullable InetSocketAddress proxy, @Nullable CertificateAndKeySource certificateAndKeySource) throws IOException {

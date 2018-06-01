@@ -69,8 +69,8 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
     }
 
     @Override
-    public WebDriver createWebDriver(WebDriverConfig config) throws IOException {
-        return createWebDriverMaybeWithProxy(config.getProxyAddress(), config.getCertificateAndKeySource());
+    public WebdrivingSession createWebdrivingSession(WebDriverConfig config) throws IOException {
+        return WebdrivingSession.simple(createWebDriverMaybeWithProxy(config.getProxyAddress(), config.getCertificateAndKeySource()));
     }
 
     private SupplementingFirefoxProfile createFirefoxProfile(List<FirefoxProfileFolderAction> actions) {

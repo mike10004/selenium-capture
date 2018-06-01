@@ -60,7 +60,7 @@ public class UnproxiedWebDriverTest {
         ChromeWebDriverFactory factory = ChromeWebDriverFactory.builder()
                 .chromeOptions(options)
                 .build();
-        testUnproxied(() -> factory.createWebDriver(EMPTY_WEBDRIVER_CONFIG));
+        testUnproxied(() -> factory.createWebdrivingSession(EMPTY_WEBDRIVER_CONFIG));
     }
 
     private static final WebDriverConfig EMPTY_WEBDRIVER_CONFIG = WebDriverConfig.builder().build();
@@ -69,22 +69,20 @@ public class UnproxiedWebDriverTest {
     public void testFirefox() throws Exception {
         UnitTests.setupRecommendedGeckoDriver();
         FirefoxWebDriverFactory factory = FirefoxWebDriverFactory.builder().environment(xvfbRule.getController().newEnvironment()).build();
-        testUnproxied(() -> factory.createWebDriver(EMPTY_WEBDRIVER_CONFIG));
+        testUnproxied(() -> factory.createWebdrivingSession(EMPTY_WEBDRIVER_CONFIG));
     }
 
     private interface ExceptingSupplier<T, X extends Throwable> {
         T get() throws X;
     }
 
-    private void testUnproxied(ExceptingSupplier<? extends WebDriver, ? extends Exception> driverSupplier) throws Exception {
-        WebDriver driver = driverSupplier.get();
-        try {
+    private void testUnproxied(ExceptingSupplier<? extends WebdrivingSession, ? extends Exception> driverSupplier) throws Exception {
+        try (WebdrivingSession session = driverSupplier.get()) {
+            WebDriver driver = session.getWebDriver();
             driver.get("http://localhost:" + nano.getListeningPort() + "/");
             String bodyText = driver.findElement(By.tagName("body")).getText();
             System.out.println(StringUtils.abbreviate(bodyText, 256));
             assertEquals("body text", "hello", bodyText);
-        } finally {
-            driver.quit();
         }
     }
 }
