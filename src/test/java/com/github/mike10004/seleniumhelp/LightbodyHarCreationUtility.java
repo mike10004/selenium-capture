@@ -128,7 +128,6 @@ public class LightbodyHarCreationUtility {
         TrafficCollector collector = TrafficCollector.builder(webDriverFactory)
                 .collectHttps(new AutoCertificateAndKeySource(scratchDir.toPath()))
                 .onException(ExceptionReactor.LOG_AND_SUPPRESS)
-                .harPostProcessor(new BrotliResponseTransform().asPostProcessor())
                 .build();
         Har har = collector.collect(new InteractiveTrafficGenerator()).har;
         File harFile = File.createTempFile("lightbody", ".har", scratchDir);

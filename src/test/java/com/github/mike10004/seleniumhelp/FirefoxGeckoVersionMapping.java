@@ -14,7 +14,7 @@ import java.util.regex.Pattern;
 
 class FirefoxGeckoVersionMapping {
 
-    static final String DEFAULT_RECOMMENDED_GECKODRIVER_VERSION = "0.19.1";
+    static final String DEFAULT_RECOMMENDED_GECKODRIVER_VERSION = "0.20.1";
 
     public static final RangeMap<Version, String> ffRangeToGeckoMap = ImmutableRangeMap.<Version, String>builder()
             .put(Range.atLeast(Version.parseVersion("53.0")), DEFAULT_RECOMMENDED_GECKODRIVER_VERSION)

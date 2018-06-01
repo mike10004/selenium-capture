@@ -4,7 +4,6 @@ import com.google.common.collect.ImmutableList;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.HttpRequest;
 import net.lightbody.bmp.BrowserMobProxy;
-import net.lightbody.bmp.BrowserMobProxyServer;
 import net.lightbody.bmp.core.har.Har;
 import net.lightbody.bmp.mitm.CertificateAndKeySource;
 import net.lightbody.bmp.mitm.manager.ImpersonatingMitmManager;
@@ -26,7 +25,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Supplier;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Objects.requireNonNull;
 
@@ -37,7 +35,7 @@ public class TrafficCollectorImpl implements TrafficCollector {
     private final CertificateAndKeySource certificateAndKeySource;
     private final ImmutableList<HttpFiltersSource> httpFiltersSources;
     private final Supplier<InetSocketAddress> upstreamProxyProvider;
-    private final Supplier<BrowserMobProxy> localProxyInstantiator;
+    private final Supplier<? extends BrowserMobProxy> interceptingProxyInstantiator;
     private final ImmutableList<HarPostProcessor> harPostProcessors;
     private final ExceptionReactor exceptionReactor;
 
@@ -49,21 +47,21 @@ public class TrafficCollectorImpl implements TrafficCollector {
      * @param certificateAndKeySource credential source
      * @param upstreamProxyProvider upstream proxy provider; can supply null if no upstream proxy is to be used
      * @param httpFiltersSources list of filters sources; this should probably include {@link AnonymizingFiltersSource}
-     * @param localProxyInstantiator supplier that constructs the local proxy instance
+     * @param interceptingProxyInstantiator supplier that constructs the local proxy instance
      * @param harPostProcessors list of HAR post-processors
      */
     protected TrafficCollectorImpl(WebDriverFactory webDriverFactory,
                             @Nullable CertificateAndKeySource certificateAndKeySource,
                             Supplier<InetSocketAddress> upstreamProxyProvider,
                                Iterable<? extends HttpFiltersSource> httpFiltersSources,
-                               Supplier<BrowserMobProxy> localProxyInstantiator,
+                               Supplier<? extends BrowserMobProxy> interceptingProxyInstantiator,
                                Iterable<? extends HarPostProcessor> harPostProcessors,
                                ExceptionReactor exceptionReactor) {
         this.webDriverFactory = checkNotNull(webDriverFactory);
         this.certificateAndKeySource = certificateAndKeySource;
         this.httpFiltersSources = ImmutableList.copyOf(httpFiltersSources);
         this.upstreamProxyProvider = checkNotNull(upstreamProxyProvider);
-        this.localProxyInstantiator = checkNotNull(localProxyInstantiator);
+        this.interceptingProxyInstantiator = checkNotNull(interceptingProxyInstantiator);
         this.harPostProcessors = ImmutableList.copyOf(harPostProcessors);
         this.exceptionReactor = requireNonNull(exceptionReactor);
     }
@@ -77,7 +75,7 @@ public class TrafficCollectorImpl implements TrafficCollector {
                 builder.certificateAndKeySource,
                 builder.upstreamProxyProvider,
                 builder.httpFiltersSources,
-                builder.localProxyInstantiator,
+                builder.interceptingProxyInstantiator,
                 builder.harPostProcessors,
                 builder.exceptionReactor);
     }
@@ -192,7 +190,7 @@ public class TrafficCollectorImpl implements TrafficCollector {
         private CertificateAndKeySource certificateAndKeySource = null;
         private final List<HttpFiltersSource> httpFiltersSources = new ArrayList<>();
         private Supplier<InetSocketAddress> upstreamProxyProvider = () -> null;
-        private Supplier<BrowserMobProxy> localProxyInstantiator = BrowserMobProxyServer::new;
+        private Supplier<? extends BrowserMobProxy> interceptingProxyInstantiator = BrAwareBrowserMobProxyServer::new;
         private final List<HarPostProcessor> harPostProcessors = new ArrayList<>();
         private ExceptionReactor exceptionReactor = ExceptionReactor.PROPAGATE;
 
@@ -211,8 +209,16 @@ public class TrafficCollectorImpl implements TrafficCollector {
             return this;
         }
 
-        public Builder localProxyInstantiator(Supplier<BrowserMobProxy> localProxyInstantiator) {
-            this.localProxyInstantiator = checkNotNull(localProxyInstantiator);
+        /**
+         * Sets the supplier of the proxy server instance that is used to intercept and collect traffic.
+         * By default, we supply a custom implementation that supports brotli decoding,
+         * {@link BrAwareBrowserMobProxyServer}. To revert this behavior to a more hands-off implementation,
+         * set this to a supplier of a {@link net.lightbody.bmp.BrowserMobProxyServer} instance.
+         * @param interceptingProxyInstantiator the instantiator
+         * @return this builder instance
+         */
+        public Builder interceptingProxyInstantiator(Supplier<? extends BrowserMobProxy> interceptingProxyInstantiator) {
+            this.interceptingProxyInstantiator = checkNotNull(interceptingProxyInstantiator);
             return this;
         }
 
@@ -226,6 +232,11 @@ public class TrafficCollectorImpl implements TrafficCollector {
             return this;
         }
 
+        /**
+         * Adds all argument filters sources to this builder's filters list.
+         * @param val the filters sources to add
+         * @return this instance
+         */
         public Builder filters(Collection<? extends HttpFiltersSource> val) {
             httpFiltersSources.addAll(val);
             return this;
@@ -296,7 +307,7 @@ public class TrafficCollectorImpl implements TrafficCollector {
     }
 
     protected BrowserMobProxy instantiateProxy() {
-        return localProxyInstantiator.get();
+        return interceptingProxyInstantiator.get();
     }
 
     protected void configureProxy(BrowserMobProxy bmp, CertificateAndKeySource certificateAndKeySource, @Nullable TrafficMonitor trafficMonitor) {

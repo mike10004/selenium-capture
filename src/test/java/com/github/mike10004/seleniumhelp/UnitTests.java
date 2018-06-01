@@ -8,6 +8,7 @@ import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import io.github.bonigarcia.wdm.ChromeDriverManager;
 import io.github.bonigarcia.wdm.FirefoxDriverManager;
+import org.jsoup.Jsoup;
 import org.openqa.selenium.Platform;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.firefox.FirefoxBinary;
@@ -51,7 +52,7 @@ public class UnitTests {
      * of Chrome installed on the build system. Otherwise we're just hoping that
      * the latest version of Chrome is installed.
      */
-    static final String DEFAULT_RECOMMENDED_CHROMEDRIVER_VERSION = "2.33";
+    static final String DEFAULT_RECOMMENDED_CHROMEDRIVER_VERSION = "2.39";
 
     private UnitTests() {}
 
@@ -235,4 +236,8 @@ public class UnitTests {
         return Boolean.parseBoolean(System.getProperty(SYSPROP_OPENSSL_TESTS_SKIP, "false"));
     }
 
+    public static String removeHtmlWrapping(String html) {
+        org.jsoup.nodes.Document doc = Jsoup.parse(html);
+        return doc.text();
+    }
 }
