@@ -11,4 +11,4 @@ before_install:
 notifications:
   email: false
 install: true
-script: mvn --settings travis-maven-settings.xml install -U -B -P travis -Dwdm.gitHubTokenName=$GITHUB_TOKEN_NAME -Dwdm.gitHubTokenSecret=$GITHUB_TOKEN_SECRET
+script: mvn --settings travis-maven-settings.xml install -U -B -P travis -Dwdm.gitHubTokenName=$GITHUB_TOKEN_NAME -Dwdm.gitHubTokenSecret=$GITHUB_TOKEN_SECRET -Dselenium-help.chromedriver.version=2.38
