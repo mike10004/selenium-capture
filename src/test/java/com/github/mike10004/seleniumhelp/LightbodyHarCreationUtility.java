@@ -32,6 +32,8 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  * Program that opens a web browser, records the traffic, and closes upon reading "stop" from standard input.
+ * Configure behavior by creating a configuration file in the current directory named "har-creation-config.json",
+ * containing JSON structured as specified by {@link LightbodyHarCreationUtility.UtilityConfig}.
  */
 public class LightbodyHarCreationUtility {
 
@@ -125,6 +127,8 @@ public class LightbodyHarCreationUtility {
         WebDriverFactory webDriverFactory = createWebDriverFactory(scratchDir);
         TrafficCollector collector = TrafficCollector.builder(webDriverFactory)
                 .collectHttps(new AutoCertificateAndKeySource(scratchDir.toPath()))
+                .onException(ExceptionReactor.LOG_AND_SUPPRESS)
+                .harPostProcessor(new BrotliResponseTransform().asPostProcessor())
                 .build();
         Har har = collector.collect(new InteractiveTrafficGenerator()).har;
         File harFile = File.createTempFile("lightbody", ".har", scratchDir);
@@ -170,14 +174,17 @@ public class LightbodyHarCreationUtility {
         @Override
         public Void generate(WebDriver driver) throws IOException {
             System.out.format("collecting traffic; enter %s to stop%n", STOP_TEXT);
+            boolean stopHeard = false;
             try (BufferedReader reader = new BufferedReader(signalInputSource.openStream())) {
                 String line;
                 while ((line = reader.readLine()) != null) {
                     if (line.trim().equalsIgnoreCase(STOP_TEXT)) {
+                        stopHeard = true;
                         break;
                     }
                 }
             }
+            System.out.format("finishing traffic collection (%s)%n", stopHeard ? "due to STOP" : "not sure why");
             //noinspection RedundantCast
             return (Void) null;
         }

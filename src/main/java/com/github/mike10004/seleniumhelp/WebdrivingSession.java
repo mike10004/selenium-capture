@@ -1,6 +1,7 @@
 package com.github.mike10004.seleniumhelp;
 
 import org.openqa.selenium.WebDriver;
+import org.slf4j.LoggerFactory;
 
 public interface WebdrivingSession extends java.io.Closeable {
 
@@ -15,6 +16,7 @@ public interface WebdrivingSession extends java.io.Closeable {
 
             @Override
             public void close() {
+                LoggerFactory.getLogger(WebdrivingSession.class).trace("webdriver quitting");
                 driver.quit();
             }
         };

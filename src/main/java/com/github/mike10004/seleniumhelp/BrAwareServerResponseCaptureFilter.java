@@ -158,9 +158,9 @@ public class BrAwareServerResponseCaptureFilter  extends ServerResponseCaptureFi
         }
     }
 
-    protected byte[] decompressContents(byte[] brotliCompressedBytes, DecompressionFilter decompressor) throws IOException {
+    protected byte[] decompressContents(byte[] compressedBytes, DecompressionFilter decompressor) throws IOException {
         byte[] decompressed;
-        try (InputStream in = decompressor.openStream(new ByteArrayInputStream(brotliCompressedBytes))) {
+        try (InputStream in = decompressor.openStream(new ByteArrayInputStream(compressedBytes))) {
             decompressed = ByteStreams.toByteArray(in);
         }
         return decompressed;

@@ -180,7 +180,7 @@ public class CollectionTestBase {
     }
 
     protected <T> HarPlus<T> testTrafficCollector(WebDriverFactory webDriverFactory, TrafficGenerator<T> pageSourceTrafficGenerator) throws IOException {
-        TrafficCollector.Builder tcBuilder = TrafficCollector.builder(webDriverFactory)
+        TrafficCollectorImpl.Builder tcBuilder = TrafficCollector.builder(webDriverFactory)
                 .upstreamProxy(new TestProxySupplier());
         if ("https".equals(protocol)) {
             CertificateAndKeySource certificateAndKeySource = TestCertificateAndKeySource.create();

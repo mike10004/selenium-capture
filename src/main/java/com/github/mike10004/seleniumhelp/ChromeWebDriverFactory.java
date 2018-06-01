@@ -10,6 +10,8 @@ import org.openqa.selenium.WebDriverException;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeDriverService;
 import org.openqa.selenium.chrome.ChromeOptions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
@@ -23,6 +25,8 @@ import java.util.function.Supplier;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public class ChromeWebDriverFactory extends EnvironmentWebDriverFactory {
+
+    private static final Logger log = LoggerFactory.getLogger(ChromeWebDriverFactory.class);
 
     private final ChromeOptions chromeOptions;
     private final CookiePreparer cookiePreparer;
@@ -46,20 +50,59 @@ public class ChromeWebDriverFactory extends EnvironmentWebDriverFactory {
 
     @Override
     public WebdrivingSession createWebdrivingSession(WebDriverConfig config) throws IOException {
-        return WebdrivingSession.simple(createWebDriverMaybeWithProxy(config.getProxyAddress(), config.getCertificateAndKeySource()));
+        DriverAndService driverAndService = createWebDriverMaybeWithProxy(config.getProxyAddress(), config.getCertificateAndKeySource());
+        return new WebdrivingSession() {
+            @Override
+            public WebDriver getWebDriver() {
+                return driverAndService.driver;
+            }
+
+            @Override
+            public void close() {
+                driverAndService.driver.quit();
+                if (driverAndService.service.isRunning()) {
+                    log.warn("driver service still running: {}", driverAndService.service);
+                }
+            }
+        };
     }
 
-    private WebDriver createWebDriverMaybeWithProxy(@Nullable InetSocketAddress proxy, @Nullable CertificateAndKeySource certificateAndKeySource) throws IOException {
+    private static class DriverAndService {
+
+        public final ChromeDriver driver;
+        public final ChromeDriverService service;
+
+        private DriverAndService(@Nullable ChromeDriver driver, ChromeDriverService service) {
+            this.driver = driver;
+            this.service = service;
+        }
+    }
+
+    private DriverAndService createWebDriverMaybeWithProxy(@Nullable InetSocketAddress proxy, @Nullable CertificateAndKeySource certificateAndKeySource) throws IOException {
         cookiePreparer.supplementOptions(chromeOptions);
         if (proxy != null) {
             configureProxy(chromeOptions, proxy, certificateAndKeySource);
         }
-        ChromeDriverService.Builder builder = createDriverServiceBuilder();
-        builder.withEnvironment(environmentSupplier.get());
-        driverServiceBuilderConfigurators.forEach(configurator -> configurator.configure(builder));
-        ChromeDriver driver = new ChromeDriver(builder.build(), chromeOptions);
+        ChromeDriverService.Builder serviceBuilder = createDriverServiceBuilder();
+        serviceBuilder.withEnvironment(environmentSupplier.get());
+        driverServiceBuilderConfigurators.forEach(configurator -> configurator.configure(serviceBuilder));
+        ChromeDriverService service = serviceBuilder.build();
+        final ChromeDriver driver;
+        try {
+            driver = new ChromeDriver(service, chromeOptions);
+        } catch (WebDriverException e) { // on failure to start
+            if (service.isRunning()) {
+                log.warn("failed to construct ChromeDriver, but driver service is still running; trying to stop");
+                try {
+                    service.stop();
+                } catch (RuntimeException e2) {
+                    log.error("failed to stop driver service", e2);
+                }
+            }
+            throw e;
+        }
         cookiePreparer.prepareCookies(driver);
-        return driver;
+        return new DriverAndService(driver, service);
     }
 
     protected ChromeDriverService.Builder createDriverServiceBuilder() {

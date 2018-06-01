@@ -14,11 +14,11 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.github.mike10004.seleniumhelp.HarCleaner.HEADER_VALUE_BROTLI_ENCODED;
+import static com.github.mike10004.seleniumhelp.BrotliResponseTransform.HEADER_VALUE_BROTLI_ENCODED;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.*;
 
-public class HarCleanerTest {
+public class BrotliResponseTransformTest {
     @Test
     public void clean() throws Exception {
         Har har = new Har();
@@ -35,7 +35,7 @@ public class HarCleanerTest {
         List<HarEntry> entries = Stream.of(plainJsResponse, brotliCssResponse, plainCssResponse, brotliJsResponse)
                 .map(rsp -> buildEntry(new HarRequest(), rsp)).collect(Collectors.toList());
         entries.forEach(log::addEntry);
-        List<HarEntry> cleaned = new HarCleaner().clean(har);
+        List<HarEntry> cleaned = new BrotliResponseTransform().clean(har);
         for (HarEntry entry : cleaned) {
             System.out.format("%s (%s) %s%n", entry.getResponse().getContent().getMimeType(), entry.getResponse().getContent().getEncoding(), entry.getRequest().getUrl());
         }
@@ -106,7 +106,7 @@ public class HarCleanerTest {
         HarLog log = new HarLog();
         log.addEntry(entry);
         har.setLog(log);
-        new HarCleaner().clean(har);
+        new BrotliResponseTransform().clean(har);
         assertEquals("num entries after clean", 1, har.getLog().getEntries().size());
     }
 }
