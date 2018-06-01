@@ -38,6 +38,7 @@ public class UnitTests {
 
     private static final String SYSPROP_CHROME_OPTIONS_EXTRA_ARGS = "chrome.options.extraArgs";
     private static final String SYSPROP_FIREFOX_EXECUTABLE_PATH = "selenium-help.firefox.executable.path";
+    private static final String SYSPROP_CHROMEDRIVER_VERSION = "selenium-help.chromedriver.version";
 
     /**
      * Recommended version of ChromeDriver.
@@ -52,15 +53,20 @@ public class UnitTests {
      * of Chrome installed on the build system. Otherwise we're just hoping that
      * the latest version of Chrome is installed.
      */
-    static final String DEFAULT_RECOMMENDED_CHROMEDRIVER_VERSION = "2.39";
+    static final String DEFAULT_RECOMMENDED_CHROMEDRIVER_VERSION_ = "2.39";
 
     private UnitTests() {}
+
+    private static String getRecommendedChromedriverVersion() {
+        return System.getProperty(SYSPROP_CHROMEDRIVER_VERSION, DEFAULT_RECOMMENDED_CHROMEDRIVER_VERSION_);
+    }
 
     /**
      * Downloads and configures the JVM for use of a recommended version of ChromeDriver.
      */
     public static void setupRecommendedChromeDriver() {
-        ChromeDriverManager.getInstance().version(DEFAULT_RECOMMENDED_CHROMEDRIVER_VERSION).setup();
+        String version = getRecommendedChromedriverVersion();
+        ChromeDriverManager.getInstance().version(version).setup();
     }
 
     /**
