@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.37
+----
+
+* core API change: provide closeable session from webdriver factory instead of webdriver directly
+
 0.36
 ----
 
