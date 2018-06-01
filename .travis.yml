@@ -7,7 +7,7 @@ addons:
     - netpbm
     - firefox
 before_install:
-  - dpkg-query -l xvfb chromium-browser sqlite3 firefox
+  - dpkg-query -l xvfb chromium-browser sqlite3 firefox google-chrome-stable
 notifications:
   email: false
 install: true
