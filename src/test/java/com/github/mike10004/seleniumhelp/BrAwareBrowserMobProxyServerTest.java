@@ -24,6 +24,7 @@ public class BrAwareBrowserMobProxyServerTest {
     public void decodeDuringHarCapture() throws Exception {
         WebDriverFactory webDriverFactory = ChromeWebDriverFactory.builder()
                 .environment(() -> xvfbRule.getController().newEnvironment())
+                .chromeOptions(UnitTests.createChromeOptions())
                 .build();
         TrafficCollector collector = TrafficCollector.builder(webDriverFactory)
                 // the collector uses the BrAwareBrowserMobProxyServer by default, so there is no need to specify it here
