@@ -36,9 +36,13 @@ import static org.openqa.selenium.os.WindowsUtils.getPathsInProgramFiles;
  */
 public class UnitTests {
 
-    private static final String SYSPROP_CHROME_OPTIONS_EXTRA_ARGS = "chrome.options.extraArgs";
+    private static final String SYSPROP_CHROME_OPTIONS_EXTRA_ARGS = "selenium-help.chrome.options.extraArgs";
     private static final String SYSPROP_FIREFOX_EXECUTABLE_PATH = "selenium-help.firefox.executable.path";
+    private static final String SYSPROP_CHROME_EXECUTABLE_PATH = "selenium-help.chrome.executable.path";
     private static final String SYSPROP_CHROMEDRIVER_VERSION = "selenium-help.chromedriver.version";
+    public static final String SYSPROP_OPENSSL_TESTS_SKIP = "selenium-help.openssl.tests.skip";
+    private static final String SYSPROP_OPENSSL_EXECUTABLE = "selenium-help.openssl.executable.path";
+    private static final String SYSPROP_CHROME_HEADLESS_TESTS_DISABLED = "selenium-help.chrome.headless.tests.disabled";
 
     /**
      * Recommended version of ChromeDriver.
@@ -53,7 +57,7 @@ public class UnitTests {
      * of Chrome installed on the build system. Otherwise we're just hoping that
      * the latest version of Chrome is installed.
      */
-    static final String DEFAULT_RECOMMENDED_CHROMEDRIVER_VERSION_ = "2.39";
+    private static final String DEFAULT_RECOMMENDED_CHROMEDRIVER_VERSION_ = "2.39";
 
     private UnitTests() {}
 
@@ -82,23 +86,41 @@ public class UnitTests {
     }
 
     public static boolean isHeadlessChromeTestsDisabled() {
-        return Boolean.parseBoolean(System.getProperty("selenium-help.chrome.headless.tests.disabled", "false"));
+        return Boolean.parseBoolean(System.getProperty(SYSPROP_CHROME_HEADLESS_TESTS_DISABLED, "false"));
     }
 
     @Nullable
     static String getFirefoxExecutablePath() {
-        String executablePath = Strings.emptyToNull(System.getProperty(SYSPROP_FIREFOX_EXECUTABLE_PATH));
-        if (executablePath == null) {
-            executablePath = System.getenv("FIREFOX_BIN");
-        }
-        if (executablePath == null && Platforms.getPlatform().isWindows()) {
-            Stream<Executable> executables = locateFirefoxBinariesFromPlatform();
-            File file = executables.map(Executable::getFile).filter(File::isFile).findFirst().orElse(null);
-            if (file != null) {
-                executablePath = file.getAbsolutePath();
+        return getExecutablePath(SYSPROP_FIREFOX_EXECUTABLE_PATH, "FIREFOX_BIN", () -> {
+            if (Platforms.getPlatform().isWindows()) {
+                Stream<Executable> executables = locateFirefoxBinariesFromPlatform();
+                File file = executables.map(Executable::getFile).filter(File::isFile).findFirst().orElse(null);
+                if (file != null) {
+                    return file.getAbsolutePath();
+                }
             }
+            return null;
+        });
+    }
+
+    /**
+     * Gets an executable path.
+     * @return the executable path, or whatever is supplied by the defaulter; can be null if the defaulter returns null
+     */
+    private static String getExecutablePath(String systemPropertyName, String environmentVariableName, Supplier<String> defaulter) {
+        String executablePath = Strings.emptyToNull(System.getProperty(systemPropertyName));
+        if (executablePath == null && environmentVariableName != null) {
+            executablePath = Strings.emptyToNull(System.getenv(environmentVariableName));
         }
-        return executablePath;
+        if (executablePath == null) {
+            executablePath = defaulter.get();
+        }
+        return Strings.emptyToNull(executablePath);
+    }
+
+    @Nullable
+    static String getChromeExecutablePath() {
+        return getExecutablePath(SYSPROP_CHROME_EXECUTABLE_PATH, "CHROME_BIN", () -> null);
     }
 
     // Licensed to the Software Freedom Conservancy (SFC) under one
@@ -217,12 +239,13 @@ public class UnitTests {
      */
     public static ChromeOptions createChromeOptions() {
         ChromeOptions options = new ChromeOptions();
+        String executablePath = getChromeExecutablePath();
+        if (executablePath != null) {
+            options.setBinary(executablePath);
+        }
         options.addArguments(getChromeOptionsExtraArgs());
         return options;
     }
-
-    public static final String SYSPROP_OPENSSL_TESTS_SKIP = "openssl.tests.skip";
-    private static final String SYSPROP_OPENSSL_EXECUTABLE = "openssl.executable.path";
 
     public static ExecutableConfig makeOpensslConfig() {
         String path = Strings.emptyToNull(System.getProperty(SYSPROP_OPENSSL_EXECUTABLE));

@@ -6,6 +6,7 @@ addons:
     - sqlite3
     - netpbm
     - firefox
+    - google-chrome-stable
 before_install:
   - dpkg-query -l xvfb chromium-browser sqlite3 firefox google-chrome-stable
 notifications:

@@ -65,8 +65,8 @@
                             <version>2.20.1</version>
                             <configuration>
                                 <systemPropertyVariables>
-                                    <chrome.headless.tests.disabled>${chrome.headless.tests.disabled}</chrome.headless.tests.disabled>
-                                    <chrome.options.extraArgs>--no-sandbox</chrome.options.extraArgs>
+                                    <selenium-help.chrome.headless.tests.disabled>${chrome.headless.tests.disabled}</selenium-help.chrome.headless.tests.disabled>
+                                    <selenium-help.chrome.options.extraArgs>--no-sandbox</selenium-help.chrome.options.extraArgs>
                                 </systemPropertyVariables>
                             </configuration>
                         </plugin>
