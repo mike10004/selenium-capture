@@ -53,7 +53,7 @@ public class ExplodedCookieConverterTest {
         Map<String, Object> exploded = conv.reverse().convert(cookie);
         assertNotNull(exploded);
         // this is kind of a weird check, but the exploded cookie map does contain one entry (for 'isSecure')
-        assertEquals("conversion of empty cookie results in mostly-empty map", ImmutableSet.of(new SimpleImmutableEntry<>("name", "x"), new SimpleImmutableEntry<>("value", ""), new SimpleImmutableEntry<>("isSecure", false)), exploded.entrySet());
+        assertEquals("conversion of empty cookie results in mostly-empty map", ImmutableSet.of(new SimpleImmutableEntry<>("name", "x"), new SimpleImmutableEntry<>("value", "")), exploded.entrySet());
     }
 
     @Test

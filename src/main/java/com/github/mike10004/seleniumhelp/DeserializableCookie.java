@@ -19,6 +19,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -42,6 +43,7 @@ public class DeserializableCookie implements ClientCookie {
     static final String FIELD_LAST_ACCESSED = "lastAccessed";
     static final String FIELD_CREATION_DATE = "creationDate";
     static final String FIELD_EXPIRY_DATE = "cookieExpiryDate";
+    private static final int DEFAULT_COOKIE_VERSION = 0;
 
     @SuppressWarnings("unused") // for gson deserialization
     private DeserializableCookie() {
@@ -50,17 +52,17 @@ public class DeserializableCookie implements ClientCookie {
 
     private final String name;
     private final String value;
+    private final String cookiePath;
+    private final String cookieDomain;
     @JsonAdapter(ImmutableStringMapTypeAdapter.class)
     private final ImmutableMap<String, String> attribs;
-    private final String cookieComment;
-    private final String cookieDomain;
     private final Date cookieExpiryDate;
-    private final String cookiePath;
-    private final boolean isSecure;
-    private final int cookieVersion;
     private final Date creationDate;
     private final Date lastAccessed;
-    private final boolean httpOnly;
+    private final Boolean isSecure;
+    private final Boolean httpOnly;
+    private final Integer cookieVersion;
+    private final String cookieComment;
 
     private DeserializableCookie(Builder builder) {
         name = builder.name;
@@ -152,12 +154,12 @@ public class DeserializableCookie implements ClientCookie {
 
     @Override
     public boolean isSecure() {
-        return isSecure;
+        return isSecure != null && isSecure.booleanValue();
     }
 
     @Override
     public int getVersion() {
-        return cookieVersion;
+        return cookieVersion != null ? cookieVersion.intValue() : DEFAULT_COOKIE_VERSION;
     }
 
     /**
@@ -188,25 +190,26 @@ public class DeserializableCookie implements ClientCookie {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
+        if (!(o instanceof DeserializableCookie)) return false;
         DeserializableCookie that = (DeserializableCookie) o;
+        return Objects.equals(name, that.name) &&
+                Objects.equals(value, that.value) &&
+                Objects.equals(attribs, that.attribs) &&
+                Objects.equals(cookieComment, that.cookieComment) &&
+                Objects.equals(cookieDomain, that.cookieDomain) &&
+                Objects.equals(cookieExpiryDate, that.cookieExpiryDate) &&
+                Objects.equals(cookiePath, that.cookiePath) &&
+                Objects.equals(isSecure, that.isSecure) &&
+                Objects.equals(cookieVersion, that.cookieVersion) &&
+                Objects.equals(creationDate, that.creationDate) &&
+                Objects.equals(lastAccessed, that.lastAccessed) &&
+                Objects.equals(httpOnly, that.httpOnly);
+    }
 
-        if (isSecure != that.isSecure) return false;
-        if (httpOnly != that.httpOnly) return false;
-        if (cookieVersion != that.cookieVersion) return false;
-        if (name != null ? !name.equals(that.name) : that.name != null) return false;
-        if (attribs != null ? !attribs.equals(that.attribs) : that.attribs != null) return false;
-        if (value != null ? !value.equals(that.value) : that.value != null) return false;
-        if (cookieComment != null ? !cookieComment.equals(that.cookieComment) : that.cookieComment != null)
-            return false;
-        if (cookieDomain != null ? !cookieDomain.equals(that.cookieDomain) : that.cookieDomain != null) return false;
-        if (cookieExpiryDate != null ? !equals(cookieExpiryDate, that.cookieExpiryDate) : that.cookieExpiryDate != null)
-            return false;
-        if (cookiePath != null ? !cookiePath.equals(that.cookiePath) : that.cookiePath != null) return false;
-        if (creationDate != null ? !equals(creationDate, that.creationDate) : that.creationDate != null) return false;
-        return lastAccessed != null ? lastAccessed.equals(that.lastAccessed) : that.lastAccessed == null;
+    @Override
+    public int hashCode() {
 
+        return Objects.hash(name, value, attribs, cookieComment, cookieDomain, cookieExpiryDate, cookiePath, isSecure, cookieVersion, creationDate, lastAccessed, httpOnly);
     }
 
     protected static boolean equals(Date a, Date b) {
@@ -219,46 +222,29 @@ public class DeserializableCookie implements ClientCookie {
         return DateUtils.truncatedEquals(a, b, Calendar.SECOND);
     }
 
-    @Override
-    public int hashCode() {
-        int result = name != null ? name.hashCode() : 0;
-        result = 31 * result + (attribs != null ? attribs.hashCode() : 0);
-        result = 31 * result + (value != null ? value.hashCode() : 0);
-        result = 31 * result + (cookieComment != null ? cookieComment.hashCode() : 0);
-        result = 31 * result + (cookieDomain != null ? cookieDomain.hashCode() : 0);
-        result = 31 * result + (cookieExpiryDate != null ? cookieExpiryDate.hashCode() : 0);
-        result = 31 * result + (cookiePath != null ? cookiePath.hashCode() : 0);
-        result = 31 * result + (isSecure ? 1 : 0);
-        result = 31 * result + (httpOnly ? 1 : 0);
-        result = 31 * result + cookieVersion;
-        result = 31 * result + (creationDate != null ? creationDate.hashCode() : 0);
-        result = 31 * result + (lastAccessed != null ? lastAccessed.hashCode() : 0);
-        return result;
-    }
-
     public ImmutableMap<String, String> copyAttributes() {
         return ImmutableMap.copyOf(attribs);
     }
 
     public boolean isHttpOnly() {
-        return httpOnly;
+        return httpOnly !=  null && httpOnly.booleanValue();
     }
 
     @Override
     public String toString() {
         MoreObjects.ToStringHelper h = MoreObjects.toStringHelper(this);
         h.add("name", name);
+        h.add("path", cookiePath);
         if (value != null) h.add("value", StringUtils.abbreviate(value, 36));
         if (attribs != null) h.add("attribs", attribs);
         if (cookieComment != null) h.add("cookieComment", cookieComment);
         if (cookieDomain != null) h.add("cookieDomain", cookieDomain);
         if (cookieExpiryDate != null) h.add("cookieExpiryDate", cookieExpiryDate);
-        h.add("cookiePath", cookiePath);
-        h.add("isSecure", isSecure);
-        h.add("cookieVersion", cookieVersion);
+        if (isSecure != null) h.add("isSecure", isSecure);
+        if (cookieVersion != null) h.add("cookieVersion", cookieVersion);
         if (creationDate != null) h.add("creationDate", creationDate);
         if (lastAccessed != null) h.add("lastAccessed", lastAccessed);
-        h.add("httpOnly", httpOnly);
+        if (httpOnly != null) h.add("httpOnly", httpOnly);
         return h.toString();
     }
 
@@ -271,7 +257,7 @@ public class DeserializableCookie implements ClientCookie {
     }
 
 
-    @SuppressWarnings("BooleanParameter")
+    @SuppressWarnings({"BooleanParameter", "UnusedReturnValue"})
     public static final class Builder implements SetCookie {
         private final String name;
         private final Map<String, String> attribs = new LinkedHashMap<>();
@@ -280,11 +266,11 @@ public class DeserializableCookie implements ClientCookie {
         private String cookieDomain;
         private Date cookieExpiryDate;
         private String cookiePath;
-        private boolean isSecure;
-        private int cookieVersion;
+        private Boolean isSecure;
+        private Integer cookieVersion;
         private Date creationDate;
         private Date lastAccessed;
-        private boolean httpOnly;
+        private Boolean httpOnly;
 
         private Builder(String name, String value) {
             this.name = checkNotNull(name);
