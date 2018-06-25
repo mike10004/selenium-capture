@@ -1,6 +1,7 @@
 package com.github.mike10004.seleniumhelp;
 
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableList;
 import com.google.common.io.CharSource;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -62,7 +63,6 @@ public class LightbodyHarCreationUtility {
     private enum BrowserBrand {
         chrome, firefox
     }
-
 
     private static class UtilityConfig {
 
@@ -149,9 +149,8 @@ public class LightbodyHarCreationUtility {
 
     private static class InteractiveTrafficGenerator implements TrafficGenerator<Void> {
 
-        public static final String STOP_TEXT = "stop";
-
         private final CharSource signalInputSource;
+        private final ImmutableList<InputHandler> inputHandlers;
 
         public InteractiveTrafficGenerator() {
             this(new CharSource() {
@@ -168,24 +167,44 @@ public class LightbodyHarCreationUtility {
 
         public InteractiveTrafficGenerator(CharSource signalInputSource) {
             this.signalInputSource = signalInputSource;
+            this.inputHandlers = ImmutableList.of(new StopHandler());
         }
 
         @Override
         public Void generate(WebDriver driver) throws IOException {
-            System.out.format("collecting traffic; enter %s to stop%n", STOP_TEXT);
+            System.out.format("collecting traffic; enter %s to stop%n", NextAction.STOP);
             boolean stopHeard = false;
             try (BufferedReader reader = new BufferedReader(signalInputSource.openStream())) {
                 String line;
-                while ((line = reader.readLine()) != null) {
-                    if (line.trim().equalsIgnoreCase(STOP_TEXT)) {
-                        stopHeard = true;
-                        break;
+                while (!stopHeard && (line = reader.readLine()) != null) {
+                    String input = line.trim();
+                    for (InputHandler inputHandler : inputHandlers) {
+                        NextAction action = inputHandler.handle(input);
+                        if (action == NextAction.STOP) {
+                            stopHeard = true;
+                            break;
+                        }
                     }
                 }
             }
             System.out.format("finishing traffic collection (%s)%n", stopHeard ? "due to STOP" : "not sure why");
             //noinspection RedundantCast
             return (Void) null;
+        }
+    }
+
+    private enum NextAction {
+        CONTINUE, STOP
+    }
+
+    private interface InputHandler {
+        NextAction handle(String input);
+    }
+
+    private static class StopHandler implements InputHandler {
+        @Override
+        public NextAction handle(String input) {
+            return NextAction.STOP.name().equalsIgnoreCase(input) ? NextAction.STOP : NextAction.CONTINUE;
         }
     }
 }
