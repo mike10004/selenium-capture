@@ -6,10 +6,12 @@ import com.google.common.collect.ImmutableSet;
 import org.apache.commons.lang3.time.DateUtils;
 import org.junit.Test;
 
+import java.time.Instant;
 import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static org.junit.Assert.*;
 
@@ -22,7 +24,8 @@ public class ExplodedCookieConverterTest {
     @Test
     public void doForward() throws Exception {
         ExplodedCookieConverter c = new ExplodedCookieConverter();
-        DeserializableCookie cookie = c.convert(ExampleCookieSource.asExplodedCookie());
+        Map<String, Object> mapRep = ExampleCookieSource.asExplodedCookie();
+        DeserializableCookie cookie = c.convert(mapRep);
         assertNotNull("cookie", cookie);
         assertEquals("name", ExampleCookieSource.name, cookie.getName());
         assertEquals("domain", ExampleCookieSource.originHost, cookie.getDomain());
@@ -42,6 +45,7 @@ public class ExplodedCookieConverterTest {
         ExplodedCookieConverter conv = new ExplodedCookieConverter();
         DeserializableCookie c = ExampleCookieSource.asDeserializableCookie();
         Map<String, Object> exploded = conv.reverse().convert(c);
+        assertEquals("should not have any Date values", ImmutableSet.of(), exploded.entrySet().stream().filter(entry -> entry.getValue() instanceof Date).map(Map.Entry::getKey).collect(Collectors.toSet()));
         ImmutableMap<String, Object> expected = ExampleCookieSource.asExplodedCookie();
         assertThat("exploded", exploded, MapMatcher.expectingWithTruncatedMillis(expected));
     }
@@ -71,9 +75,9 @@ public class ExplodedCookieConverterTest {
         Converter<DeserializableCookie, Map<String, Object>> d2m = new ExplodedCookieConverter().reverse();
         DeserializableCookie d = ExampleCookieSource.asDeserializableCookie();
         Map<String, Object> map = d2m.convert(d);
-        assertTrue("creationDate is date type", map.get(DeserializableCookie.FIELD_CREATION_DATE) instanceof Date);
-        assertTrue("lastAccessed is date type", map.get(DeserializableCookie.FIELD_LAST_ACCESSED) instanceof Date);
-        assertTrue("expiry is date type", map.get(DeserializableCookie.FIELD_EXPIRY_DATE) instanceof Date);
+        assertTrue("creationDate is date type", map.get(DeserializableCookie.FIELD_CREATION_DATE) instanceof Instant);
+        assertTrue("lastAccessed is date type", map.get(DeserializableCookie.FIELD_LAST_ACCESSED) instanceof Instant);
+        assertTrue("expiry is date type", map.get(DeserializableCookie.FIELD_EXPIRY_DATE) instanceof Instant);
     }
 
 }

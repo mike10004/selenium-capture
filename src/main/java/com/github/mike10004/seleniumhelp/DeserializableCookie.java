@@ -15,6 +15,7 @@ import org.apache.http.cookie.SetCookie;
 import org.apache.http.impl.cookie.BasicClientCookie;
 
 import javax.annotation.Nullable;
+import java.time.Instant;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.LinkedHashMap;
@@ -38,6 +39,8 @@ public class DeserializableCookie implements ClientCookie {
 
     static final String FIELD_ATTRIBUTES = "attribs";
     static final String FIELD_DOMAIN = "cookieDomain";
+    static final String ATTR_DOMAIN = "Domain";
+    static final String ATTR_MAX_AGE = "max-age";
     @SuppressWarnings("unused")
     static final String FIELD_HTTP_ONLY = "httpOnly";
     static final String FIELD_LAST_ACCESSED = "lastAccessed";
@@ -56,9 +59,11 @@ public class DeserializableCookie implements ClientCookie {
     private final String cookieDomain;
     @JsonAdapter(ImmutableStringMapTypeAdapter.class)
     private final ImmutableMap<String, String> attribs;
-    private final Date cookieExpiryDate;
-    private final Date creationDate;
-    private final Date lastAccessed;
+    @JsonAdapter(DateTolerantInstantTypeAdapter.class)
+    private final Instant cookieExpiryDate;
+    @JsonAdapter(DateTolerantInstantTypeAdapter.class)
+    private final Instant creationDate;
+    private final Instant lastAccessed;
     private final Boolean isSecure;
     private final Boolean httpOnly;
     private final Integer cookieVersion;
@@ -83,6 +88,11 @@ public class DeserializableCookie implements ClientCookie {
         return new Builder(name, value);
     }
 
+    /**
+     * Gets the attribute value that corresponds to the given key case-insensitively.
+     * @param name the key
+     * @return the attribute value, or null if not present
+     */
     @Override
     public String getAttribute(final String name) {
         String value = attribs.get(name);
@@ -127,14 +137,25 @@ public class DeserializableCookie implements ClientCookie {
         return null;
     }
 
+    /**
+     * @deprecated use {@link #getExpiryInstant()} instead
+     */
+    @Deprecated
     @Override
     public Date getExpiryDate() {
+        return cookieExpiryDate == null ? null : Date.from(cookieExpiryDate);
+    }
+
+    public Instant getExpiryInstant() {
         return cookieExpiryDate;
     }
 
     @Override
     public boolean isPersistent() {
-        return null != cookieExpiryDate;
+        if (cookieExpiryDate != null) {
+            return true;
+        }
+        return getAttribute(ATTR_MAX_AGE) != null;
     }
 
     @Override
@@ -171,20 +192,41 @@ public class DeserializableCookie implements ClientCookie {
     @Override
     public boolean isExpired(final Date now) {
         requireNonNull(now, "Date");
-        Date cookieExpiryDate_ = this.cookieExpiryDate;
-        return cookieExpiryDate_ != null && (cookieExpiryDate_.before(now) || cookieExpiryDate.equals(now));
+        return isExpired(now.toInstant());
     }
 
+    public boolean isExpired(final Instant now) {
+        requireNonNull(now, "instant");
+        Instant cookieExpiryDate_ = this.cookieExpiryDate;
+        return cookieExpiryDate_ != null && (cookieExpiryDate_.isBefore(now) || cookieExpiryDate.equals(now));
+    }
+
+    /**
+     * @deprecated use {@link #getCreationInstant()} instead
+     */
+    @Deprecated
     public Date getCreationDate() {
+        return creationDate == null ? null : Date.from(creationDate);
+    }
+
+    public Instant getCreationInstant() {
         return creationDate;
     }
 
+    /**
+     * @deprecated use {@link #getLastAccessedInstant()} instead
+     */
+    @Deprecated
     public Date getLastAccessed() {
+        return lastAccessed == null ? null : Date.from(lastAccessed);
+    }
+
+    public Instant getLastAccessedInstant() {
         return lastAccessed;
     }
 
     public String getDomainAttribute() {
-        return getAttribute("Domain");
+        return getAttribute(ATTR_DOMAIN);
     }
 
     @Override
@@ -248,6 +290,21 @@ public class DeserializableCookie implements ClientCookie {
         return h.toString();
     }
 
+    @Nullable
+    public Instant getBestExpiry() {
+        String maxAgeStr = getAttribute(ATTR_MAX_AGE);
+        Instant creationDate = getCreationInstant();
+        if (maxAgeStr != null && creationDate != null) {
+            try {
+                int maxAgeSeconds = Integer.parseInt(maxAgeStr);
+                return creationDate.plusSeconds(maxAgeSeconds);
+            } catch (RuntimeException ignore) {
+            }
+        }
+        return getExpiryInstant();
+    }
+
+    @Nullable
     public String getBestDomainProperty() {
         String domainAttr = getDomainAttribute();
         if (domainAttr != null) {
@@ -264,12 +321,12 @@ public class DeserializableCookie implements ClientCookie {
         private final String value;
         private String cookieComment;
         private String cookieDomain;
-        private Date cookieExpiryDate;
+        private Instant cookieExpiryDate;
         private String cookiePath;
         private Boolean isSecure;
         private Integer cookieVersion;
-        private Date creationDate;
-        private Date lastAccessed;
+        private Instant creationDate;
+        private Instant lastAccessed;
         private Boolean httpOnly;
 
         private Builder(String name, String value) {
@@ -299,8 +356,21 @@ public class DeserializableCookie implements ClientCookie {
             return this;
         }
 
+        public Builder expiry(Instant cookieExpiryDate) {
+            this.cookieExpiryDate = cookieExpiryDate;
+            return this;
+        }
+
+        /**
+         * @deprecated use {@link #expiry(Instant)} instead
+         */
+        @Deprecated
         public Builder expiry(Date val) {
-            cookieExpiryDate = val;
+            if (val == null) {
+                cookieExpiryDate = null;
+            } else {
+                cookieExpiryDate = val.toInstant();
+            }
             return this;
         }
 
@@ -320,12 +390,34 @@ public class DeserializableCookie implements ClientCookie {
             return this;
         }
 
+        /**
+         * @deprecated use {@link #creationDate(Instant)} instead
+         */
+        @Deprecated
         public Builder creationDate(Date val) {
+            if (val == null) {
+                this.creationDate = null;
+            } else {
+                creationDate = val.toInstant();
+            }
+            return this;
+        }
+
+        public Builder creationDate(Instant val) {
             creationDate = val;
             return this;
         }
 
+        /**
+         * @deprecated use {@link #lastAccessed(Instant)} instead
+         */
+        @Deprecated
         public Builder lastAccessed(Date val) {
+            //noinspection RedundantCast
+            return lastAccessed((Instant) (val == null ? null : val.toInstant()));
+        }
+
+        public Builder lastAccessed(Instant val) {
             lastAccessed = val;
             return this;
         }
@@ -350,8 +442,13 @@ public class DeserializableCookie implements ClientCookie {
         }
 
         @Override
+        @Deprecated
         public void setExpiryDate(Date cookieExpiryDate) {
-            this.cookieExpiryDate = cookieExpiryDate;
+            if (cookieExpiryDate == null) {
+                this.cookieExpiryDate = null;
+            } else {
+                this.cookieExpiryDate = cookieExpiryDate.toInstant();
+            }
         }
 
         @Override

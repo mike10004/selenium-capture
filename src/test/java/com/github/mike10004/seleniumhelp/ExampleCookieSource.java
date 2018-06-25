@@ -1,6 +1,7 @@
 package com.github.mike10004.seleniumhelp;
 
-import com.google.common.base.Predicate;
+import java.time.Instant;
+import java.util.function.Predicate;
 import com.google.common.base.Predicates;
 import com.google.common.collect.ImmutableMap;
 
@@ -29,7 +30,7 @@ public class ExampleCookieSource {
     }
 
     private static <K, V> void maybePut(Predicate<K> exclusionPredicate, ImmutableMap.Builder<K, V> builder, K key, V value) {
-        if (!exclusionPredicate.apply(key)) {
+        if (!exclusionPredicate.test(key)) {
             builder.put(key, value);
         }
     }
@@ -40,12 +41,12 @@ public class ExampleCookieSource {
         maybePut(excludes, b, "attribs", attribs);
         maybePut(excludes, b, "value", value);
         maybePut(excludes, b, "cookieDomain", originHost);
-        maybePut(excludes, b, "cookieExpiryDate", new Date(expiryDateMillisSinceEpoch));
+        maybePut(excludes, b, "cookieExpiryDate", Instant.ofEpochMilli(expiryDateMillisSinceEpoch));
         maybePut(excludes, b, "cookiePath", path);
         maybePut(excludes, b, "isSecure", secure);
         maybePut(excludes, b, "httpOnly", httpOnly);
-        maybePut(excludes, b, "creationDate", new Date(createdDateMillisSinceEpoch));
-        maybePut(excludes, b, "lastAccessed", new Date(accessDateMillisSinceEpoch));
+        maybePut(excludes, b, "creationDate", Instant.ofEpochMilli(createdDateMillisSinceEpoch));
+        maybePut(excludes, b, "lastAccessed", Instant.ofEpochMilli(accessDateMillisSinceEpoch));
         return b.build();
     }
 
@@ -54,10 +55,10 @@ public class ExampleCookieSource {
         c.setSecure(ExampleCookieSource.secure);
         c.setPath(ExampleCookieSource.path);
         c.attributes(ExampleCookieSource.attribs);
-        c.setExpiryDate(new Date(ExampleCookieSource.expiryDateMillisSinceEpoch));
+        c.expiry(Instant.ofEpochMilli(ExampleCookieSource.expiryDateMillisSinceEpoch));
         c.setDomain(originHost);
-        c.creationDate(new Date(ExampleCookieSource.createdDateMillisSinceEpoch));
-        c.lastAccessed(new Date(ExampleCookieSource.accessDateMillisSinceEpoch));
+        c.creationDate(Instant.ofEpochMilli((ExampleCookieSource.createdDateMillisSinceEpoch)));
+        c.lastAccessed(Instant.ofEpochMilli((ExampleCookieSource.accessDateMillisSinceEpoch)));
         c.httpOnly(ExampleCookieSource.httpOnly);
         return c.build();
     }
