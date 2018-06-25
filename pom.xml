@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.github.mike10004</groupId>
     <artifactId>selenium-help</artifactId>
-    <version>0.38</version>
+    <version>0.39-SNAPSHOT</version>
     <name>selenium-help</name>
     <description>Library that helps you use Selenium WebDriver in Java</description>
     <url>https://github.com/mike10004/selenium-help</url>
@@ -62,12 +62,26 @@
                     <plugins>
                         <plugin>
                             <artifactId>maven-surefire-plugin</artifactId>
-                            <version>2.20.1</version>
                             <configuration>
                                 <systemPropertyVariables>
                                     <selenium-help.chrome.headless.tests.disabled>${chrome.headless.tests.disabled}</selenium-help.chrome.headless.tests.disabled>
                                     <selenium-help.chrome.options.extraArgs>--no-sandbox</selenium-help.chrome.options.extraArgs>
                                 </systemPropertyVariables>
+                            </configuration>
+                        </plugin>
+                    </plugins>
+                </pluginManagement>
+            </build>
+        </profile>
+        <profile>
+            <id>skip-tests</id>
+            <build>
+                <pluginManagement>
+                    <plugins>
+                        <plugin>
+                            <artifactId>maven-surefire-plugin</artifactId>
+                            <configuration>
+                                <skipTests>true</skipTests>
                             </configuration>
                         </plugin>
                     </plugins>
