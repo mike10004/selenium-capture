@@ -139,9 +139,14 @@ public class FirefoxCookieRowTransform {
     }
 
     protected void supplementSqlFields(Map<String, Object> explodedCookie, Map<String, String> sqlRow) {
-
         if (!sqlRow.containsKey("isHttpOnly")) {
             sqlRow.put("isHttpOnly", "1"); // assume http only
+        }
+        if (!sqlRow.containsKey("host")) {
+            String baseDomain = sqlRow.get("baseDomain");
+            if ("localhost".equalsIgnoreCase(baseDomain)) {
+                sqlRow.put("host", baseDomain);
+            }
         }
     }
 
