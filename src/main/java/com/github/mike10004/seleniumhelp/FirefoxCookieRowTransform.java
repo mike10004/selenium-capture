@@ -10,7 +10,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.net.InternetDomainName;
 
 import java.math.BigInteger;
-import java.util.Date;
+import java.time.Instant;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TreeMap;
@@ -119,8 +119,9 @@ public class FirefoxCookieRowTransform {
     protected String stringifyCookieValue(Object cookieFieldValue, String sqlFieldName) {
         if (cookieFieldValue instanceof Map) {
             return ATTRIB_JOINER.join((Map)cookieFieldValue);
-        } else if (cookieFieldValue instanceof Date) {
-            BigInteger millis = BigInteger.valueOf(((Date)cookieFieldValue).getTime());
+        } else if (cookieFieldValue instanceof Instant) {
+            Instant instant = (Instant) cookieFieldValue;
+            BigInteger millis = BigInteger.valueOf(instant.toEpochMilli());
             int exponent = getCookieToSqlDateConversionExponentBySqlFieldName(sqlFieldName);
             final long value;
             if (exponent >= 0) {

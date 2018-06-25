@@ -16,6 +16,8 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -51,7 +53,7 @@ public abstract class CookieUsageTestBase {
 
     protected void checkOurCookies(Iterable<DeserializableCookie> cookies) {
         for (DeserializableCookie c : cookies) {
-            checkArgument(c.getExpiryDate() != null, "null expiry: %s", c);
+            checkArgument(c.getExpiryInstant() != null, "null expiry: %s", c);
         }
     }
 
@@ -125,11 +127,11 @@ public abstract class CookieUsageTestBase {
     static DeserializableCookie newCookie(String name, String value) {
         DeserializableCookie.Builder cookie = DeserializableCookie.builder(name, value);
         cookie.httpOnly(true);
-        Date now = new Date();
-        Date later = DateUtils.addMonths(now, 3);
+        Instant now = Instant.now();
+        Instant later = now.plus(Duration.ofDays(90));
         cookie.creationDate(now);
         cookie.lastAccessed(now);
-        cookie.setExpiryDate(later);
+        cookie.expiry(later);
         cookie.setSecure(true);
         cookie.setDomain("localhost");
         cookie.setPath("/");
