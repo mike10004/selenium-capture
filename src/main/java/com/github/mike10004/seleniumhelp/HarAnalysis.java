@@ -130,7 +130,8 @@ public class HarAnalysis {
         final List<DeserializableCookie> cookies = new ArrayList<>();
         headerValues.forEach(headerValue -> {
             try {
-                Stream<DeserializableCookie> cookieStream = cookieSpec.parse(headerValue, originUrl, creationDate).stream()
+                List<org.apache.http.cookie.Cookie> parsed = cookieSpec.parse(headerValue, originUrl, creationDate);
+                Stream<DeserializableCookie> cookieStream = parsed.stream()
                         .map(x -> (DeserializableCookie) x);
                 cookieStream.forEach(cookies::add);
             } catch (MalformedCookieException e) {

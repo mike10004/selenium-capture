@@ -18,7 +18,6 @@ import javax.annotation.Nullable;
 import java.time.Instant;
 import java.util.BitSet;
 import java.util.Collections;
-import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -57,7 +56,7 @@ class RFC6265SetCookieHeaderParser implements SetCookieHeaderParser {
         return DeserializableCookie.builder(name, value)
                 .domain(getDefaultDomain(origin))
                 .path(getDefaultPath(origin))
-                .creationDate(creationDate == null ? null : Date.from(creationDate));
+                .creationDate(creationDate);
     }
 
     public List<Cookie> parse(final Header header, final CookieOrigin origin, final @Nullable Instant creationDate) throws MalformedCookieException {

@@ -6,6 +6,7 @@ package com.github.mike10004.seleniumhelp;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.math.LongMath;
 import com.google.gson.Gson;
 import com.google.gson.annotations.JsonAdapter;
 import org.apache.commons.lang3.StringUtils;
@@ -15,6 +16,7 @@ import org.apache.http.cookie.SetCookie;
 import org.apache.http.impl.cookie.BasicClientCookie;
 
 import javax.annotation.Nullable;
+import java.math.BigInteger;
 import java.time.Instant;
 import java.util.Calendar;
 import java.util.Date;
@@ -290,15 +292,36 @@ public class DeserializableCookie implements ClientCookie {
         return h.toString();
     }
 
+    private static final BigInteger LONG_MIN_BIGINT = BigInteger.valueOf(Long.MIN_VALUE);
+    private static final BigInteger LONG_MAX_BIGINT = BigInteger.valueOf(Long.MAX_VALUE);
+
+    private static long clamp(BigInteger value, BigInteger min, BigInteger max) {
+        if (value.compareTo(min) < 0) {
+            return min.longValueExact();
+        }
+        if (value.compareTo(max) > 0) {
+            return max.longValueExact();
+        }
+        return value.longValueExact();
+    }
+
     @Nullable
     public Instant getBestExpiry() {
         String maxAgeStr = getAttribute(ATTR_MAX_AGE);
         Instant creationDate = getCreationInstant();
         if (maxAgeStr != null && creationDate != null) {
+            BigInteger maxAgeSeconds = null;
             try {
-                int maxAgeSeconds = Integer.parseInt(maxAgeStr);
-                return creationDate.plusSeconds(maxAgeSeconds);
+                 maxAgeSeconds = new BigInteger(maxAgeStr);
             } catch (RuntimeException ignore) {
+            }
+            if (maxAgeSeconds != null) {
+                long maxAgeSecondsLong = clamp(maxAgeSeconds, LONG_MIN_BIGINT, LONG_MAX_BIGINT);
+                long maxAgeMillis = LongMath.saturatedMultiply(maxAgeSecondsLong, 1000);
+                long creationEpochMillis = creationDate.toEpochMilli();
+                long expiryEpochMillis = LongMath.saturatedAdd(creationEpochMillis, maxAgeMillis);
+                Instant later = Instant.ofEpochMilli(expiryEpochMillis);
+                return later;
             }
         }
         return getExpiryInstant();
