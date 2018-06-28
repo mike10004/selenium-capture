@@ -65,6 +65,7 @@ public class DeserializableCookie implements ClientCookie {
     private final Instant cookieExpiryDate;
     @JsonAdapter(DateTolerantInstantTypeAdapter.class)
     private final Instant creationDate;
+    @JsonAdapter(DateTolerantInstantTypeAdapter.class)
     private final Instant lastAccessed;
     private final Boolean isSecure;
     private final Boolean httpOnly;

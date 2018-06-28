@@ -2,14 +2,18 @@ package com.github.mike10004.seleniumhelp;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import org.junit.Test;
 
 import java.text.SimpleDateFormat;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.TimeZone;
+import java.util.function.BiConsumer;
 
 import static org.junit.Assert.*;
 
@@ -87,5 +91,79 @@ public class DeserializableCookieTest {
         System.out.format("best expiry: %s for %s%n", bestExpiry, c);
         assertNotNull("getBestExpiry result", bestExpiry);
         assertFalse("expired", c.isExpired(Instant.now()));
+    }
+
+    private static Iterator<Instant> instants(Instant start, Duration increment) {
+        return new Iterator<Instant>() {
+
+            private Instant previous = start;
+
+            @Override
+            public boolean hasNext() {
+                return true;
+            }
+
+            @Override
+            public synchronized Instant next() {
+                Instant next = previous.plus(increment);
+                previous = next;
+                return next;
+            }
+        };
+    }
+
+    @Test
+    public void serializationOfDateFields_all() throws Exception {
+        Iterator<Instant> instants = instants(Instant.now().minus(Duration.ofDays(7)), Duration.ofHours(1));
+        DeserializableCookie.Builder cookieBuilder = DeserializableCookie.builder("foo", "bar");
+        dateFieldSetters().forEach(setter -> setter.accept(cookieBuilder, instants.next()));
+        DeserializableCookie cookie = cookieBuilder.build();
+        DeserializableCookie deserialized = invertTwice(cookie);
+        assertEquals("deserialized", cookie, deserialized);
+    }
+
+    @Test
+    public void serializationOfDateFields_individual() throws Exception {
+        Iterator<Instant> instants = instants(Instant.now().minus(Duration.ofDays(7)), Duration.ofHours(1));
+        dateFieldSetters().forEach(setter -> {
+            DeserializableCookie.Builder cookieBuilder = DeserializableCookie.builder("foo", "bar");
+            setter.accept(cookieBuilder, instants.next());
+            DeserializableCookie cookie = cookieBuilder.build();
+            DeserializableCookie deserialized = invertTwice(cookie);
+            assertEquals("deserialized", cookie, deserialized);
+        });
+    }
+
+    private static Iterable<BiConsumer<? super DeserializableCookie.Builder, Instant>> dateFieldSetters() {
+        return Arrays.asList(
+                DeserializableCookie.Builder::creationDate,
+                DeserializableCookie.Builder::lastAccessed,
+                DeserializableCookie.Builder::expiry
+        );
+    }
+
+    private static DeserializableCookie invertTwice(DeserializableCookie cookie) {
+        Gson gson = new GsonBuilder().setPrettyPrinting().create();
+        String json = gson.toJson(cookie);
+        System.out.println(json);
+        DeserializableCookie deserialized = gson.fromJson(json, DeserializableCookie.class);
+        return deserialized;
+    }
+
+    @Test
+    public void deserialize_instantsAsStrings() throws Exception {
+        String json = "{\n" +
+                "      \"name\": \"foo\",\n" +
+                "      \"value\": \"bar\",\n" +
+                "      \"cookiePath\": \"/\",\n" +
+                "      \"cookieDomain\": \".example.com\",\n" +
+                "      \"attribs\": {},\n" +
+                "      \"cookieExpiryDate\": \"2018-03-11T05:18:29Z\",\n" +
+                "      \"creationDate\": \"2016-03-10T17:40:57.274Z\",\n" +
+                "      \"lastAccessed\": \"2016-03-10T17:42:21.853Z\",\n" +
+                "      \"isSecure\": false\n" +
+                "    }";
+        DeserializableCookie cookie = new Gson().fromJson(json, DeserializableCookie.class);
+        assertNotNull("lastAccessed", cookie.getLastAccessedInstant());
     }
 }
