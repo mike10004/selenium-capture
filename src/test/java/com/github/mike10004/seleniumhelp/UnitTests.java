@@ -62,7 +62,11 @@ public class UnitTests {
     private UnitTests() {}
 
     private static String getRecommendedChromedriverVersion() {
-        return System.getProperty(SYSPROP_CHROMEDRIVER_VERSION, DEFAULT_RECOMMENDED_CHROMEDRIVER_VERSION_);
+        String val = System.getProperty(SYSPROP_CHROMEDRIVER_VERSION);
+        if (Strings.isNullOrEmpty(val)) {
+            val = DEFAULT_RECOMMENDED_CHROMEDRIVER_VERSION_;
+        }
+        return val;
     }
 
     /**
