@@ -1,6 +1,7 @@
 package com.github.mike10004.seleniumhelp;
 
 import net.lightbody.bmp.core.har.HarContent;
+import net.lightbody.bmp.core.har.HarResponse;
 import org.junit.Assume;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -48,7 +49,8 @@ public class ChromeWebDriverFactoryHttpCollectionTest extends CollectionTestBase
                 .chromeOptions(UnitTests.createChromeOptions())
                 .headless()
                 .build();
-        HarContent content = testTrafficCollector(webDriverFactory, new URL("http://httpbin.org/brotli"));
+        HarResponse response = testTrafficCollector(webDriverFactory, new URL("http://httpbin.org/brotli"));
+        HarContent content = response.getContent();
         System.out.println(content.getText());
     }
 }
