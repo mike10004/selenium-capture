@@ -6,8 +6,10 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.net.HostAndPort;
 import com.google.gson.Gson;
+import com.google.gson.JsonParseException;
 import net.lightbody.bmp.core.har.HarContent;
 import net.lightbody.bmp.core.har.HarEntry;
+import net.lightbody.bmp.core.har.HarResponse;
 import net.lightbody.bmp.mitm.CertificateAndKeySource;
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.commons.validator.routines.InetAddressValidator;
@@ -113,12 +115,19 @@ public class CollectionTestBase {
         int port = getPort();
         System.out.format("testing collector on port %d with %s%n", port, webDriverFactory);
         URL url = new URL(protocol, "httpbin.org", port, "/get?foo=bar&foo=baz");
-        HarContent content = testTrafficCollector(webDriverFactory, url);
+        HarResponse response = testTrafficCollector(webDriverFactory, url);
+        checkState(response.getStatus() == 200, "expected HTTP status 200 but got %s", response.getStatus());
+        HarContent content = response.getContent();
         String json = content.getText();
-        Gson gson = new Gson();
-        HttpBinGetResponseData responseData = gson.fromJson(json, HttpBinGetResponseData.class);
-        checkResponseData(url, responseData);
-        return content;
+        try {
+            Gson gson = new Gson();
+            HttpBinGetResponseData responseData = gson.fromJson(json, HttpBinGetResponseData.class);
+            checkResponseData(url, responseData);
+            return content;
+        } catch (JsonParseException e) {
+            System.out.format("parse failed on response content %s content-type=\"%s\":%n%n%s%n%n", response.getStatus(), content.getMimeType(), json);
+            throw e;
+        }
     }
 
     private static boolean isIpAddressAlreadyResolved(String expectedOrigin) {
@@ -154,7 +163,7 @@ public class CollectionTestBase {
         }
     }
 
-    protected HarContent testTrafficCollector(WebDriverFactory webDriverFactory, final URL url) throws IOException {
+    protected HarResponse testTrafficCollector(WebDriverFactory webDriverFactory, final URL url) throws IOException {
         TrafficGenerator<String> urlTrafficGenerator = driver -> {
             driver.get(url.toString());
             String currentUrl = driver.getCurrentUrl(), pageSource = driver.getPageSource();
@@ -165,18 +174,18 @@ public class CollectionTestBase {
         HarPlus<String> collection = testTrafficCollector(webDriverFactory, urlTrafficGenerator);
         List<HarEntry> entries = ImmutableList.copyOf(collection.har.getLog().getEntries());
         System.out.format("%d request URLs recorded in HAR:%n", entries.size());
-        HarContent content = null;
+        HarResponse response = null;
         for (int i = 0; i < entries.size(); i++) {
             HarEntry harEntry = entries.get(i);
             String requestUrl = harEntry.getRequest().getUrl();
             System.out.format("  %2d %s%n", i + 1, requestUrl);
             if (url.toString().equals(requestUrl)) {
-                checkState(content == null, "content already found matching %s: %s (not sure what to do if two HAR entries match the URL)", url, content);
-                content = harEntry.getResponse().getContent();
+                checkState(response == null, "response already found matching %s: %s (not sure what to do if two HAR entries match the URL)", url, response);
+                response = harEntry.getResponse();
             }
         }
-        assertNotNull("no request for " + url + " in HAR", content);
-        return content;
+        assertNotNull("no request for " + url + " in HAR", response);
+        return response;
     }
 
     protected <T> HarPlus<T> testTrafficCollector(WebDriverFactory webDriverFactory, TrafficGenerator<T> pageSourceTrafficGenerator) throws IOException {
