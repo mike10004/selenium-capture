@@ -100,6 +100,7 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
         profile.setPreference("browser.newtabpage.enabled", false);
         profile.setPreference("app.update.url", "");
         profile.setPreference("browser.safebrowsing.provider.mozilla.updateURL", "");
+        profile.setPreference("media.gmp-manager.url", "");
         if (proxy != null) {
             // https://stackoverflow.com/questions/2887978/webdriver-and-proxy-server-for-firefox
             profile.setPreference("network.proxy.type", 1);

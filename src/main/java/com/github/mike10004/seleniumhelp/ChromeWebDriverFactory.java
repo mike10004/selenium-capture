@@ -72,7 +72,7 @@ public class ChromeWebDriverFactory extends EnvironmentWebDriverFactory {
         public final ChromeDriver driver;
         public final ChromeDriverService service;
 
-        private DriverAndService(@Nullable ChromeDriver driver, ChromeDriverService service) {
+        public DriverAndService(@Nullable ChromeDriver driver, ChromeDriverService service) {
             this.driver = driver;
             this.service = service;
         }

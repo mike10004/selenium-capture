@@ -30,12 +30,13 @@ public class JBrowserDriverFactory implements WebDriverFactory {
         return WebdrivingSession.simple(createWebDriver(config.getProxyAddress(), config.getCertificateAndKeySource()));
     }
 
-    private WebDriver createWebDriver(InetSocketAddress proxy,
+    private WebDriver createWebDriver(@Nullable InetSocketAddress proxy,
               @SuppressWarnings("unused") @Nullable CertificateAndKeySource certificateAndKeySource) {
-        requireNonNull(proxy, "proxy");
-        ProxyConfig proxyConfig = new ProxyConfig(ProxyConfig.Type.HTTP, "localhost", proxy.getPort());
-        Settings.Builder settingsBuilder = Settings.builder()
-                .proxy(proxyConfig);
+        Settings.Builder settingsBuilder = Settings.builder();
+        if (proxy != null) {
+            ProxyConfig proxyConfig = new ProxyConfig(ProxyConfig.Type.HTTP, "localhost", proxy.getPort());
+            settingsBuilder.proxy(proxyConfig);
+        }
         if (certificatePemFile != null) {
             settingsBuilder.ssl(certificatePemFile.getAbsolutePath());
         }
