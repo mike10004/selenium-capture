@@ -3,7 +3,6 @@ package com.github.mike10004.seleniumhelp;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import net.lightbody.bmp.client.ClientUtil;
-import net.lightbody.bmp.mitm.CertificateAndKeySource;
 import org.openqa.selenium.Proxy;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebDriverException;
@@ -21,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -50,7 +50,7 @@ public class ChromeWebDriverFactory extends EnvironmentWebDriverFactory {
 
     @Override
     public WebdrivingSession createWebdrivingSession(WebDriverConfig config) throws IOException {
-        DriverAndService driverAndService = createWebDriverMaybeWithProxy(config.getProxyAddress(), config.getCertificateAndKeySource());
+        DriverAndService driverAndService = createWebDriverMaybeWithProxy(config);
         return new WebdrivingSession() {
             @Override
             public WebDriver getWebDriver() {
@@ -78,11 +78,9 @@ public class ChromeWebDriverFactory extends EnvironmentWebDriverFactory {
         }
     }
 
-    private DriverAndService createWebDriverMaybeWithProxy(@Nullable InetSocketAddress proxy, @Nullable CertificateAndKeySource certificateAndKeySource) throws IOException {
+    private DriverAndService createWebDriverMaybeWithProxy(WebDriverConfig config) throws IOException {
+        configureProxy(chromeOptions, config);
         cookiePreparer.supplementOptions(chromeOptions);
-        if (proxy != null) {
-            configureProxy(chromeOptions, proxy, certificateAndKeySource);
-        }
         ChromeDriverService.Builder serviceBuilder = createDriverServiceBuilder();
         serviceBuilder.withEnvironment(environmentSupplier.get());
         driverServiceBuilderConfigurators.forEach(configurator -> configurator.configure(serviceBuilder));
@@ -110,17 +108,24 @@ public class ChromeWebDriverFactory extends EnvironmentWebDriverFactory {
     }
 
     /**
-     * Configures a capabilities instance to use the given proxy. The certificate and key source
+     * Parameterizes a capabilities instance according to a config instance. The certificate and key source
      * is not used because Chrome in webdriver mode appears to be fine with untrusted certificates,
      * which is good because we don't know how to install custom certificates.
      * @param options the options instance
-     * @param proxySocketAddress the proxy
-     * @param certificateAndKeySource the certificate and key source (unused)
+     * @param config the config instance
      */
-    protected void configureProxy(ChromeOptions options, InetSocketAddress proxySocketAddress, @SuppressWarnings("unused") @Nullable CertificateAndKeySource certificateAndKeySource) {
-        Proxy seleniumProxy = ClientUtil.createSeleniumProxy(proxySocketAddress);
-        options.setProxy(seleniumProxy);
+    protected void configureProxy(ChromeOptions options, WebDriverConfig config) {
+        @Nullable InetSocketAddress proxySocketAddress = config.getProxyAddress();
+        if (proxySocketAddress != null) {
+            Proxy seleniumProxy = ClientUtil.createSeleniumProxy(proxySocketAddress);
+            options.setProxy(seleniumProxy);
+        }
+        List<String> proxyBypasses = config.getProxyBypasses();
+        String proxyBypassParam = proxyBypasses.stream().collect(Collectors.joining(CHROME_PROXY_BYPASS_ARG_PATTERN_DELIMITER));
+        options.addArguments(String.format("--proxy-bypass-list=%s", proxyBypassParam));
     }
+
+    private static final String CHROME_PROXY_BYPASS_ARG_PATTERN_DELIMITER = ";";
 
     @VisibleForTesting
     ChromeOptions getChromeOptions() {

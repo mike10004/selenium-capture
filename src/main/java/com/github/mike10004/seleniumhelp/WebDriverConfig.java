@@ -1,9 +1,12 @@
 package com.github.mike10004.seleniumhelp;
 
+import com.google.common.collect.ImmutableList;
 import net.lightbody.bmp.mitm.CertificateAndKeySource;
 
 import javax.annotation.Nullable;
 import java.net.InetSocketAddress;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public interface WebDriverConfig {
@@ -22,6 +25,10 @@ public interface WebDriverConfig {
     @Nullable
     CertificateAndKeySource getCertificateAndKeySource();
 
+    default List<String> getProxyBypasses() {
+        return Collections.emptyList();
+    }
+
     static Builder builder() {
         return new Builder();
     }
@@ -30,8 +37,9 @@ public interface WebDriverConfig {
     final class Builder {
         private InetSocketAddress proxyAddress;
         private CertificateAndKeySource certificateAndKeySource;
-
+        private final List<String> proxyBypasses;
         private Builder() {
+            proxyBypasses = new ArrayList<>();
         }
 
         public Builder proxy(InetSocketAddress proxyAddress) {
@@ -45,6 +53,11 @@ public interface WebDriverConfig {
         }
 
         public Builder bypassHost(String hostPattern) {
+            if (hostPattern != null) {
+                if (!hostPattern.trim().isEmpty()) {
+                    proxyBypasses.add(hostPattern);
+                }
+            }
             return this;
         }
 
@@ -66,9 +79,17 @@ public interface WebDriverConfig {
             @Nullable
             private final CertificateAndKeySource certificateAndKeySource;
 
+            private final ImmutableList<String> proxyBypasses;
+
             private WebDriverConfigImpl(Builder builder) {
                 proxyAddress = builder.proxyAddress;
                 certificateAndKeySource = builder.certificateAndKeySource;
+                proxyBypasses = ImmutableList.copyOf(builder.proxyBypasses);
+            }
+
+            @Override
+            public List<String> getProxyBypasses() {
+                return proxyBypasses;
             }
 
             /**

@@ -33,6 +33,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static java.util.Objects.requireNonNull;
@@ -70,7 +71,7 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
 
     @Override
     public WebdrivingSession createWebdrivingSession(WebDriverConfig config) throws IOException {
-        return WebdrivingSession.simple(createWebDriverMaybeWithProxy(config.getProxyAddress(), config.getCertificateAndKeySource()));
+        return WebdrivingSession.simple(createWebDriverMaybeWithProxy(config));
     }
 
     private SupplementingFirefoxProfile createFirefoxProfile(List<FirefoxProfileFolderAction> actions) {
@@ -81,8 +82,9 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
         return new FirefoxOptions();
     }
 
-    private WebDriver createWebDriverMaybeWithProxy(@Nullable InetSocketAddress proxy,
-                                                    @Nullable CertificateAndKeySource certificateAndKeySource) throws IOException {
+    private WebDriver createWebDriverMaybeWithProxy(WebDriverConfig config) throws IOException {
+        @Nullable InetSocketAddress proxy = config.getProxyAddress();
+        @Nullable CertificateAndKeySource certificateAndKeySource = config.getCertificateAndKeySource();
         List<FirefoxProfileFolderAction> actions = new ArrayList<>(2);
         List<DeserializableCookie> cookies_ = getCookies();
         if (!cookies.isEmpty()) {
@@ -108,7 +110,7 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
             profile.setPreference("network.proxy.http_port", proxy.getPort());
             profile.setPreference("network.proxy.ssl", "localhost");
             profile.setPreference("network.proxy.ssl_port", proxy.getPort());
-            profile.setPreference("network.proxy.no_proxies_on", ""); // no host bypassing; collector should get all traffic
+            profile.setPreference("network.proxy.no_proxies_on", makeProxyBypassPreferenceValue(config.getProxyBypasses()));
             profile.setPreference("browser.search.geoip.url", "");
             profile.setPreference("network.prefetch-next", false);
             profile.setPreference("network.http.speculative-parallel-limit", 0);
@@ -127,6 +129,16 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
                 .build();
         WebDriver driver = constructor.construct(service, options);
         return driver;
+    }
+
+    private static final String FIREFOX_PROXY_BYPASS_RULE_DELIM = ", ";
+
+    private String makeProxyBypassPreferenceValue(List<String> hosts) {
+        if (hosts == null || hosts.isEmpty()) {
+            return "";
+        }
+        String prefValue = hosts.stream().collect(Collectors.joining(FIREFOX_PROXY_BYPASS_RULE_DELIM));
+        return prefValue;
     }
 
     /**
@@ -166,6 +178,7 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
         }
     }
 
+    @SuppressWarnings("SameParameterValue")
     @VisibleForTesting
     static Predicate<Object> newTypePredicate(Iterable<Class<?>> permittedSuperclasses) {
         final Set<Class<?>> superclasses = ImmutableSet.copyOf(permittedSuperclasses);

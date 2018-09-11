@@ -3,14 +3,13 @@ package com.github.mike10004.seleniumhelp;
 import com.machinepublishers.jbrowserdriver.JBrowserDriver;
 import com.machinepublishers.jbrowserdriver.ProxyConfig;
 import com.machinepublishers.jbrowserdriver.Settings;
-import net.lightbody.bmp.mitm.CertificateAndKeySource;
 import org.openqa.selenium.WebDriver;
 
 import javax.annotation.Nullable;
 import java.io.File;
 import java.net.InetSocketAddress;
-
-import static java.util.Objects.requireNonNull;
+import java.util.HashSet;
+import java.util.Set;
 
 public class JBrowserDriverFactory implements WebDriverFactory {
 
@@ -27,14 +26,21 @@ public class JBrowserDriverFactory implements WebDriverFactory {
 
     @Override
     public WebdrivingSession createWebdrivingSession(WebDriverConfig config) {
-        return WebdrivingSession.simple(createWebDriver(config.getProxyAddress(), config.getCertificateAndKeySource()));
+        return WebdrivingSession.simple(createWebDriver(config));
     }
 
-    private WebDriver createWebDriver(@Nullable InetSocketAddress proxy,
-              @SuppressWarnings("unused") @Nullable CertificateAndKeySource certificateAndKeySource) {
+    /**
+     * Creates a webdriver. The certificate and key source is ignored and the pem file passed to the constructor
+     * of this instance is used instead.
+     * @param config the config
+     * @return
+     */
+    private WebDriver createWebDriver(WebDriverConfig config) {
+        @Nullable InetSocketAddress proxy = config.getProxyAddress();
         Settings.Builder settingsBuilder = Settings.builder();
         if (proxy != null) {
-            ProxyConfig proxyConfig = new ProxyConfig(ProxyConfig.Type.HTTP, "localhost", proxy.getPort());
+            Set<String> nonProxyHosts = new HashSet<>(config.getProxyBypasses());
+            ProxyConfig proxyConfig = new ProxyConfig(ProxyConfig.Type.HTTP, "localhost", proxy.getPort(), null, null, false, nonProxyHosts);
             settingsBuilder.proxy(proxyConfig);
         }
         if (certificatePemFile != null) {

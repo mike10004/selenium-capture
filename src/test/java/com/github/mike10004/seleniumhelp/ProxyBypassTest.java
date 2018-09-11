@@ -19,6 +19,7 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 import net.lightbody.bmp.BrowserMobProxy;
 import net.lightbody.bmp.BrowserMobProxyServer;
 import net.lightbody.bmp.filters.HttpsAwareFiltersAdapter;
+import org.junit.Assume;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -44,7 +45,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
-import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -104,7 +104,7 @@ public class ProxyBypassTest {
         assertEquals("ground truth - expect bad message", BAD_MESSAGE, bodyText.trim());
     }
 
-    private static final String GOOD_MESSAGE = "You did good", BAD_MESSAGE = "You did bad";
+    private static final String GOOD_MESSAGE = "Reached the target server", BAD_MESSAGE = "Intercepted by proxy";
     private static final int MAX_BUFFER_SIZE_BYTES = 0; //2 * 1024 * 1024;
 
     private String testBypass(WebDriverFactory webDriverFactory, Predicate<? super String> bypassFilter) throws Exception {
@@ -210,7 +210,7 @@ public class ProxyBypassTest {
         } else if (webDriverFactory instanceof ChromeWebDriverFactory) {
             UnitTests.setupRecommendedChromeDriver();
         } else if (webDriverFactory instanceof JBrowserDriverFactory) {
-            Logger.getLogger(getClass().getName()).finest("doing nothing because JBrowserDriver needs no setup");
+            Assume.assumeFalse("JBrowserDriver does not support proxy host bypasses", webDriverFactory instanceof JBrowserDriverFactory);
         } else {
             throw new AssertionError("unhandled driver factory: " + webDriverFactory);
         }
