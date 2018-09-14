@@ -26,7 +26,7 @@ public class JBrowserDriverFactory implements WebDriverFactory {
 
     @Override
     public WebdrivingSession createWebdrivingSession(WebDriverConfig config) {
-        return WebdrivingSession.simple(createWebDriver(config));
+        return new SimpleWebdrivingSession(createWebDriver(config));
     }
 
     /**

@@ -1,11 +1,20 @@
 package com.github.mike10004.seleniumhelp;
 
+import com.github.mike10004.seleniumhelp.TrafficCollectorImpl.ProxyConfigurator;
+import net.lightbody.bmp.BrowserMobProxy;
+import net.lightbody.bmp.BrowserMobProxyServer;
+import net.lightbody.bmp.mitm.CertificateAndKeySource;
+import org.littleshoot.proxy.HttpFiltersSource;
 import org.openqa.selenium.WebDriverException;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.function.Supplier;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Objects.requireNonNull;
 
 public interface TrafficCollector {
@@ -65,4 +74,99 @@ public interface TrafficCollector {
         return new TrafficCollectorImpl.Builder(webDriverFactory);
     }
 
+    @SuppressWarnings("unused")
+    final class Builder {
+
+        private final WebDriverFactory webDriverFactory;
+        private CertificateAndKeySource certificateAndKeySource = null;
+        private final List<HttpFiltersSource> httpFiltersSources = new ArrayList<>();
+        private ProxyConfigurator upstreamConfigurator = ProxyConfigurator.inoperative();
+        private Supplier<? extends BrowserMobProxy> interceptingProxyInstantiator = BrAwareBrowserMobProxyServer::new;
+        private final List<HarPostProcessor> harPostProcessors = new ArrayList<>();
+        private ExceptionReactor exceptionReactor = ExceptionReactor.PROPAGATE;
+
+        Builder(WebDriverFactory webDriverFactory) {
+            this.webDriverFactory = requireNonNull(webDriverFactory);
+            httpFiltersSources.add(AnonymizingFiltersSource.getInstance());
+        }
+
+        public Builder onException(ExceptionReactor exceptionReactor) {
+            this.exceptionReactor = requireNonNull(exceptionReactor);
+            return this;
+        }
+
+        public Builder collectHttps(CertificateAndKeySource certificateAndKeySource) {
+            this.certificateAndKeySource = requireNonNull(certificateAndKeySource);
+            return this;
+        }
+
+        /**
+         * Sets the supplier of the proxy server instance that is used to intercept and collect traffic.
+         * By default, we supply a custom implementation that supports brotli decoding,
+         * {@link BrAwareBrowserMobProxyServer}. To revert this behavior to a more hands-off implementation,
+         * set this to a supplier of a {@link net.lightbody.bmp.BrowserMobProxyServer} instance.
+         * @param interceptingProxyInstantiator the instantiator
+         * @return this builder instance
+         */
+        public Builder interceptingProxyInstantiator(Supplier<? extends BrowserMobProxy> interceptingProxyInstantiator) {
+            this.interceptingProxyInstantiator = requireNonNull(interceptingProxyInstantiator);
+            return this;
+        }
+
+        public Builder nonAnonymizing() {
+            httpFiltersSources.remove(AnonymizingFiltersSource.getInstance());
+            return this;
+        }
+
+        public Builder filter(HttpFiltersSource filter) {
+            httpFiltersSources.add(filter);
+            return this;
+        }
+
+        /**
+         * Adds all argument filters sources to this builder's filters list.
+         * @param val the filters sources to add
+         * @return this instance
+         */
+        public Builder filters(Collection<? extends HttpFiltersSource> val) {
+            httpFiltersSources.addAll(val);
+            return this;
+        }
+
+        Builder upstreamProxy(ProxyConfigurator configurator) {
+            this.upstreamConfigurator = requireNonNull(configurator);
+            return this;
+        }
+
+        public Builder noUpstreamProxy() {
+            return upstreamProxy(bmp -> {
+                bmp.setChainedProxy(null);
+                if (bmp instanceof BrowserMobProxyServer) {
+                    ((BrowserMobProxyServer)bmp).setChainedProxyManager(null);
+                }
+            });
+        }
+
+        @Deprecated
+        public Builder upstreamProxy(InetSocketAddress address) {
+            return upstreamProxy(() -> address);
+        }
+
+        @Deprecated
+        public Builder upstreamProxy(Supplier<InetSocketAddress> supplier) {
+            return upstreamProxy(ProxyConfigurator.upstream(supplier));
+        }
+
+        public Builder harPostProcessor(HarPostProcessor harPostProcessor) {
+            harPostProcessors.add(harPostProcessor);
+            return this;
+        }
+
+        public TrafficCollector build() {
+            return new TrafficCollectorImpl(webDriverFactory,
+                    certificateAndKeySource, upstreamConfigurator,
+                    httpFiltersSources, interceptingProxyInstantiator,
+                    harPostProcessors, exceptionReactor);
+        }
+    }
 }

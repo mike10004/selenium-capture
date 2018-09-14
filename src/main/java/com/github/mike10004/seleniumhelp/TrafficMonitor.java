@@ -2,6 +2,9 @@ package com.github.mike10004.seleniumhelp;
 
 import io.netty.handler.codec.http.HttpObject;
 import org.littleshoot.proxy.HttpFiltersSource;
+import org.openqa.selenium.WebDriver;
+
+import java.lang.ref.WeakReference;
 
 /**
  * Interface for classes that passively listen to HTTP requests and responses generated during
@@ -38,4 +41,8 @@ public interface TrafficMonitor {
         return 0;
     }
 
+    @SuppressWarnings("unused")
+    default void sessionCreated(WeakReference<WebdrivingSession> session) {
+        // no op
+    }
 }

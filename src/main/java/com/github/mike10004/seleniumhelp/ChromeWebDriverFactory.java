@@ -50,35 +50,11 @@ public class ChromeWebDriverFactory extends EnvironmentWebDriverFactory {
 
     @Override
     public WebdrivingSession createWebdrivingSession(WebDriverConfig config) throws IOException {
-        DriverAndService driverAndService = createWebDriverMaybeWithProxy(config);
-        return new WebdrivingSession() {
-            @Override
-            public WebDriver getWebDriver() {
-                return driverAndService.driver;
-            }
-
-            @Override
-            public void close() {
-                driverAndService.driver.quit();
-                if (driverAndService.service.isRunning()) {
-                    log.warn("driver service still running: {}", driverAndService.service);
-                }
-            }
-        };
+        ServicedSession session = createWebDriverMaybeWithProxy(config);
+        return session;
     }
 
-    private static class DriverAndService {
-
-        public final ChromeDriver driver;
-        public final ChromeDriverService service;
-
-        public DriverAndService(@Nullable ChromeDriver driver, ChromeDriverService service) {
-            this.driver = driver;
-            this.service = service;
-        }
-    }
-
-    private DriverAndService createWebDriverMaybeWithProxy(WebDriverConfig config) throws IOException {
+    private ServicedSession createWebDriverMaybeWithProxy(WebDriverConfig config) throws IOException {
         configureProxy(chromeOptions, config);
         cookiePreparer.supplementOptions(chromeOptions);
         ChromeDriverService.Builder serviceBuilder = createDriverServiceBuilder();
@@ -100,7 +76,7 @@ public class ChromeWebDriverFactory extends EnvironmentWebDriverFactory {
             throw e;
         }
         cookiePreparer.prepareCookies(driver);
-        return new DriverAndService(driver, service);
+        return new ServicedSession(driver, service);
     }
 
     protected ChromeDriverService.Builder createDriverServiceBuilder() {

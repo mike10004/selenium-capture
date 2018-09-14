@@ -71,7 +71,7 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
 
     @Override
     public WebdrivingSession createWebdrivingSession(WebDriverConfig config) throws IOException {
-        return WebdrivingSession.simple(createWebDriverMaybeWithProxy(config));
+        return createWebDriverMaybeWithProxy(config);
     }
 
     private SupplementingFirefoxProfile createFirefoxProfile(List<FirefoxProfileFolderAction> actions) {
@@ -82,7 +82,7 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
         return new FirefoxOptions();
     }
 
-    private WebDriver createWebDriverMaybeWithProxy(WebDriverConfig config) throws IOException {
+    private ServicedSession createWebDriverMaybeWithProxy(WebDriverConfig config) throws IOException {
         @Nullable InetSocketAddress proxy = config.getProxyAddress();
         @Nullable CertificateAndKeySource certificateAndKeySource = config.getCertificateAndKeySource();
         List<FirefoxProfileFolderAction> actions = new ArrayList<>(2);
@@ -128,7 +128,7 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
                 .usingFirefoxBinary(binary)
                 .build();
         WebDriver driver = constructor.construct(service, options);
-        return driver;
+        return new ServicedSession(driver, service);
     }
 
     private static final String FIREFOX_PROXY_BYPASS_RULE_DELIM = ", ";
