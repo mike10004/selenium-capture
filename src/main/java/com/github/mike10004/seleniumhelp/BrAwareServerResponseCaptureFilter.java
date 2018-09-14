@@ -140,10 +140,40 @@ public class BrAwareServerResponseCaptureFilter  extends ServerResponseCaptureFi
         }
     }
 
+    private static String simplifyName(Class<?> clazz) {
+        if (clazz == null) {
+            return "null";
+        }
+        String simpleName = clazz.getSimpleName();
+        if (simpleName.length() < 5) {
+            return clazz.getName();
+        }
+        return simpleName;
+    }
+
     protected interface DecompressionFilter {
+
         InputStream openStream(InputStream compressedDataStream) throws IOException;
 
-        DecompressionFilter IDENTITY = input -> input;
+        DecompressionFilter IDENTITY = named(input -> input, "DecompressionFilter{IDENTITY}");
+
+        static DecompressionFilter named(DecompressionFilter filter, String name) {
+            return new DecompressionFilter() {
+                @Override
+                public InputStream openStream(InputStream compressedDataStream) throws IOException {
+                    return filter.openStream(compressedDataStream);
+                }
+
+                @Override
+                public String toString() {
+                    return name;
+                }
+            };
+        }
+
+        static DecompressionFilter namedForConstructor(DecompressionFilter filter, Class<?> clazz) {
+            return named(filter, String.format("%s::new", simplifyName(clazz)));
+        }
 
         static DecompressionFilter concatenate(Iterable<DecompressionFilter> filters) {
             return new DecompressionFilter() {
@@ -153,6 +183,11 @@ public class BrAwareServerResponseCaptureFilter  extends ServerResponseCaptureFi
                         compressedDataStream = filter.openStream(compressedDataStream);
                     }
                     return compressedDataStream;
+                }
+
+                @Override
+                public String toString() {
+                    return String.format("CompositeFilter{components=%s}", filters);
                 }
             };
         }
@@ -185,9 +220,9 @@ public class BrAwareServerResponseCaptureFilter  extends ServerResponseCaptureFi
     protected DecompressionFilter createDecompressor(String singleEncoding) throws UnsupportedContentEncodingException {
         switch (singleEncoding) {
             case HttpHeaders.Values.GZIP:
-                return GZIPInputStream::new;
+                return DecompressionFilter.namedForConstructor(GZIPInputStream::new, GZIPInputStream.class);
             case HEADER_VALUE_BROTLI_ENCODING:
-                return BrotliInputStream::new;
+                return DecompressionFilter.namedForConstructor(BrotliInputStream::new, BrotliInputStream.class);
             case "identity":
                 return DecompressionFilter.IDENTITY;
             default:
@@ -222,9 +257,15 @@ public class BrAwareServerResponseCaptureFilter  extends ServerResponseCaptureFi
 
     @Override
     protected void captureContentEncoding(HttpResponse httpResponse) {
-        String value = HttpHeaders.getHeader(httpResponse, HttpHeaders.Names.CONTENT_ENCODING);
-        if (value != null) {
-            contentEncodings.add(value);
+        // 2018-09-14 [MC] Made a change with possible side-effects; the content encodings were being
+        //                 double-captured, once from serverToProxyResponse and once from
+        //                 proxyToClientResponse. So now we check that the encodings list is not
+        //                 already populated.
+        if (contentEncodings.isEmpty()) {
+            String value = HttpHeaders.getHeader(httpResponse, HttpHeaders.Names.CONTENT_ENCODING);
+            if (value != null) {
+                contentEncodings.add(value);
+            }
         }
     }
 
