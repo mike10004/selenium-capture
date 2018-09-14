@@ -10,17 +10,21 @@ import java.time.Duration;
 
 import static java.util.Objects.requireNonNull;
 
+/**
+ * Interface of an object that represents a webdriving session.
+ * Closing a session invokes {@link WebDriver#quit()}.
+ */
 public interface WebdrivingSession extends java.io.Closeable {
 
     /**
      * Gets the webdriver in use for this session.
-     * @return
+     * @return the webdriver
      */
     WebDriver getWebDriver();
 
     /**
      * Gets the driver service, if one was used to create the webdriver.
-     * @return
+     * @return the driver service
      */
     @Nullable
     DriverService getDriverService();
