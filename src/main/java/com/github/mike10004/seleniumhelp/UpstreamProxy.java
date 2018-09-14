@@ -22,7 +22,7 @@ public class UpstreamProxy implements ChainedProxyManager {
     private final String username;
     private final String password;
 
-    UpstreamProxy(final ChainedProxyType proxyType, final String host, final int port,
+    public UpstreamProxy(final ChainedProxyType proxyType, final String host, final int port,
                   final String username, final String password) {
         this.proxyType = proxyType;
         this.host = host;
