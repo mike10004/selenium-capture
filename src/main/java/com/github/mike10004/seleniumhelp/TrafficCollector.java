@@ -1,9 +1,11 @@
 package com.github.mike10004.seleniumhelp;
 
 import com.github.mike10004.seleniumhelp.TrafficCollectorImpl.ProxyConfigurator;
+import com.google.common.net.HostAndPort;
 import net.lightbody.bmp.BrowserMobProxy;
-import net.lightbody.bmp.BrowserMobProxyServer;
 import net.lightbody.bmp.mitm.CertificateAndKeySource;
+import org.littleshoot.proxy.ChainedProxyManager;
+import org.littleshoot.proxy.ChainedProxyType;
 import org.littleshoot.proxy.HttpFiltersSource;
 import org.openqa.selenium.WebDriverException;
 
@@ -139,22 +141,38 @@ public interface TrafficCollector {
         }
 
         public Builder noUpstreamProxy() {
-            return upstreamProxy(bmp -> {
-                bmp.setChainedProxy(null);
-                if (bmp instanceof BrowserMobProxyServer) {
-                    ((BrowserMobProxyServer)bmp).setChainedProxyManager(null);
+            return upstreamProxy(ProxyConfigurator.noProxy());
+        }
+
+        @Deprecated
+        public Builder upstreamProxy(InetSocketAddress address, ChainedProxyType proxyType) {
+            if (address == null) {
+                return noUpstreamProxy();
+            } else {
+                return upstreamProxy(() -> literalize(address), proxyType);
+            }
+        }
+
+        private static HostAndPort literalize(InetSocketAddress socketAddress) {
+            if (socketAddress == null) {
+                return null;
+            }
+            return HostAndPort.fromParts(socketAddress.getHostString(), socketAddress.getPort());
+        }
+
+        private Builder upstreamProxy(Supplier<HostAndPort> supplier, ChainedProxyType proxyType) {
+            requireNonNull(proxyType);
+            return upstreamProxy(() -> {
+                HostAndPort socketAddress = supplier.get();
+                if (socketAddress == null) {
+                    return null;
                 }
+                return UpstreamProxy.noCredentials(socketAddress, proxyType);
             });
         }
 
-        @Deprecated
-        public Builder upstreamProxy(InetSocketAddress address) {
-            return upstreamProxy(() -> address);
-        }
-
-        @Deprecated
-        public Builder upstreamProxy(Supplier<InetSocketAddress> supplier) {
-            return upstreamProxy(ProxyConfigurator.upstream(supplier));
+        public Builder upstreamProxy(Supplier<ChainedProxyManager> chainedProxyManagerSupplier) {
+            return upstreamProxy(ProxyConfigurator.upstream(chainedProxyManagerSupplier));
         }
 
         public Builder harPostProcessor(HarPostProcessor harPostProcessor) {
@@ -168,5 +186,7 @@ public interface TrafficCollector {
                     httpFiltersSources, interceptingProxyInstantiator,
                     harPostProcessors, exceptionReactor);
         }
+
     }
+
 }

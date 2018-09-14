@@ -221,6 +221,11 @@
                 <artifactId>guava</artifactId>
                 <version>23.6-jre</version>
             </dependency>
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-all</artifactId>
+                <version>4.1.8.Final</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
     <dependencies>
@@ -247,6 +252,21 @@
             <groupId>net.lightbody.bmp</groupId>
             <artifactId>browsermob-core</artifactId>
             <version>2.1.5</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.littleshoot</groupId>
+                    <artifactId>littleproxy</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>net.lightbody.bmp</groupId>
+                    <artifactId>littleproxy</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>com.github.mike10004</groupId>
+            <artifactId>littleproxy</artifactId>
+            <version>1.1.3socksmod1</version>
         </dependency>
         <dependency>
             <groupId>org.seleniumhq.selenium</groupId>

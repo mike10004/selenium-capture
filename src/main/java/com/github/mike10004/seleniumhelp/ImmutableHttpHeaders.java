@@ -1,8 +1,10 @@
 package com.github.mike10004.seleniumhelp;
 
+import com.google.common.base.Function;
 import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterators;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMessage;
 
@@ -168,7 +170,9 @@ public class ImmutableHttpHeaders extends HttpHeaders {
         return inner.contains(name, value, ignoreCaseValue);
     }
 
+    @SuppressWarnings({"DeprecatedIsStillUsed"})
     @Override
+    @Deprecated
     public Iterator<Entry<String, String>> iterator() {
         return new IteratorNotSupportingRemove<>(inner.iterator());
     }
@@ -205,5 +209,76 @@ public class ImmutableHttpHeaders extends HttpHeaders {
     @Override
     public String toString() {
         return inner.toString();
+    }
+
+    @SuppressWarnings("unchecked") // we're casting strings to charsequences
+    @Override
+    public Iterator<Entry<CharSequence, CharSequence>> iteratorCharSequence() {
+        //noinspection deprecation
+        return Iterators.transform(iterator(), new Function<Entry, Entry<CharSequence, CharSequence>>() {
+            @Override
+            public Entry<CharSequence, CharSequence> apply(@SuppressWarnings("NullableProblems") Entry input) {
+                return (Entry<CharSequence, CharSequence>) input;
+            }
+        });
+    }
+
+    @Override
+    public Integer getInt(CharSequence name) {
+        return inner.getInt(name);
+    }
+
+    @Override
+    public int getInt(CharSequence name, int defaultValue) {
+        return inner.getInt(name, defaultValue);
+    }
+
+    @Override
+    public Short getShort(CharSequence name) {
+        return inner.getShort(name);
+    }
+
+    @Override
+    public short getShort(CharSequence name, short defaultValue) {
+        return inner.getShort(name, defaultValue);
+    }
+
+    @Override
+    public Long getTimeMillis(CharSequence name) {
+        return inner.getTimeMillis(name);
+    }
+
+    @Override
+    public long getTimeMillis(CharSequence name, long defaultValue) {
+        return inner.getTimeMillis(name, defaultValue);
+    }
+
+    @Override
+    public int size() {
+        return inner.size();
+    }
+
+    @Deprecated
+    @Override
+    public HttpHeaders addInt(CharSequence name, int value) {
+        throw new UnsupportedOperationException("immutable");
+    }
+
+    @Deprecated
+    @Override
+    public HttpHeaders addShort(CharSequence name, short value) {
+        throw new UnsupportedOperationException("immutable");
+    }
+
+    @Deprecated
+    @Override
+    public HttpHeaders setInt(CharSequence name, int value) {
+        throw new UnsupportedOperationException("immutable");
+    }
+
+    @Deprecated
+    @Override
+    public HttpHeaders setShort(CharSequence name, short value) {
+        throw new UnsupportedOperationException("immutable");
     }
 }

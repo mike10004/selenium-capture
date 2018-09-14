@@ -2,14 +2,22 @@ package com.github.mike10004.seleniumhelp;
 
 import com.google.common.annotations.Beta;
 import com.google.common.base.MoreObjects;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableList;
+import com.google.common.net.HostAndPort;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.HttpRequest;
 import net.lightbody.bmp.BrowserMobProxy;
+import net.lightbody.bmp.BrowserMobProxyServer;
 import net.lightbody.bmp.core.har.Har;
 import net.lightbody.bmp.mitm.CertificateAndKeySource;
 import net.lightbody.bmp.mitm.manager.ImpersonatingMitmManager;
 import net.lightbody.bmp.proxy.CaptureType;
+import org.littleshoot.proxy.ChainedProxy;
+import org.littleshoot.proxy.ChainedProxyAdapter;
+import org.littleshoot.proxy.ChainedProxyManager;
+import org.littleshoot.proxy.ChainedProxyType;
 import org.littleshoot.proxy.HttpFilters;
 import org.littleshoot.proxy.HttpFiltersSource;
 import org.littleshoot.proxy.HttpFiltersSourceAdapter;
@@ -23,9 +31,12 @@ import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.net.InetSocketAddress;
 import java.util.EnumSet;
+import java.util.Queue;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static java.util.Objects.requireNonNull;
 
 /**
@@ -73,18 +84,33 @@ public class TrafficCollectorImpl implements TrafficCollector {
 
     protected interface ProxyConfigurator {
 
+        static ProxyConfigurator noProxy() {
+            return bmp -> {
+                bmp.setChainedProxy(null);
+                if (bmp instanceof BrowserMobProxyServer) {
+                    ((BrowserMobProxyServer)bmp).setChainedProxyManager(null);
+                }
+            };
+        }
+
         void configure(BrowserMobProxy proxy);
 
         static ProxyConfigurator inoperative() {
             return proxy -> {};
         }
 
-        static ProxyConfigurator upstream(Supplier<? extends InetSocketAddress> upstreamProxyProvider) {
+        static ProxyConfigurator upstream(Supplier<ChainedProxyManager> chainedProxyManagerSupplier) {
+            requireNonNull(chainedProxyManagerSupplier);
             return bmp -> {
-                @Nullable InetSocketAddress upstreamProxy = upstreamProxyProvider.get();
-                bmp.setChainedProxy(upstreamProxy);
+                @Nullable ChainedProxyManager chainedProxyManager = chainedProxyManagerSupplier.get();
+                if (chainedProxyManager == null) {
+                    noProxy().configure(bmp);
+                } else {
+                    ((BrowserMobProxyServer)bmp).setChainedProxyManager(chainedProxyManager);
+                }
             };
         }
+
     }
 
     protected Set<CaptureType> getCaptureTypes() {

@@ -16,12 +16,14 @@ import org.apache.commons.validator.routines.InetAddressValidator;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Rule;
+import org.littleshoot.proxy.ChainedProxyManager;
+import org.littleshoot.proxy.ChainedProxyType;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.net.InetAddress;
-import java.net.InetSocketAddress;
+import java.net.URI;
 import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.List;
@@ -38,16 +40,23 @@ public class CollectionTestBase {
     public static final String SYSPROP_TEST_PROXY = "selenium-help.test.proxy.http";
 
     private static HostAndPort upstreamProxyHostAndPort_ = null;
+    private static ChainedProxyType upstreamProxyType_ = null;
 
     @Rule
     public XvfbRule xvfb = XvfbRule.builder().build();
 
-    private final @Nullable HostAndPort upstreamProxyHostAndPort;
+    @Nullable
+    private final HostAndPort upstreamProxyHostAndPort;
+
+    @Nullable
+    private final ChainedProxyType upstreamProxyType;
+
     protected final String protocol;
 
     protected CollectionTestBase(String protocol) {
         this.protocol = protocol;
         this.upstreamProxyHostAndPort = upstreamProxyHostAndPort_;
+        this.upstreamProxyType = upstreamProxyType_;
         checkArgument("http".equals(protocol) || "https".equals(protocol), "protocol must be  http or https: %s", protocol);
     }
 
@@ -73,7 +82,14 @@ public class CollectionTestBase {
     public static void setUpstreamProxy() {
         String proxyValue = System.getProperty(SYSPROP_TEST_PROXY);
         if (!Strings.isNullOrEmpty(proxyValue)) {
-            upstreamProxyHostAndPort_ = HostAndPort.fromString(proxyValue);
+            if (proxyValue.matches("^\\w+://.*$")) {
+                URI proxyUri = URI.create(proxyValue);
+                upstreamProxyType_ = ChainedProxyType.valueOf(proxyUri.getScheme().toUpperCase());
+                upstreamProxyHostAndPort_ = HostAndPort.fromParts(proxyUri.getHost(), proxyUri.getPort());
+            } else {
+                upstreamProxyHostAndPort_ = HostAndPort.fromString(proxyValue);
+                upstreamProxyType_ = ChainedProxyType.HTTP;
+            }
         } else {
             LoggerFactory.getLogger(CollectionTestBase.class).info("this test is much more valuable if you set system or maven property " + SYSPROP_TEST_PROXY + " to an available HTTP proxy that does not have the same external IP address as the JVM's network interface");
         }
@@ -150,16 +166,11 @@ public class CollectionTestBase {
         }
     }
 
-    protected class TestProxySupplier implements java.util.function.Supplier<InetSocketAddress> {
+    protected class TestProxySupplier implements java.util.function.Supplier<ChainedProxyManager> {
 
         @Override
-        public InetSocketAddress get() {
-            if (upstreamProxyHostAndPort != null) {
-                InetSocketAddress address = new InetSocketAddress(upstreamProxyHostAndPort.getHost(), upstreamProxyHostAndPort.getPort());
-                return address;
-            } else {
-                return null;
-            }
+        public ChainedProxyManager get() {
+            return UpstreamProxy.noCredentials(upstreamProxyHostAndPort, upstreamProxyType);
         }
     }
 
