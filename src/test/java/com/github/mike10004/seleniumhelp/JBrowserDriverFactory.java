@@ -7,9 +7,11 @@ import org.openqa.selenium.WebDriver;
 
 import javax.annotation.Nullable;
 import java.io.File;
-import java.net.InetSocketAddress;
+import java.net.URI;
 import java.util.HashSet;
 import java.util.Set;
+
+import static com.google.common.base.Preconditions.checkArgument;
 
 public class JBrowserDriverFactory implements WebDriverFactory {
 
@@ -25,7 +27,7 @@ public class JBrowserDriverFactory implements WebDriverFactory {
     }
 
     @Override
-    public WebdrivingSession createWebdrivingSession(WebDriverConfig config) {
+    public WebdrivingSession startWebdriving(WebDriverConfig config) {
         return new SimpleWebdrivingSession(createWebDriver(config));
     }
 
@@ -36,11 +38,13 @@ public class JBrowserDriverFactory implements WebDriverFactory {
      * @return
      */
     private WebDriver createWebDriver(WebDriverConfig config) {
-        @Nullable InetSocketAddress proxy = config.getProxyAddress();
+
+        @Nullable URI proxy = config.getProxySpecification();
         Settings.Builder settingsBuilder = Settings.builder();
         if (proxy != null) {
             Set<String> nonProxyHosts = new HashSet<>(config.getProxyBypasses());
-            ProxyConfig proxyConfig = new ProxyConfig(ProxyConfig.Type.HTTP, "localhost", proxy.getPort(), null, null, false, nonProxyHosts);
+            checkArgument(proxy.getUserInfo() == null, "proxy URI user info is not supported");
+            ProxyConfig proxyConfig = new ProxyConfig(getTypeFromScheme(proxy), proxy.getHost(), proxy.getPort(), null, null, false, nonProxyHosts);
             settingsBuilder.proxy(proxyConfig);
         }
         if (certificatePemFile != null) {
@@ -48,6 +52,16 @@ public class JBrowserDriverFactory implements WebDriverFactory {
         }
         Settings settings = settingsBuilder.build();
         return new JBrowserDriver(settings);
+    }
 
+    private static ProxyConfig.Type getTypeFromScheme(URI uri) {
+        String scheme = uri.getScheme();
+        if (scheme != null) {
+            scheme = scheme.toLowerCase();
+            if (scheme.startsWith("socks")) {
+                return ProxyConfig.Type.SOCKS;
+            }
+        }
+        return ProxyConfig.Type.HTTP;
     }
 }

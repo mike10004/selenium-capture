@@ -1,6 +1,5 @@
 package com.github.mike10004.seleniumhelp;
 
-import com.github.mike10004.seleniumhelp.TrafficCollectorImpl.ProxyConfigurator;
 import com.google.common.net.HostAndPort;
 import net.lightbody.bmp.BrowserMobProxy;
 import net.lightbody.bmp.mitm.CertificateAndKeySource;
@@ -12,6 +11,7 @@ import org.openqa.selenium.WebDriverException;
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -82,7 +82,7 @@ public interface TrafficCollector {
         private final WebDriverFactory webDriverFactory;
         private CertificateAndKeySource certificateAndKeySource = null;
         private final List<HttpFiltersSource> httpFiltersSources = new ArrayList<>();
-        private ProxyConfigurator upstreamConfigurator = ProxyConfigurator.inoperative();
+        private ProxyUris.BmpConfigurator upstreamConfigurator = ProxyUris.BmpConfigurator.inoperative();
         private Supplier<? extends BrowserMobProxy> interceptingProxyInstantiator = BrAwareBrowserMobProxyServer::new;
         private final List<HarPostProcessor> harPostProcessors = new ArrayList<>();
         private ExceptionReactor exceptionReactor = ExceptionReactor.PROPAGATE;
@@ -135,13 +135,13 @@ public interface TrafficCollector {
             return this;
         }
 
-        Builder upstreamProxy(ProxyConfigurator configurator) {
+        private Builder upstreamProxy(ProxyUris.BmpConfigurator configurator) {
             this.upstreamConfigurator = requireNonNull(configurator);
             return this;
         }
 
         public Builder noUpstreamProxy() {
-            return upstreamProxy(ProxyConfigurator.noProxy());
+            return upstreamProxy(ProxyUris.BmpConfigurator.noProxy());
         }
 
         @Deprecated
@@ -162,7 +162,7 @@ public interface TrafficCollector {
 
         private Builder upstreamProxy(Supplier<HostAndPort> supplier, ChainedProxyType proxyType) {
             requireNonNull(proxyType);
-            return upstreamProxy(() -> {
+            return upstreamProxyManager(() -> {
                 HostAndPort socketAddress = supplier.get();
                 if (socketAddress == null) {
                     return null;
@@ -171,8 +171,18 @@ public interface TrafficCollector {
             });
         }
 
-        public Builder upstreamProxy(Supplier<ChainedProxyManager> chainedProxyManagerSupplier) {
-            return upstreamProxy(ProxyConfigurator.upstream(chainedProxyManagerSupplier));
+        private Builder upstreamProxyManager(Supplier<ChainedProxyManager> chainedProxyManagerSupplier) {
+            return upstreamProxy(ProxyUris.BmpConfigurator.upstream(chainedProxyManagerSupplier));
+        }
+
+        /**
+         * Configures the collector to use an upstream proxy specified by a URI. The URI components
+         * must be as described in {@link WebDriverConfig#getProxySpecification()}.
+         * @param proxySpecificationSupplier
+         * @return this builder instance
+         */
+        public Builder upstreamProxy(Supplier<URI> proxySpecificationSupplier) {
+            return upstreamProxy(ProxyUris.BmpConfigurator.fromUriSupplier(proxySpecificationSupplier));
         }
 
         public Builder harPostProcessor(HarPostProcessor harPostProcessor) {

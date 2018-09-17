@@ -2,12 +2,20 @@ package com.github.mike10004.seleniumhelp;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.net.HostAndPort;
 import org.junit.Test;
+import org.openqa.selenium.firefox.FirefoxOptions;
+import org.openqa.selenium.firefox.FirefoxProfile;
 
+import java.io.IOException;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
 
 public class FirefoxWebDriverFactoryTest {
 
@@ -48,5 +56,28 @@ public class FirefoxWebDriverFactoryTest {
         FirefoxWebDriverFactory factory = FirefoxWebDriverFactory.builder().environment(expected).build();
         Map<String, String> actual = factory.environmentSupplier.get();
         assertEquals("environment", expected, actual);
+    }
+
+    @Test
+    public void proxyBypassList() throws Exception {
+        HostBypassTestCase.runAll(this::testProxyBypass);
+    }
+
+    private List<String> testProxyBypass(HostBypassTestCase testCase) {
+        FirefoxWebDriverFactory factory = FirefoxWebDriverFactory.builder()
+                .preference(FirefoxWebDriverFactory.PREF_PROXY_HOST_BYPASSES, FirefoxWebDriverFactory.makeProxyBypassPreferenceValue(new HashMap<>(), testCase.preconfigured))
+                .build();
+        WebDriverConfig config = WebDriverConfig.builder()
+                .proxy(HostAndPort.fromString("somewhere:1234"), testCase.specifiedBySessionConfig)
+                .build();
+        FirefoxOptions opts = null;
+        try {
+            opts = factory.populateOptions(config);
+        } catch (IOException e) {
+            fail("could not populate options: " + e.toString());
+        }
+        FirefoxProfile prof = opts.getProfile();
+        assertNotNull("profile not created", prof);
+        return FirefoxWebDriverFactory.parseProxyBypassPatterns(prof.getStringPreference(FirefoxWebDriverFactory.PREF_PROXY_HOST_BYPASSES, ""));
     }
 }

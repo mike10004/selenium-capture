@@ -1,10 +1,10 @@
 package com.github.mike10004.seleniumhelp;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
-import net.lightbody.bmp.client.ClientUtil;
+import org.apache.commons.lang3.StringUtils;
 import org.openqa.selenium.Proxy;
-import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebDriverException;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeDriverService;
@@ -14,15 +14,21 @@ import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
-import java.net.InetSocketAddress;
+import java.net.URI;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 public class ChromeWebDriverFactory extends EnvironmentWebDriverFactory {
 
@@ -49,7 +55,7 @@ public class ChromeWebDriverFactory extends EnvironmentWebDriverFactory {
     }
 
     @Override
-    public WebdrivingSession createWebdrivingSession(WebDriverConfig config) throws IOException {
+    public WebdrivingSession startWebdriving(WebDriverConfig config) throws IOException {
         ServicedSession session = createWebDriverMaybeWithProxy(config);
         return session;
     }
@@ -84,6 +90,63 @@ public class ChromeWebDriverFactory extends EnvironmentWebDriverFactory {
     }
 
     /**
+     * Methods adapted from {@link net.lightbody.bmp.client.ClientUtil}.
+     */
+    private static class SeleniumProxies {
+
+        private SeleniumProxies() {}
+
+        /**
+         * Creates a Selenium Proxy object using the specified socket address as the HTTP proxy server.
+         * @param proxySpecification URI specifying the proxy; see {@link WebDriverConfig#getProxySpecification()}
+         * @return a Selenium Proxy instance, configured to use the specified address and port as its proxy server
+         */
+        public static org.openqa.selenium.Proxy createSeleniumProxy(URI proxySpecification) {
+            requireNonNull(proxySpecification, "proxySpecification");
+            org.openqa.selenium.Proxy proxy = new org.openqa.selenium.Proxy();
+            proxy.setProxyType(org.openqa.selenium.Proxy.ProxyType.MANUAL);
+            String socketAddress = String.format("%s:%d", proxySpecification.getHost(), proxySpecification.getPort());
+            String userInfo = proxySpecification.getUserInfo();
+            if (ProxyUris.isSocks(proxySpecification)) {
+                proxy.setSocksProxy(socketAddress);
+                proxy.setSocksVersion(ProxyUris.parseSocksVersionFromUriScheme(proxySpecification));
+                proxy.setSocksUsername(ProxyUris.getUsername(proxySpecification));
+                proxy.setSocksPassword(ProxyUris.getPassword(proxySpecification));
+            } else {
+                if (!Strings.isNullOrEmpty(userInfo)) {
+                    log.warn("HTTP proxy server credentials may not be specified in the proxy specification URI (and I'm not sure what to suggest instead); only SOCKS proxy server credentials may be specified in the proxy specification URI");
+                }
+                proxy.setHttpProxy(socketAddress);
+                proxy.setSslProxy(socketAddress);
+            }
+            return proxy;
+        }
+
+    }
+
+    @SuppressWarnings("unchecked")
+    static List<String> getArguments(ChromeOptions options) {
+        Map<String, ?> json = options.toJson();
+        Map<String, ?> googOptions = (Map<String, ?>) json.get("goog:chromeOptions");
+        checkArgument(googOptions != null, "args not present in %s", json);
+        return (List<String>) googOptions.get("args");
+    }
+
+    static final String BYPASS_ARG_PREFIX = "--proxy-bypass-list=";
+
+    static List<String> parseBypasses(ChromeOptions options) {
+        List<String> args = getArguments(options);
+        List<String> bypassArgs = args.stream()
+                .filter(arg -> arg.startsWith(BYPASS_ARG_PREFIX))
+                .map(arg -> StringUtils.removeStart(arg, BYPASS_ARG_PREFIX))
+                .collect(Collectors.toList());
+        List<String> bypassPatterns = bypassArgs.stream()
+                .flatMap(argValue -> Arrays.stream(argValue.split(proxyBypassPatternArgDelimiter())))
+                .collect(Collectors.toList());
+        return bypassPatterns;
+    }
+
+    /**
      * Parameterizes a capabilities instance according to a config instance. The certificate and key source
      * is not used because Chrome in webdriver mode appears to be fine with untrusted certificates,
      * which is good because we don't know how to install custom certificates.
@@ -91,17 +154,27 @@ public class ChromeWebDriverFactory extends EnvironmentWebDriverFactory {
      * @param config the config instance
      */
     protected void configureProxy(ChromeOptions options, WebDriverConfig config) {
-        @Nullable InetSocketAddress proxySocketAddress = config.getProxyAddress();
+        @Nullable URI proxySocketAddress = config.getProxySpecification();
         if (proxySocketAddress != null) {
-            Proxy seleniumProxy = ClientUtil.createSeleniumProxy(proxySocketAddress);
+            Proxy seleniumProxy = SeleniumProxies.createSeleniumProxy(proxySocketAddress);
             options.setProxy(seleniumProxy);
+            List<String> preconfiguredBypasses = parseBypasses(options);
+            List<String> moreBypasses = config.getProxyBypasses();
+            if (!preconfiguredBypasses.isEmpty() || !moreBypasses.isEmpty()) {
+                Stream<String> allBypasses = Stream.concat(preconfiguredBypasses.stream(), moreBypasses.stream())
+                        .filter(Objects::nonNull)
+                        .filter(s -> !s.trim().isEmpty());
+                String proxyBypassParam = allBypasses.collect(Collectors.joining(CHROME_PROXY_BYPASS_ARG_PATTERN_DELIMITER));
+                options.addArguments(String.format("%s%s", BYPASS_ARG_PREFIX, proxyBypassParam));
+            }
         }
-        List<String> proxyBypasses = config.getProxyBypasses();
-        String proxyBypassParam = proxyBypasses.stream().collect(Collectors.joining(CHROME_PROXY_BYPASS_ARG_PATTERN_DELIMITER));
-        options.addArguments(String.format("--proxy-bypass-list=%s", proxyBypassParam));
     }
 
     private static final String CHROME_PROXY_BYPASS_ARG_PATTERN_DELIMITER = ";";
+
+    static String proxyBypassPatternArgDelimiter() {
+        return CHROME_PROXY_BYPASS_ARG_PATTERN_DELIMITER;
+    }
 
     @VisibleForTesting
     ChromeOptions getChromeOptions() {

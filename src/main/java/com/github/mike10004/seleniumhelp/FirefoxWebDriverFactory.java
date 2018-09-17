@@ -2,10 +2,12 @@ package com.github.mike10004.seleniumhelp;
 
 import com.github.mike10004.seleniumhelp.FirefoxCookieDb.Importer;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Maps;
 import com.google.common.io.ByteSource;
 import com.google.common.io.Files;
 import com.google.common.io.Resources;
@@ -23,10 +25,11 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
-import java.net.InetSocketAddress;
+import java.net.URI;
 import java.nio.file.Path;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -70,7 +73,7 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
     }
 
     @Override
-    public WebdrivingSession createWebdrivingSession(WebDriverConfig config) throws IOException {
+    public WebdrivingSession startWebdriving(WebDriverConfig config) throws IOException {
         return createWebDriverMaybeWithProxy(config);
     }
 
@@ -83,7 +86,57 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
     }
 
     private ServicedSession createWebDriverMaybeWithProxy(WebDriverConfig config) throws IOException {
-        @Nullable InetSocketAddress proxy = config.getProxyAddress();
+        FirefoxOptions options = populateOptions(config);
+        FirefoxBinary binary = binarySupplier.get();
+        Map<String, String> environment = environmentSupplier.get();
+        GeckoDriverService service = new GeckoDriverService.Builder()
+                .withEnvironment(environment)
+                .usingFirefoxBinary(binary)
+                .build();
+        WebDriver driver = constructor.construct(service, options);
+        return new ServicedSession(driver, service);
+    }
+
+    /**
+     * @author https://stackoverflow.com/questions/2887978/webdriver-and-proxy-server-for-firefox
+     */
+    private enum FirefoxNetworkProxyType {
+
+        /**
+         * Direct connection (or) no proxy.
+         */
+        DIRECT(0),
+
+        /**
+         * Manual proxy configuration.
+         */
+        MANUAL(1),
+
+        /**
+         * Proxy auto-configuration (PAC).
+         */
+        PAC(2),
+
+        /**
+         * Auto-detect proxy settings.
+         */
+        AUTODETECT(4),
+
+        /**
+         * Use system proxy settings.
+         */
+        SYSTEM(5);
+
+        public final int code;
+
+        FirefoxNetworkProxyType(int code) {
+            this.code = code;
+        }
+    }
+
+    @VisibleForTesting
+    FirefoxOptions populateOptions(WebDriverConfig config) throws IOException {
+        @Nullable URI proxyUri = config.getProxySpecification();
         @Nullable CertificateAndKeySource certificateAndKeySource = config.getCertificateAndKeySource();
         List<FirefoxProfileFolderAction> actions = new ArrayList<>(2);
         List<DeserializableCookie> cookies_ = getCookies();
@@ -103,40 +156,54 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
         profile.setPreference("app.update.url", "");
         profile.setPreference("browser.safebrowsing.provider.mozilla.updateURL", "");
         profile.setPreference("media.gmp-manager.url", "");
-        if (proxy != null) {
-            // https://stackoverflow.com/questions/2887978/webdriver-and-proxy-server-for-firefox
-            profile.setPreference("network.proxy.type", 1);
-            profile.setPreference("network.proxy.http", "localhost");
-            profile.setPreference("network.proxy.http_port", proxy.getPort());
-            profile.setPreference("network.proxy.ssl", "localhost");
-            profile.setPreference("network.proxy.ssl_port", proxy.getPort());
-            profile.setPreference("network.proxy.no_proxies_on", makeProxyBypassPreferenceValue(config.getProxyBypasses()));
+        if (proxyUri != null) {
+            profile.setPreference("network.proxy.type", FirefoxNetworkProxyType.MANUAL.code);
+            profile.setPreference("network.proxy.http", proxyUri.getHost());
+            profile.setPreference("network.proxy.http_port", proxyUri.getPort());
+            profile.setPreference("network.proxy.ssl", proxyUri.getHost());
+            profile.setPreference("network.proxy.ssl_port", proxyUri.getPort());
+            profile.setPreference(PREF_PROXY_HOST_BYPASSES, makeProxyBypassPreferenceValue(profilePreferences, config.getProxyBypasses()));
             profile.setPreference("browser.search.geoip.url", "");
             profile.setPreference("network.prefetch-next", false);
             profile.setPreference("network.http.speculative-parallel-limit", 0);
         }
-        applyAdditionalPreferences(profilePreferences, proxy, certificateAndKeySource, profile);
+        Map<String, Object> profilePreferences_ = Maps.filterKeys(profilePreferences, key -> !HIDDEN_PREFS.contains(key));
+        applyAdditionalPreferences(profilePreferences_, config, certificateAndKeySource, profile);
         for (FirefoxProfileAction profileAction : profileActions) {
             profileAction.perform(profile);
         }
-        FirefoxBinary binary = binarySupplier.get();
-        Map<String, String> environment = environmentSupplier.get();
         FirefoxOptions options = createFirefoxOptions();
         options.setProfile(profile);
-        GeckoDriverService service = new GeckoDriverService.Builder()
-                .withEnvironment(environment)
-                .usingFirefoxBinary(binary)
-                .build();
-        WebDriver driver = constructor.construct(service, options);
-        return new ServicedSession(driver, service);
+        return options;
     }
 
-    private static final String FIREFOX_PROXY_BYPASS_RULE_DELIM = ", ";
+    static final String PREF_PROXY_HOST_BYPASSES = "network.proxy.no_proxies_on";
 
-    private String makeProxyBypassPreferenceValue(List<String> hosts) {
-        if (hosts == null || hosts.isEmpty()) {
-            return "";
+    private static final ImmutableSet<String> HIDDEN_PREFS = ImmutableSet.<String>builder()
+            .add(PREF_PROXY_HOST_BYPASSES)
+            .build();
+
+    private static final String FIREFOX_PROXY_BYPASS_RULE_DELIM = ",";
+
+    static Splitter proxyBypassPatternDelimiter() {
+        return Splitter.on(FIREFOX_PROXY_BYPASS_RULE_DELIM).omitEmptyStrings().trimResults();
+    }
+
+    private static List<String> parseProxyBypassPatterns(Map<String, Object> prefs) {
+        Object val = prefs.get(PREF_PROXY_HOST_BYPASSES);
+        return parseProxyBypassPatterns(val);
+    }
+
+    static List<String> parseProxyBypassPatterns(Object val) {
+        if (val == null) {
+            return Collections.emptyList();
         }
+        return proxyBypassPatternDelimiter().splitToList(val.toString());
+    }
+
+    static String makeProxyBypassPreferenceValue(Map<String, Object> profilePreferences, List<String> hosts) {
+        hosts = new ArrayList<>(hosts);
+        hosts.addAll(parseProxyBypassPatterns(profilePreferences));
         String prefValue = hosts.stream().collect(Collectors.joining(FIREFOX_PROXY_BYPASS_RULE_DELIM));
         return prefValue;
     }
@@ -144,13 +211,13 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
     /**
      * Applies additional preferences, drawn from a map, to a profile. Subclasses may overr
      * @param profilePreferences map of profile preference settings
-     * @param proxy the proxy socket address
+     * @param config session config
      * @param certificateAndKeySource the certificate and key source
      * @param profile the profile
      */
     @SuppressWarnings("unused")
     protected void applyAdditionalPreferences(Map<String, Object> profilePreferences,
-              @Nullable InetSocketAddress proxy,
+              WebDriverConfig config,
               @Nullable CertificateAndKeySource certificateAndKeySource, FirefoxProfile profile) {
         for (String key : profilePreferences.keySet()) {
             Object value = profilePreferences.get(key);

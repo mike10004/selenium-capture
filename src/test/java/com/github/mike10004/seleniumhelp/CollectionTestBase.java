@@ -13,6 +13,7 @@ import net.lightbody.bmp.core.har.HarResponse;
 import net.lightbody.bmp.mitm.CertificateAndKeySource;
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.commons.validator.routines.InetAddressValidator;
+import org.apache.http.client.utils.URIBuilder;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Rule;
@@ -24,6 +25,7 @@ import javax.annotation.Nullable;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.List;
@@ -166,11 +168,22 @@ public class CollectionTestBase {
         }
     }
 
-    protected class TestProxySupplier implements java.util.function.Supplier<ChainedProxyManager> {
+    protected class TestProxySupplier implements java.util.function.Supplier<URI> {
 
         @Override
-        public ChainedProxyManager get() {
-            return UpstreamProxy.noCredentials(upstreamProxyHostAndPort, upstreamProxyType);
+        public URI get() {
+            if (upstreamProxyHostAndPort == null) {
+                return null;
+            }
+            try {
+                return new URIBuilder()
+                        .setScheme(ProxyUris.toScheme(upstreamProxyType))
+                        .setHost(upstreamProxyHostAndPort.getHost())
+                        .setPort(upstreamProxyHostAndPort.getPort())
+                        .build();
+            } catch (URISyntaxException e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 

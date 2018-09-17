@@ -197,9 +197,10 @@ public class ProxyBypassTest {
     }
 
     protected WebDriverConfig buildConfig(InetSocketAddress proxySocketAddress, List<String> bypasses) {
+        URI proxyUri = URI.create(proxySocketAddress.getHostString() + ":" + proxySocketAddress.getPort());
         System.out.format("building WebDriverConfig with proxy %s and bypasses %s%n", proxySocketAddress, bypasses);
         return WebDriverConfig.builder()
-                .proxy(proxySocketAddress)
+                .proxy(proxyUri)
                 .bypassHosts(bypasses)
                 .build();
     }

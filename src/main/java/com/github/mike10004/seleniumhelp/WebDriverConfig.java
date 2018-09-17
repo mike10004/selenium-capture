@@ -1,22 +1,32 @@
 package com.github.mike10004.seleniumhelp;
 
+import com.google.common.base.MoreObjects;
 import com.google.common.collect.ImmutableList;
+import com.google.common.net.HostAndPort;
 import net.lightbody.bmp.mitm.CertificateAndKeySource;
+import org.apache.http.client.utils.URIBuilder;
 
 import javax.annotation.Nullable;
-import java.net.InetSocketAddress;
-import java.util.ArrayList;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Collections;
 import java.util.List;
+
+import static com.google.common.base.Preconditions.checkState;
 
 public interface WebDriverConfig {
 
     /**
-     * Gets the proxy socket address. Null means do not use a proxy.
+     * Gets the proxy specifiation, or null if no proxy is to be used. The proxy host and port
+     * must be specified by the URI, and the URI may additionally specify credentials with
+     * {@link URI#getUserInfo()} and type, SOCKS or HTTP, with the URI scheme. If the scheme
+     * does not specify the type, then it is assumed that the proxy is an HTTP proxy server.
+     * Patterns of hosts to bypass may be supplied as values of query parameters with name
+     * {@link ProxyUris#PARAM_BYPASS}.
      * @return the socket address of the proxy
      */
     @Nullable
-    InetSocketAddress getProxyAddress();
+    URI getProxySpecification();
 
     /**
      * Gets the certificate and key source to be used when proxying HTTPS traffic.
@@ -25,8 +35,18 @@ public interface WebDriverConfig {
     @Nullable
     CertificateAndKeySource getCertificateAndKeySource();
 
+    static WebDriverConfig empty() {
+        return Builder.EMPTY;
+    }
+
+    /**
+     * Gets a list of patterns that specify hosts to bypass the proxy for. These are specified
+     * as values of query parameters with name {@link ProxyUris#PARAM_BYPASS} in the
+     * {@link #getProxySpecification() proxy specification URI}.
+     * @return the bypass pattern list
+     */
     default List<String> getProxyBypasses() {
-        return Collections.emptyList();
+        return ProxyUris.getProxyBypassesFromQueryString(getProxySpecification());
     }
 
     static Builder builder() {
@@ -35,16 +55,35 @@ public interface WebDriverConfig {
 
     @SuppressWarnings("ResultOfMethodCallIgnored")
     final class Builder {
-        private InetSocketAddress proxyAddress;
+
+        private URI proxySpecification;
+
         private CertificateAndKeySource certificateAndKeySource;
-        private final List<String> proxyBypasses;
+
         private Builder() {
-            proxyBypasses = new ArrayList<>();
         }
 
-        public Builder proxy(InetSocketAddress proxyAddress) {
-            this.proxyAddress = proxyAddress;
+        private static final WebDriverConfig EMPTY = new Builder().build();
+
+        public Builder proxy(URI proxySpecification) {
+            this.proxySpecification = proxySpecification;
             return this;
+        }
+
+        public Builder proxy(HostAndPort proxyAddress) {
+            return proxy(proxyAddress, Collections.emptyList());
+        }
+
+        public Builder proxy(HostAndPort proxyAddress, List<String> proxyBypasses) {
+            try {
+                URIBuilder b = new URIBuilder().setHost(proxyAddress.getHost()).setPort(proxyAddress.getPort());
+                for (String bypass : proxyBypasses) {
+                    b.addParameter(ProxyUris.PARAM_BYPASS, bypass);
+                }
+                return proxy(b.build());
+            } catch (URISyntaxException e) {
+                throw new IllegalArgumentException(e);
+            }
         }
 
         public Builder certificateAndKeySource(CertificateAndKeySource certificateAndKeySource) {
@@ -52,16 +91,29 @@ public interface WebDriverConfig {
             return this;
         }
 
+        /**
+         * @deprecated use {@link #proxy(URI)} or {@link #proxy(HostAndPort, List)} instead
+         */
+        @Deprecated
         public Builder bypassHost(String hostPattern) {
+            checkState(proxySpecification != null, "proxy spec URI must be set before adding bypass host pattern");
             if (hostPattern != null) {
                 if (!hostPattern.trim().isEmpty()) {
-                    proxyBypasses.add(hostPattern);
+                    try {
+                        URI rebuilt = new URIBuilder(proxySpecification)
+                                .addParameter(ProxyUris.PARAM_BYPASS, hostPattern)
+                                .build();
+                        return proxy(rebuilt);
+                    } catch (URISyntaxException e) {
+                        throw new IllegalArgumentException(e);
+                    }
                 }
             }
             return this;
         }
 
         @SuppressWarnings("ResultOfMethodCallIgnored")
+        @Deprecated
         public Builder bypassHosts(List<String> hostPatterns) {
             hostPatterns.forEach(this::bypassHost);
             return this;
@@ -74,22 +126,23 @@ public interface WebDriverConfig {
         private static class WebDriverConfigImpl implements WebDriverConfig {
 
             @Nullable
-            private final InetSocketAddress proxyAddress;
+            private final URI proxyUri;
 
             @Nullable
             private final CertificateAndKeySource certificateAndKeySource;
 
-            private final ImmutableList<String> proxyBypasses;
+            private final ImmutableList<String> hostBypassPatterns;
 
-            private WebDriverConfigImpl(Builder builder) {
-                proxyAddress = builder.proxyAddress;
+            public WebDriverConfigImpl(Builder builder) {
+                proxyUri = builder.proxySpecification;
                 certificateAndKeySource = builder.certificateAndKeySource;
-                proxyBypasses = ImmutableList.copyOf(builder.proxyBypasses);
+                // cache this because it is immutable
+                hostBypassPatterns = ImmutableList.copyOf(ProxyUris.getProxyBypassesFromQueryString(proxyUri));
             }
 
             @Override
             public List<String> getProxyBypasses() {
-                return proxyBypasses;
+                return hostBypassPatterns;
             }
 
             /**
@@ -98,8 +151,8 @@ public interface WebDriverConfig {
              */
             @Override
             @Nullable
-            public InetSocketAddress getProxyAddress() {
-                return proxyAddress;
+            public URI getProxySpecification() {
+                return proxyUri;
             }
 
             /**
@@ -112,6 +165,15 @@ public interface WebDriverConfig {
                 return certificateAndKeySource;
             }
 
+
+            @Override
+            public String toString() {
+                MoreObjects.ToStringHelper h = MoreObjects.toStringHelper("WebdrivingSessionConfig");
+                if (proxyUri != null) h.add("proxySpecification", proxyUri);
+                if (certificateAndKeySource != null) h.add("certificateAndKeySource", certificateAndKeySource);
+                return h.toString();
+            }
         }
+
     }
 }
