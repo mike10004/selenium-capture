@@ -102,7 +102,7 @@ class ProxyUris {
      * @author {@link net.lightbody.bmp.client.ClientUtil}
      */
     @Nullable
-    public static org.openqa.selenium.Proxy createSeleniumProxy(URI proxySpecification) {
+    public static org.openqa.selenium.Proxy createSeleniumProxy(URI proxySpecification, WebDriverFactory webDriverFactory) {
         if (proxySpecification == null) {
             return null;
         }
@@ -122,6 +122,9 @@ class ProxyUris {
             proxy.setHttpProxy(socketAddress);
             proxy.setSslProxy(socketAddress);
         }
+        List<String> bypassPatterns = getProxyBypassesFromQueryString(proxySpecification);
+        String joinedBypassPatterns = Strings.emptyToNull(webDriverFactory.joinBypassPatterns(bypassPatterns));
+        proxy.setNoProxy(joinedBypassPatterns);
         return proxy;
     }
 

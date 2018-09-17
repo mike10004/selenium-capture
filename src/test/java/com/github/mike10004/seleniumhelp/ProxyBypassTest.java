@@ -87,7 +87,7 @@ public class ProxyBypassTest {
         System.out.format("bypass: testing with %s%n", webDriverFactory.getClass().getSimpleName());
         prepareWebdriver();
         String bodyText = testBypass(webDriverFactory, host -> true).trim();
-        assertEquals("message", GOOD_MESSAGE, bodyText);
+        assertEquals("expect to be bypassed", MESSAGE_NOT_INTERCEPTED, bodyText);
     }
 
     /**
@@ -101,15 +101,15 @@ public class ProxyBypassTest {
         System.out.format("nobypass: testing with %s%n", webDriverFactory.getClass().getSimpleName());
         prepareWebdriver();
         String bodyText = testBypass(webDriverFactory, host -> false);
-        assertEquals("ground truth - expect bad message", BAD_MESSAGE, bodyText.trim());
+        assertEquals("expect no bypass", MESSAGE_INTERCEPTED, bodyText.trim());
     }
 
-    private static final String GOOD_MESSAGE = "Reached the target server", BAD_MESSAGE = "Intercepted by proxy";
+    private static final String MESSAGE_NOT_INTERCEPTED = "Reached the target server", MESSAGE_INTERCEPTED = "Intercepted by proxy";
     private static final int MAX_BUFFER_SIZE_BYTES = 0; //2 * 1024 * 1024;
 
     private String testBypass(WebDriverFactory webDriverFactory, Predicate<? super String> bypassFilter) throws Exception {
         NanoServer server = NanoServer.builder()
-                .get(whatever -> NanoResponse.status(200).plainTextUtf8(GOOD_MESSAGE))
+                .get(whatever -> NanoResponse.status(200).plainTextUtf8(MESSAGE_NOT_INTERCEPTED))
                 .build();
         BrowserMobProxy proxy = new BrowserMobProxyServer();
         proxy.addLastHttpFilterFactory(new HttpFiltersSourceAdapter() {
@@ -134,7 +134,7 @@ public class ProxyBypassTest {
                             URI uri = URI.create((request).uri());
                             if (HttpMethod.GET.equals(request.method()) && "/".equals(uri.getPath())) {
                                 Charset charset = StandardCharsets.UTF_8;
-                                byte[] bytes = BAD_MESSAGE.getBytes(charset);
+                                byte[] bytes = MESSAGE_INTERCEPTED.getBytes(charset);
                                 DefaultFullHttpResponse response_ = new DefaultFullHttpResponse(request.protocolVersion(), HttpResponseStatus.BAD_REQUEST, Unpooled.wrappedBuffer(bytes));
                                 response_.headers().set(HttpHeaders.CONTENT_TYPE, MediaType.PLAIN_TEXT_UTF_8.withCharset(charset).toString());
                                 response_.headers().set(HttpHeaders.CONTENT_LENGTH, String.valueOf(bytes.length));
@@ -211,7 +211,7 @@ public class ProxyBypassTest {
             UnitTests.setupRecommendedChromeDriver();
         } else if (webDriverFactory instanceof JBrowserDriverFactory) {
             //noinspection ConstantConditions
-            Assume.assumeFalse("JBrowserDriver does not support proxy host bypasses", webDriverFactory instanceof JBrowserDriverFactory);
+            Assume.assumeFalse("JBrowserDriver does not support proxy host bypasses, even though the ProxyConfig API gives the appearance that it does", webDriverFactory instanceof JBrowserDriverFactory);
         } else {
             throw new AssertionError("unhandled driver factory: " + webDriverFactory);
         }

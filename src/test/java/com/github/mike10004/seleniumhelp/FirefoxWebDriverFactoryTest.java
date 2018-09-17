@@ -58,26 +58,4 @@ public class FirefoxWebDriverFactoryTest {
         assertEquals("environment", expected, actual);
     }
 
-    @Test
-    public void proxyBypassList() throws Exception {
-        HostBypassTestCase.runAll(this::testProxyBypass);
-    }
-
-    private List<String> testProxyBypass(HostBypassTestCase testCase) {
-        FirefoxWebDriverFactory factory = FirefoxWebDriverFactory.builder()
-                .preference(FirefoxWebDriverFactory.PREF_PROXY_HOST_BYPASSES, FirefoxWebDriverFactory.makeProxyBypassPreferenceValue(new HashMap<>(), testCase.preconfigured))
-                .build();
-        WebdrivingConfig config = WebdrivingConfig.builder()
-                .proxy(HostAndPort.fromString("somewhere:1234"), testCase.specifiedBySessionConfig)
-                .build();
-        FirefoxOptions opts = null;
-        try {
-            opts = factory.populateOptions(config);
-        } catch (IOException e) {
-            fail("could not populate options: " + e.toString());
-        }
-        FirefoxProfile prof = opts.getProfile();
-        assertNotNull("profile not created", prof);
-        return FirefoxWebDriverFactory.parseProxyBypassPatterns(prof.getStringPreference(FirefoxWebDriverFactory.PREF_PROXY_HOST_BYPASSES, ""));
-    }
 }

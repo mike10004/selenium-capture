@@ -2,12 +2,10 @@ package com.github.mike10004.seleniumhelp;
 
 import com.github.mike10004.seleniumhelp.FirefoxCookieDb.Importer;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Maps;
 import com.google.common.io.ByteSource;
 import com.google.common.io.Files;
 import com.google.common.io.Resources;
@@ -29,10 +27,10 @@ import java.net.URI;
 import java.nio.file.Path;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -97,46 +95,8 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
         return new ServicedSession(driver, service);
     }
 
-    /**
-     * @author https://stackoverflow.com/questions/2887978/webdriver-and-proxy-server-for-firefox
-     */
-    private enum FirefoxNetworkProxyType {
-
-        /**
-         * Direct connection (or) no proxy.
-         */
-        DIRECT(0),
-
-        /**
-         * Manual proxy configuration.
-         */
-        MANUAL(1),
-
-        /**
-         * Proxy auto-configuration (PAC).
-         */
-        PAC(2),
-
-        /**
-         * Auto-detect proxy settings.
-         */
-        AUTODETECT(4),
-
-        /**
-         * Use system proxy settings.
-         */
-        SYSTEM(5);
-
-        public final int code;
-
-        FirefoxNetworkProxyType(int code) {
-            this.code = code;
-        }
-    }
-
     @VisibleForTesting
     FirefoxOptions populateOptions(WebdrivingConfig config) throws IOException {
-        @Nullable URI proxyUri = config.getProxySpecification();
         @Nullable CertificateAndKeySource certificateAndKeySource = config.getCertificateAndKeySource();
         List<FirefoxProfileFolderAction> actions = new ArrayList<>(2);
         List<DeserializableCookie> cookies_ = getCookies();
@@ -159,55 +119,33 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
         profile.setPreference("browser.search.geoip.url", "");
         profile.setPreference("network.prefetch-next", false);
         profile.setPreference("network.http.speculative-parallel-limit", 0);
-        if (proxyUri != null) {
-            profile.setPreference("network.proxy.type", FirefoxNetworkProxyType.MANUAL.code);
-            profile.setPreference("network.proxy.http", proxyUri.getHost());
-            profile.setPreference("network.proxy.http_port", proxyUri.getPort());
-            profile.setPreference("network.proxy.ssl", proxyUri.getHost());
-            profile.setPreference("network.proxy.ssl_port", proxyUri.getPort());
-            profile.setPreference(PREF_PROXY_HOST_BYPASSES, makeProxyBypassPreferenceValue(profilePreferences, config.getProxyBypasses()));
-        }
-        Map<String, Object> profilePreferences_ = Maps.filterKeys(profilePreferences, key -> !HIDDEN_PREFS.contains(key));
-        applyAdditionalPreferences(profilePreferences_, config, certificateAndKeySource, profile);
+        applyAdditionalPreferences(profilePreferences, config, certificateAndKeySource, profile);
         for (FirefoxProfileAction profileAction : profileActions) {
             profileAction.perform(profile);
         }
         FirefoxOptions options = createFirefoxOptions();
-        // options.setP
+        @Nullable URI proxyUri = config.getProxySpecification();
+        options.setProxy(ProxyUris.createSeleniumProxy(proxyUri, this));
+        /*
+         * As of 2018-09-17, if you don't override this setting, Firefox defaults to bypassing the proxy for loopback addresses
+         * (or anyway, that's the behavior it exhibits)
+         */
+        overrideProxyBypasses(config.getProxyBypasses(), profile);
         options.setProfile(profile);
         return options;
     }
 
-    static final String PREF_PROXY_HOST_BYPASSES = "network.proxy.no_proxies_on";
-
-    private static final ImmutableSet<String> HIDDEN_PREFS = ImmutableSet.<String>builder()
-            .add(PREF_PROXY_HOST_BYPASSES)
-            .build();
+    private void overrideProxyBypasses(List<String> bypasses, FirefoxProfile profile) {
+        String value;
+        if (bypasses.isEmpty()) {
+            value = "";
+        } else {
+            value = bypasses.stream().collect(Collectors.joining(FIREFOX_PROXY_BYPASS_RULE_DELIM));
+        }
+        profile.setPreference("network.proxy.no_proxies_on", value);
+    }
 
     private static final String FIREFOX_PROXY_BYPASS_RULE_DELIM = ",";
-
-    static Splitter proxyBypassPatternDelimiter() {
-        return Splitter.on(FIREFOX_PROXY_BYPASS_RULE_DELIM).omitEmptyStrings().trimResults();
-    }
-
-    private static List<String> parseProxyBypassPatterns(Map<String, Object> prefs) {
-        Object val = prefs.get(PREF_PROXY_HOST_BYPASSES);
-        return parseProxyBypassPatterns(val);
-    }
-
-    static List<String> parseProxyBypassPatterns(Object val) {
-        if (val == null) {
-            return Collections.emptyList();
-        }
-        return proxyBypassPatternDelimiter().splitToList(val.toString());
-    }
-
-    static String makeProxyBypassPreferenceValue(Map<String, Object> profilePreferences, List<String> hosts) {
-        hosts = new ArrayList<>(hosts);
-        hosts.addAll(parseProxyBypassPatterns(profilePreferences));
-        String prefValue = hosts.stream().collect(Collectors.joining(FIREFOX_PROXY_BYPASS_RULE_DELIM));
-        return prefValue;
-    }
 
     /**
      * Applies additional preferences, drawn from a map, to a profile. Subclasses may overr
@@ -494,4 +432,11 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
         }
     }
 
+    @Override
+    public String joinBypassPatterns(List<String> patterns) {
+        return patterns.stream()
+                .filter(Objects::nonNull)
+                .filter(s -> !s.trim().isEmpty())
+                .collect(Collectors.joining(FIREFOX_PROXY_BYPASS_RULE_DELIM));
+    }
 }

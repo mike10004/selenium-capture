@@ -2,8 +2,6 @@ package com.github.mike10004.seleniumhelp;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
-import org.apache.commons.lang3.StringUtils;
-import org.openqa.selenium.Proxy;
 import org.openqa.selenium.WebDriverException;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeDriverService;
@@ -16,14 +14,12 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -95,20 +91,6 @@ public class ChromeWebDriverFactory extends EnvironmentWebDriverFactory {
         return (List<String>) googOptions.get("args");
     }
 
-    static final String BYPASS_ARG_PREFIX = "--proxy-bypass-list=";
-
-    static List<String> parseBypasses(ChromeOptions options) {
-        List<String> args = getArguments(options);
-        List<String> bypassArgs = args.stream()
-                .filter(arg -> arg.startsWith(BYPASS_ARG_PREFIX))
-                .map(arg -> StringUtils.removeStart(arg, BYPASS_ARG_PREFIX))
-                .collect(Collectors.toList());
-        List<String> bypassPatterns = bypassArgs.stream()
-                .flatMap(argValue -> Arrays.stream(argValue.split(proxyBypassPatternArgDelimiter())))
-                .collect(Collectors.toList());
-        return bypassPatterns;
-    }
-
     /**
      * Parameterizes a capabilities instance according to a config instance. The certificate and key source
      * is not used because Chrome in webdriver mode appears to be fine with untrusted certificates,
@@ -118,26 +100,19 @@ public class ChromeWebDriverFactory extends EnvironmentWebDriverFactory {
      */
     protected void configureProxy(ChromeOptions options, WebdrivingConfig config) {
         @Nullable URI proxySpecification = config.getProxySpecification();
-        if (proxySpecification != null) {
-            Proxy seleniumProxy = ProxyUris.createSeleniumProxy(proxySpecification);
-            options.setProxy(seleniumProxy);
-            List<String> preconfiguredBypasses = parseBypasses(options);
-            List<String> moreBypasses = config.getProxyBypasses();
-            if (!preconfiguredBypasses.isEmpty() || !moreBypasses.isEmpty()) {
-                Stream<String> allBypasses = Stream.concat(preconfiguredBypasses.stream(), moreBypasses.stream())
-                        .filter(Objects::nonNull)
-                        .filter(s -> !s.trim().isEmpty());
-                String proxyBypassParam = allBypasses.collect(Collectors.joining(CHROME_PROXY_BYPASS_ARG_PATTERN_DELIMITER));
-                options.addArguments(String.format("%s%s", BYPASS_ARG_PREFIX, proxyBypassParam));
-            }
-        }
+        @Nullable org.openqa.selenium.Proxy seleniumProxy = ProxyUris.createSeleniumProxy(proxySpecification, this);
+        options.setProxy(seleniumProxy);
+    }
+
+    @Override
+    public String joinBypassPatterns(List<String> patterns) {
+        return patterns.stream()
+                .filter(Objects::nonNull)
+                .filter(s -> !s.trim().isEmpty())
+                .collect(Collectors.joining(CHROME_PROXY_BYPASS_ARG_PATTERN_DELIMITER));
     }
 
     private static final String CHROME_PROXY_BYPASS_ARG_PATTERN_DELIMITER = ";";
-
-    static String proxyBypassPatternArgDelimiter() {
-        return CHROME_PROXY_BYPASS_ARG_PATTERN_DELIMITER;
-    }
 
     @VisibleForTesting
     ChromeOptions getChromeOptions() {

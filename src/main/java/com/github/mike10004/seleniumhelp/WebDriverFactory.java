@@ -1,6 +1,7 @@
 package com.github.mike10004.seleniumhelp;
 
 import java.io.IOException;
+import java.util.List;
 
 /**
  * Interface defining methods that produce webdriver instances.
@@ -23,4 +24,5 @@ public interface WebDriverFactory {
      */
     WebdrivingSession startWebdriving(WebdrivingConfig config) throws IOException;
 
+    String joinBypassPatterns(List<String> patterns);
 }
