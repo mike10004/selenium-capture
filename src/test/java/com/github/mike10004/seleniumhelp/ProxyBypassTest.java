@@ -31,11 +31,13 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebDriverException;
 import org.openqa.selenium.WebElement;
 
-import java.net.InetSocketAddress;
 import java.net.URI;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -86,8 +88,8 @@ public class ProxyBypassTest {
     public void bypassLocalhost() throws Exception {
         System.out.format("bypass: testing with %s%n", webDriverFactory.getClass().getSimpleName());
         prepareWebdriver();
-        String bodyText = testBypass(webDriverFactory, host -> true).trim();
-        assertEquals("expect to be bypassed", MESSAGE_NOT_INTERCEPTED, bodyText);
+        Map<URI, String> bodyTexts = testBypass(webDriverFactory, host -> true);
+        assertEquals("expect to be bypassed", Collections.singleton(MESSAGE_NOT_INTERCEPTED), new HashSet<>(bodyTexts.values()));
     }
 
     /**
@@ -100,108 +102,127 @@ public class ProxyBypassTest {
     public void nobypass() throws Exception {
         System.out.format("nobypass: testing with %s%n", webDriverFactory.getClass().getSimpleName());
         prepareWebdriver();
-        String bodyText = testBypass(webDriverFactory, host -> false);
-        assertEquals("expect no bypass", MESSAGE_INTERCEPTED, bodyText.trim());
+        Map<URI, String> bodyTexts = testBypass(webDriverFactory, host -> false);
+        assertEquals("expect no bypass", Collections.singleton(MESSAGE_INTERCEPTED), new HashSet<>(bodyTexts.values()));
     }
 
     private static final String MESSAGE_NOT_INTERCEPTED = "Reached the target server", MESSAGE_INTERCEPTED = "Intercepted by proxy";
     private static final int MAX_BUFFER_SIZE_BYTES = 0; //2 * 1024 * 1024;
 
-    private String testBypass(WebDriverFactory webDriverFactory, Predicate<? super String> bypassFilter) throws Exception {
-        NanoServer server = NanoServer.builder()
+    private Map<URI, String> testBypass(WebDriverFactory webDriverFactory, Predicate<? super String> bypassFilter) throws Exception {
+        NanoServer server1 = NanoServer.builder()
+                .get(whatever -> NanoResponse.status(200).plainTextUtf8(MESSAGE_NOT_INTERCEPTED))
+                .build();
+        NanoServer server2 = NanoServer.builder()
                 .get(whatever -> NanoResponse.status(200).plainTextUtf8(MESSAGE_NOT_INTERCEPTED))
                 .build();
         BrowserMobProxy proxy = new BrowserMobProxyServer();
-        proxy.addLastHttpFilterFactory(new HttpFiltersSourceAdapter() {
-            @Override
-            public int getMaximumRequestBufferSizeInBytes() {
-                return MAX_BUFFER_SIZE_BYTES;
-            }
-
-            @Override
-            public int getMaximumResponseBufferSizeInBytes() {
-                return MAX_BUFFER_SIZE_BYTES;
-            }
-
-            @Override
-            public HttpFilters filterRequest(HttpRequest originalRequest, ChannelHandlerContext ctx) {
-                return new HttpsAwareFiltersAdapter(originalRequest, ctx) {
-                    @Override
-                    public HttpResponse clientToProxyRequest(HttpObject httpObject) {
-                        HttpResponse response = super.clientToProxyRequest(httpObject);
-                        if (!isHttps() && httpObject instanceof HttpRequest) {
-                            HttpRequest request = (HttpRequest) httpObject;
-                            URI uri = URI.create((request).uri());
-                            if (HttpMethod.GET.equals(request.method()) && "/".equals(uri.getPath())) {
-                                Charset charset = StandardCharsets.UTF_8;
-                                byte[] bytes = MESSAGE_INTERCEPTED.getBytes(charset);
-                                DefaultFullHttpResponse response_ = new DefaultFullHttpResponse(request.protocolVersion(), HttpResponseStatus.BAD_REQUEST, Unpooled.wrappedBuffer(bytes));
-                                response_.headers().set(HttpHeaders.CONTENT_TYPE, MediaType.PLAIN_TEXT_UTF_8.withCharset(charset).toString());
-                                response_.headers().set(HttpHeaders.CONTENT_LENGTH, String.valueOf(bytes.length));
-                                response = response_;
-                            }
-                        }
-                        System.out.format("%s %s -> %s%n", response == null ? "passthru" : "intercept", describe(httpObject), describe(response));
-                        return response;
-                    }
-                };
-
-            }
-
-        });
+        proxy.addLastHttpFilterFactory(new InterceptingFiltersSource());
         ExecutorService executorService = (Executors.newSingleThreadExecutor());
         proxy.start();
         try {
             String proxyHost = "127.0.0.1";
             int proxyPort = proxy.getPort();
-            try (NanoControl ctrl = server.startServer()) {
-                HostAndPort targetSocketAddress = ctrl.getSocketAddress();
-                List<String> bypasses = Stream.of(targetSocketAddress.toString())
+            try (NanoControl ctrl1 = server1.startServer();
+                NanoControl ctrl2 = server2.startServer()) {
+                HostAndPort targetSocketAddress1 = ctrl1.getSocketAddress();
+                HostAndPort targetSocketAddress2 = ctrl2.getSocketAddress();
+                List<String> bypasses = Stream.of(targetSocketAddress1, targetSocketAddress2)
+                        .map(Object::toString)
                         .filter(bypassFilter)
                         .collect(Collectors.toList());
-                WebdrivingConfig config = buildConfig(new InetSocketAddress(proxyHost, proxyPort), bypasses);
+                WebdrivingConfig config = WebdrivingConfig.builder()
+                        .proxy(HostAndPort.fromParts(proxyHost, proxyPort), bypasses)
+                        .build();
+                URI[] urls = {
+                        URI.create(String.format("http://%s/", targetSocketAddress1)),
+                        URI.create(String.format("http://%s/", targetSocketAddress2)),
+                };
+                Map<URI, String> texts = new LinkedHashMap<>();
                 try (WebdrivingSession session = webDriverFactory.startWebdriving(config)) {
                     WebDriver driver = session.getWebDriver();
-                    try {
-                        Future<String> promise = executorService.submit(new Callable<String>(){
-                            @Override
-                            public String call() {
-                                String url = String.format("http://%s/", targetSocketAddress);
-                                System.out.format("using %s to fetch %s%n", driver.getClass().getSimpleName(), url);
-                                driver.get(url);
-                                try {
-                                    WebElement body = driver.findElement(By.tagName("body"));
-                                    return Strings.nullToEmpty(body.getText());
-                                } catch (WebDriverException e) {
-                                    e.printStackTrace(System.out);
-                                    throw e;
-                                }
-
-                            }
-                        });
-                        System.out.format("waiting 5 seconds for response...");
-                        String value = promise.get(5, TimeUnit.SECONDS);
-                        System.out.format("returned \"%s\"%n", value);
-                        return value;
-                    } catch (java.util.concurrent.TimeoutException e) {
-                        System.out.format("returning empty response due to timeout%n");
-                        return "";
-                    } finally {
-                        System.out.format("webdriving session closing %s%n", driver.getClass().getSimpleName());
+                    for (URI url : urls) {
+                        try {
+                            Future<String> promise = executorService.submit(new BodyTextFetcher(driver, url));
+                            System.out.format("waiting 5 seconds for response...");
+                            String value = promise.get(5, TimeUnit.SECONDS);
+                            System.out.format("returned \"%s\"%n", value);
+                            texts.put(url, value.trim());
+                        } catch (java.util.concurrent.TimeoutException e) {
+                            System.out.format("no response from %s due to timeout%n", url);
+                            texts.put(url, "");
+                        }
                     }
+                } finally {
+                    System.out.format("webdriving session closing%n");
                 }
+                return texts;
             }
         } finally {
             proxy.stop();
         }
     }
 
-    protected WebdrivingConfig buildConfig(InetSocketAddress proxySocketAddress, List<String> bypasses) {
-        HostAndPort address = HostAndPort.fromParts(proxySocketAddress.getHostString(), proxySocketAddress.getPort());
-        System.out.format("building WebDriverConfig with proxy %s (%s) and bypasses %s%n", proxySocketAddress, address, bypasses);
-        return WebdrivingConfig.builder()
-                .proxy(address, bypasses)
-                .build();
+    private static class BodyTextFetcher implements Callable<String> {
+        private final WebDriver driver;
+        private final URI url;
+
+        public BodyTextFetcher(WebDriver driver, URI url) {
+            this.driver = driver;
+            this.url = url;
+        }
+
+        @Override
+        public String call() throws Exception {
+            String url = this.url.toString();
+            System.out.format("using %s to fetch %s%n", driver.getClass().getSimpleName(), url);
+            driver.get(url);
+            try {
+                WebElement body = driver.findElement(By.tagName("body"));
+                return Strings.nullToEmpty(body.getText());
+            } catch (WebDriverException e) {
+                e.printStackTrace(System.out);
+                throw e;
+            }
+        }
+    }
+
+    private static class InterceptingFiltersSource extends HttpFiltersSourceAdapter {
+        @Override
+        public int getMaximumRequestBufferSizeInBytes() {
+            return MAX_BUFFER_SIZE_BYTES;
+        }
+
+        @Override
+        public int getMaximumResponseBufferSizeInBytes() {
+            return MAX_BUFFER_SIZE_BYTES;
+        }
+
+        @Override
+        public HttpFilters filterRequest(HttpRequest originalRequest, ChannelHandlerContext ctx) {
+            return new HttpsAwareFiltersAdapter(originalRequest, ctx) {
+                @Override
+                public HttpResponse clientToProxyRequest(HttpObject httpObject) {
+                    HttpResponse response = super.clientToProxyRequest(httpObject);
+                    if (!isHttps() && httpObject instanceof HttpRequest) {
+                        HttpRequest request = (HttpRequest) httpObject;
+                        URI uri = URI.create((request).uri());
+                        if (HttpMethod.GET.equals(request.method()) && "/".equals(uri.getPath())) {
+                            Charset charset = StandardCharsets.UTF_8;
+                            byte[] bytes = MESSAGE_INTERCEPTED.getBytes(charset);
+                            DefaultFullHttpResponse response_ = new DefaultFullHttpResponse(request.protocolVersion(), HttpResponseStatus.BAD_REQUEST, Unpooled.wrappedBuffer(bytes));
+                            response_.headers().set(HttpHeaders.CONTENT_TYPE, MediaType.PLAIN_TEXT_UTF_8.withCharset(charset).toString());
+                            response_.headers().set(HttpHeaders.CONTENT_LENGTH, String.valueOf(bytes.length));
+                            response = response_;
+                        }
+                    }
+                    System.out.format("%s %s -> %s%n", response == null ? "passthru" : "intercept", describe(httpObject), describe(response));
+                    return response;
+                }
+            };
+
+        }
+
     }
 
     private void prepareWebdriver() {

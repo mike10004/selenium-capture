@@ -9,7 +9,6 @@ import javax.annotation.Nullable;
 import java.io.File;
 import java.net.URI;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -65,8 +64,4 @@ public class JBrowserDriverFactory implements WebDriverFactory {
         return ProxyConfig.Type.HTTP;
     }
 
-    @Override
-    public String joinBypassPatterns(List<String> patterns) {
-        throw new UnsupportedOperationException("JBrowserDriver Settings ProxyConfig accepts Set<String> instead of a joined pattern");
-    }
 }

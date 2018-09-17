@@ -17,6 +17,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -102,7 +103,7 @@ class ProxyUris {
      * @author {@link net.lightbody.bmp.client.ClientUtil}
      */
     @Nullable
-    public static org.openqa.selenium.Proxy createSeleniumProxy(URI proxySpecification, WebDriverFactory webDriverFactory) {
+    public static org.openqa.selenium.Proxy createSeleniumProxy(URI proxySpecification) {
         if (proxySpecification == null) {
             return null;
         }
@@ -123,10 +124,18 @@ class ProxyUris {
             proxy.setSslProxy(socketAddress);
         }
         List<String> bypassPatterns = getProxyBypassesFromQueryString(proxySpecification);
-        String joinedBypassPatterns = Strings.emptyToNull(webDriverFactory.joinBypassPatterns(bypassPatterns));
-        proxy.setNoProxy(joinedBypassPatterns);
+        String joinedBypassPatterns = bypassPatterns.stream()
+                .filter(Objects::nonNull)
+                .filter(s -> !s.trim().isEmpty())
+                .collect(Collectors.joining(NONPROXY_HOST_PATTERN_DELIMITER));
+        proxy.setNoProxy(Strings.emptyToNull(joinedBypassPatterns));
         return proxy;
     }
+
+    /**
+     * Defined by {@link org.openqa.selenium.Proxy#setNoProxy(String)}.
+     */
+    private static final String NONPROXY_HOST_PATTERN_DELIMITER = ",";
 
     interface BmpConfigurator {
 

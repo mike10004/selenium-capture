@@ -17,9 +17,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -100,19 +98,9 @@ public class ChromeWebDriverFactory extends EnvironmentWebDriverFactory {
      */
     protected void configureProxy(ChromeOptions options, WebdrivingConfig config) {
         @Nullable URI proxySpecification = config.getProxySpecification();
-        @Nullable org.openqa.selenium.Proxy seleniumProxy = ProxyUris.createSeleniumProxy(proxySpecification, this);
+        @Nullable org.openqa.selenium.Proxy seleniumProxy = ProxyUris.createSeleniumProxy(proxySpecification);
         options.setProxy(seleniumProxy);
     }
-
-    @Override
-    public String joinBypassPatterns(List<String> patterns) {
-        return patterns.stream()
-                .filter(Objects::nonNull)
-                .filter(s -> !s.trim().isEmpty())
-                .collect(Collectors.joining(CHROME_PROXY_BYPASS_ARG_PATTERN_DELIMITER));
-    }
-
-    private static final String CHROME_PROXY_BYPASS_ARG_PATTERN_DELIMITER = ";";
 
     @VisibleForTesting
     ChromeOptions getChromeOptions() {

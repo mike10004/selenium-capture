@@ -30,7 +30,6 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -125,7 +124,7 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
         }
         FirefoxOptions options = createFirefoxOptions();
         @Nullable URI proxyUri = config.getProxySpecification();
-        options.setProxy(ProxyUris.createSeleniumProxy(proxyUri, this));
+        options.setProxy(ProxyUris.createSeleniumProxy(proxyUri));
         /*
          * As of 2018-09-17, if you don't override this setting, Firefox defaults to bypassing the proxy for loopback addresses
          * (or anyway, that's the behavior it exhibits)
@@ -432,11 +431,4 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
         }
     }
 
-    @Override
-    public String joinBypassPatterns(List<String> patterns) {
-        return patterns.stream()
-                .filter(Objects::nonNull)
-                .filter(s -> !s.trim().isEmpty())
-                .collect(Collectors.joining(FIREFOX_PROXY_BYPASS_RULE_DELIM));
-    }
 }
