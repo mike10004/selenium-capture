@@ -156,6 +156,9 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
         profile.setPreference("app.update.url", "");
         profile.setPreference("browser.safebrowsing.provider.mozilla.updateURL", "");
         profile.setPreference("media.gmp-manager.url", "");
+        profile.setPreference("browser.search.geoip.url", "");
+        profile.setPreference("network.prefetch-next", false);
+        profile.setPreference("network.http.speculative-parallel-limit", 0);
         if (proxyUri != null) {
             profile.setPreference("network.proxy.type", FirefoxNetworkProxyType.MANUAL.code);
             profile.setPreference("network.proxy.http", proxyUri.getHost());
@@ -163,9 +166,6 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
             profile.setPreference("network.proxy.ssl", proxyUri.getHost());
             profile.setPreference("network.proxy.ssl_port", proxyUri.getPort());
             profile.setPreference(PREF_PROXY_HOST_BYPASSES, makeProxyBypassPreferenceValue(profilePreferences, config.getProxyBypasses()));
-            profile.setPreference("browser.search.geoip.url", "");
-            profile.setPreference("network.prefetch-next", false);
-            profile.setPreference("network.http.speculative-parallel-limit", 0);
         }
         Map<String, Object> profilePreferences_ = Maps.filterKeys(profilePreferences, key -> !HIDDEN_PREFS.contains(key));
         applyAdditionalPreferences(profilePreferences_, config, certificateAndKeySource, profile);
@@ -173,6 +173,7 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
             profileAction.perform(profile);
         }
         FirefoxOptions options = createFirefoxOptions();
+        // options.setP
         options.setProfile(profile);
         return options;
     }

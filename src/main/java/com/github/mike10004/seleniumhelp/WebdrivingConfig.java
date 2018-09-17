@@ -14,6 +14,9 @@ import java.util.List;
 
 import static com.google.common.base.Preconditions.checkState;
 
+/**
+ * Interface of a value class that defines a configuration for a session of webdriving.
+ */
 public interface WebdrivingConfig {
 
     /**

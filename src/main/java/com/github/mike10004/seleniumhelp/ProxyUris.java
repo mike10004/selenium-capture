@@ -8,6 +8,7 @@ import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.client.utils.URLEncodedUtils;
 import org.littleshoot.proxy.ChainedProxyManager;
 import org.littleshoot.proxy.ChainedProxyType;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 import java.net.URI;
@@ -92,6 +93,36 @@ class ProxyUris {
             return null;
         }
         return upstreamProxyType.name().toLowerCase();
+    }
+
+    /**
+     * Creates a Selenium Proxy object using the specified socket address as the HTTP proxy server.
+     * @param proxySpecification URI specifying the proxy; see {@link WebdrivingConfig#getProxySpecification()}
+     * @return a Selenium Proxy instance, configured to use the specified address and port as its proxy server
+     * @author {@link net.lightbody.bmp.client.ClientUtil}
+     */
+    @Nullable
+    public static org.openqa.selenium.Proxy createSeleniumProxy(URI proxySpecification) {
+        if (proxySpecification == null) {
+            return null;
+        }
+        org.openqa.selenium.Proxy proxy = new org.openqa.selenium.Proxy();
+        proxy.setProxyType(org.openqa.selenium.Proxy.ProxyType.MANUAL);
+        String socketAddress = String.format("%s:%d", proxySpecification.getHost(), proxySpecification.getPort());
+        String userInfo = proxySpecification.getUserInfo();
+        if (isSocks(proxySpecification)) {
+            proxy.setSocksProxy(socketAddress);
+            proxy.setSocksVersion(parseSocksVersionFromUriScheme(proxySpecification));
+            proxy.setSocksUsername(getUsername(proxySpecification));
+            proxy.setSocksPassword(getPassword(proxySpecification));
+        } else {
+            if (!Strings.isNullOrEmpty(userInfo)) {
+                LoggerFactory.getLogger(ProxyUris.class).warn("HTTP proxy server credentials may not be specified in the proxy specification URI (and I'm not sure what to suggest instead); only SOCKS proxy server credentials may be specified in the proxy specification URI");
+            }
+            proxy.setHttpProxy(socketAddress);
+            proxy.setSslProxy(socketAddress);
+        }
+        return proxy;
     }
 
     interface BmpConfigurator {
