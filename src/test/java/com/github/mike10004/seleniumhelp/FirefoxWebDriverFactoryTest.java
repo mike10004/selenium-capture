@@ -67,7 +67,7 @@ public class FirefoxWebDriverFactoryTest {
         FirefoxWebDriverFactory factory = FirefoxWebDriverFactory.builder()
                 .preference(FirefoxWebDriverFactory.PREF_PROXY_HOST_BYPASSES, FirefoxWebDriverFactory.makeProxyBypassPreferenceValue(new HashMap<>(), testCase.preconfigured))
                 .build();
-        WebDriverConfig config = WebDriverConfig.builder()
+        WebdrivingConfig config = WebdrivingConfig.builder()
                 .proxy(HostAndPort.fromString("somewhere:1234"), testCase.specifiedBySessionConfig)
                 .build();
         FirefoxOptions opts = null;

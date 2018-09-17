@@ -129,7 +129,7 @@ public class TrafficCollectorImpl implements TrafficCollector {
     }
 
     private <R> R invokeGenerate(BrowserMobProxy bmp, TrafficGenerator<R> generator, @Nullable TrafficMonitor monitor) throws IOException, WebDriverException {
-        WebDriverConfig config = WebDriverConfig.builder()
+        WebdrivingConfig config = WebdrivingConfig.builder()
                 .proxy(BrowserMobs.getConnectableSocketAddress(bmp))
                 .certificateAndKeySource(certificateAndKeySource)
                 .build();

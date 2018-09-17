@@ -73,7 +73,7 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
     }
 
     @Override
-    public WebdrivingSession startWebdriving(WebDriverConfig config) throws IOException {
+    public WebdrivingSession startWebdriving(WebdrivingConfig config) throws IOException {
         return createWebDriverMaybeWithProxy(config);
     }
 
@@ -85,7 +85,7 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
         return new FirefoxOptions();
     }
 
-    private ServicedSession createWebDriverMaybeWithProxy(WebDriverConfig config) throws IOException {
+    private ServicedSession createWebDriverMaybeWithProxy(WebdrivingConfig config) throws IOException {
         FirefoxOptions options = populateOptions(config);
         FirefoxBinary binary = binarySupplier.get();
         Map<String, String> environment = environmentSupplier.get();
@@ -135,7 +135,7 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
     }
 
     @VisibleForTesting
-    FirefoxOptions populateOptions(WebDriverConfig config) throws IOException {
+    FirefoxOptions populateOptions(WebdrivingConfig config) throws IOException {
         @Nullable URI proxyUri = config.getProxySpecification();
         @Nullable CertificateAndKeySource certificateAndKeySource = config.getCertificateAndKeySource();
         List<FirefoxProfileFolderAction> actions = new ArrayList<>(2);
@@ -217,7 +217,7 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
      */
     @SuppressWarnings("unused")
     protected void applyAdditionalPreferences(Map<String, Object> profilePreferences,
-              WebDriverConfig config,
+              WebdrivingConfig config,
               @Nullable CertificateAndKeySource certificateAndKeySource, FirefoxProfile profile) {
         for (String key : profilePreferences.keySet()) {
             Object value = profilePreferences.get(key);

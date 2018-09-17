@@ -177,7 +177,7 @@ public interface TrafficCollector {
 
         /**
          * Configures the collector to use an upstream proxy specified by a URI. The URI components
-         * must be as described in {@link WebDriverConfig#getProxySpecification()}.
+         * must be as described in {@link WebdrivingConfig#getProxySpecification()}.
          * @param proxySpecificationSupplier
          * @return this builder instance
          */

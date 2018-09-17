@@ -27,7 +27,7 @@ public class JBrowserDriverFactory implements WebDriverFactory {
     }
 
     @Override
-    public WebdrivingSession startWebdriving(WebDriverConfig config) {
+    public WebdrivingSession startWebdriving(WebdrivingConfig config) {
         return new SimpleWebdrivingSession(createWebDriver(config));
     }
 
@@ -37,7 +37,7 @@ public class JBrowserDriverFactory implements WebDriverFactory {
      * @param config the config
      * @return
      */
-    private WebDriver createWebDriver(WebDriverConfig config) {
+    private WebDriver createWebDriver(WebdrivingConfig config) {
 
         @Nullable URI proxy = config.getProxySpecification();
         Settings.Builder settingsBuilder = Settings.builder();

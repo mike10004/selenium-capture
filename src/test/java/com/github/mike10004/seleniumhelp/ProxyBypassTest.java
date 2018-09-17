@@ -159,7 +159,7 @@ public class ProxyBypassTest {
                 List<String> bypasses = Stream.of(targetSocketAddress.toString())
                         .filter(bypassFilter)
                         .collect(Collectors.toList());
-                WebDriverConfig config = buildConfig(new InetSocketAddress(proxyHost, proxyPort), bypasses);
+                WebdrivingConfig config = buildConfig(new InetSocketAddress(proxyHost, proxyPort), bypasses);
                 try (WebdrivingSession session = webDriverFactory.startWebdriving(config)) {
                     WebDriver driver = session.getWebDriver();
                     try {
@@ -196,10 +196,10 @@ public class ProxyBypassTest {
         }
     }
 
-    protected WebDriverConfig buildConfig(InetSocketAddress proxySocketAddress, List<String> bypasses) {
+    protected WebdrivingConfig buildConfig(InetSocketAddress proxySocketAddress, List<String> bypasses) {
         HostAndPort address = HostAndPort.fromParts(proxySocketAddress.getHostString(), proxySocketAddress.getPort());
         System.out.format("building WebDriverConfig with proxy %s (%s) and bypasses %s%n", proxySocketAddress, address, bypasses);
-        return WebDriverConfig.builder()
+        return WebdrivingConfig.builder()
                 .proxy(address, bypasses)
                 .build();
     }

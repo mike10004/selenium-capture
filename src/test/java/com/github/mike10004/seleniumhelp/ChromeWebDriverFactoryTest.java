@@ -85,7 +85,7 @@ public class ChromeWebDriverFactoryTest {
         if (!testCase.preconfigured.isEmpty()) {
             options.addArguments(BYPASS_ARG_PREFIX + testCase.preconfigured.stream().collect(Collectors.joining(ChromeWebDriverFactory.proxyBypassPatternArgDelimiter())));
         }
-        WebDriverConfig config = WebDriverConfig.builder()
+        WebdrivingConfig config = WebdrivingConfig.builder()
                 .proxy(HostAndPort.fromString("somewhere:1234"), testCase.specifiedBySessionConfig)
                 .build();
         ChromeWebDriverFactory factory = new ChromeWebDriverFactory();

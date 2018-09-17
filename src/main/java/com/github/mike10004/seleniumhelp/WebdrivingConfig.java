@@ -14,7 +14,7 @@ import java.util.List;
 
 import static com.google.common.base.Preconditions.checkState;
 
-public interface WebDriverConfig {
+public interface WebdrivingConfig {
 
     /**
      * Gets the proxy specifiation, or null if no proxy is to be used. The proxy host and port
@@ -35,7 +35,7 @@ public interface WebDriverConfig {
     @Nullable
     CertificateAndKeySource getCertificateAndKeySource();
 
-    static WebDriverConfig empty() {
+    static WebdrivingConfig empty() {
         return Builder.EMPTY;
     }
 
@@ -63,7 +63,7 @@ public interface WebDriverConfig {
         private Builder() {
         }
 
-        private static final WebDriverConfig EMPTY = new Builder().build();
+        private static final WebdrivingConfig EMPTY = new Builder().build();
 
         public Builder proxy(URI proxySpecification) {
             this.proxySpecification = proxySpecification;
@@ -112,11 +112,11 @@ public interface WebDriverConfig {
             return this;
         }
 
-        public WebDriverConfig build() {
-            return new WebDriverConfigImpl(this);
+        public WebdrivingConfig build() {
+            return new WebdrivingConfigImpl(this);
         }
 
-        private static class WebDriverConfigImpl implements WebDriverConfig {
+        private static class WebdrivingConfigImpl implements WebdrivingConfig {
 
             @Nullable
             private final URI proxyUri;
@@ -126,7 +126,7 @@ public interface WebDriverConfig {
 
             private final ImmutableList<String> hostBypassPatterns;
 
-            public WebDriverConfigImpl(Builder builder) {
+            public WebdrivingConfigImpl(Builder builder) {
                 proxyUri = builder.proxySpecification;
                 certificateAndKeySource = builder.certificateAndKeySource;
                 // cache this because it is immutable

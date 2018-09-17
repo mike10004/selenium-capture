@@ -8,11 +8,11 @@ import java.util.Arrays;
 
 import static org.junit.Assert.*;
 
-public class WebDriverConfigTest {
+public class WebdrivingConfigTest {
 
     @Test
     public void bypassPatterns() throws Exception {
-        WebDriverConfig config = WebDriverConfig.builder()
+        WebdrivingConfig config = WebdrivingConfig.builder()
                 .proxy(HostAndPort.fromParts("127.0.0.1", 46632), Arrays.asList("one", "two"))
                 .build();
         URI actual = config.getProxySpecification();
@@ -25,7 +25,7 @@ public class WebDriverConfigTest {
 
     @Test
     public void buildUriFromHostAndPort() throws Exception {
-        WebDriverConfig config = WebDriverConfig.builder()
+        WebdrivingConfig config = WebdrivingConfig.builder()
                 .proxy(HostAndPort.fromParts("127.0.0.1", 46632))
                 .build();
         URI actual = config.getProxySpecification();

@@ -55,12 +55,12 @@ public class ChromeWebDriverFactory extends EnvironmentWebDriverFactory {
     }
 
     @Override
-    public WebdrivingSession startWebdriving(WebDriverConfig config) throws IOException {
+    public WebdrivingSession startWebdriving(WebdrivingConfig config) throws IOException {
         ServicedSession session = createWebDriverMaybeWithProxy(config);
         return session;
     }
 
-    private ServicedSession createWebDriverMaybeWithProxy(WebDriverConfig config) throws IOException {
+    private ServicedSession createWebDriverMaybeWithProxy(WebdrivingConfig config) throws IOException {
         configureProxy(chromeOptions, config);
         cookiePreparer.supplementOptions(chromeOptions);
         ChromeDriverService.Builder serviceBuilder = createDriverServiceBuilder();
@@ -98,7 +98,7 @@ public class ChromeWebDriverFactory extends EnvironmentWebDriverFactory {
 
         /**
          * Creates a Selenium Proxy object using the specified socket address as the HTTP proxy server.
-         * @param proxySpecification URI specifying the proxy; see {@link WebDriverConfig#getProxySpecification()}
+         * @param proxySpecification URI specifying the proxy; see {@link WebdrivingConfig#getProxySpecification()}
          * @return a Selenium Proxy instance, configured to use the specified address and port as its proxy server
          */
         public static org.openqa.selenium.Proxy createSeleniumProxy(URI proxySpecification) {
@@ -153,7 +153,7 @@ public class ChromeWebDriverFactory extends EnvironmentWebDriverFactory {
      * @param options the options instance
      * @param config the config instance
      */
-    protected void configureProxy(ChromeOptions options, WebDriverConfig config) {
+    protected void configureProxy(ChromeOptions options, WebdrivingConfig config) {
         @Nullable URI proxySocketAddress = config.getProxySpecification();
         if (proxySocketAddress != null) {
             Proxy seleniumProxy = SeleniumProxies.createSeleniumProxy(proxySocketAddress);
