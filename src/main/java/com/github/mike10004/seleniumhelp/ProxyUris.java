@@ -4,13 +4,16 @@ import com.google.common.base.Strings;
 import net.lightbody.bmp.BrowserMobProxy;
 import net.lightbody.bmp.BrowserMobProxyServer;
 import org.apache.http.NameValuePair;
+import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.client.utils.URLEncodedUtils;
 import org.littleshoot.proxy.ChainedProxyManager;
 import org.littleshoot.proxy.ChainedProxyType;
 
 import javax.annotation.Nullable;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Supplier;
@@ -125,6 +128,24 @@ class ProxyUris {
                     ((BrowserMobProxyServer)bmp).setChainedProxyManager(chainedProxyManager);
                 }
             };
+        }
+
+    }
+
+    public static URI addBypass(URI proxyUri, String hostPattern) {
+        return addBypasses(proxyUri, Collections.singleton(hostPattern));
+    }
+
+    public static URI addBypasses(URI proxyUri, Collection<String> bypasses) {
+        if (bypasses.isEmpty()) {
+            return proxyUri;
+        }
+        try {
+            URIBuilder b = new URIBuilder(proxyUri);
+            bypasses.forEach(hostPattern -> b.addParameter(ProxyUris.PARAM_BYPASS, hostPattern));
+            return b.build();
+        } catch (URISyntaxException e) {
+            throw new IllegalArgumentException(e);
         }
 
     }

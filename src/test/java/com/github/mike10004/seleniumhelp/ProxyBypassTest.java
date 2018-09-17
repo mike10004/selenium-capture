@@ -131,11 +131,11 @@ public class ProxyBypassTest {
                         HttpResponse response = super.clientToProxyRequest(httpObject);
                         if (!isHttps() && httpObject instanceof HttpRequest) {
                             HttpRequest request = (HttpRequest) httpObject;
-                            URI uri = URI.create((request).getUri());
-                            if (HttpMethod.GET.equals(request.getMethod()) && "/".equals(uri.getPath())) {
+                            URI uri = URI.create((request).uri());
+                            if (HttpMethod.GET.equals(request.method()) && "/".equals(uri.getPath())) {
                                 Charset charset = StandardCharsets.UTF_8;
                                 byte[] bytes = BAD_MESSAGE.getBytes(charset);
-                                DefaultFullHttpResponse response_ = new DefaultFullHttpResponse(request.getProtocolVersion(), HttpResponseStatus.BAD_REQUEST, Unpooled.wrappedBuffer(bytes));
+                                DefaultFullHttpResponse response_ = new DefaultFullHttpResponse(request.protocolVersion(), HttpResponseStatus.BAD_REQUEST, Unpooled.wrappedBuffer(bytes));
                                 response_.headers().set(HttpHeaders.CONTENT_TYPE, MediaType.PLAIN_TEXT_UTF_8.withCharset(charset).toString());
                                 response_.headers().set(HttpHeaders.CONTENT_LENGTH, String.valueOf(bytes.length));
                                 response = response_;
@@ -160,7 +160,7 @@ public class ProxyBypassTest {
                         .filter(bypassFilter)
                         .collect(Collectors.toList());
                 WebDriverConfig config = buildConfig(new InetSocketAddress(proxyHost, proxyPort), bypasses);
-                try (WebdrivingSession session = webDriverFactory.createWebdrivingSession(config)) {
+                try (WebdrivingSession session = webDriverFactory.startWebdriving(config)) {
                     WebDriver driver = session.getWebDriver();
                     try {
                         Future<String> promise = executorService.submit(new Callable<String>(){
@@ -197,11 +197,10 @@ public class ProxyBypassTest {
     }
 
     protected WebDriverConfig buildConfig(InetSocketAddress proxySocketAddress, List<String> bypasses) {
-        URI proxyUri = URI.create(proxySocketAddress.getHostString() + ":" + proxySocketAddress.getPort());
-        System.out.format("building WebDriverConfig with proxy %s and bypasses %s%n", proxySocketAddress, bypasses);
+        HostAndPort address = HostAndPort.fromParts(proxySocketAddress.getHostString(), proxySocketAddress.getPort());
+        System.out.format("building WebDriverConfig with proxy %s (%s) and bypasses %s%n", proxySocketAddress, address, bypasses);
         return WebDriverConfig.builder()
-                .proxy(proxyUri)
-                .bypassHosts(bypasses)
+                .proxy(address, bypasses)
                 .build();
     }
 
@@ -211,6 +210,7 @@ public class ProxyBypassTest {
         } else if (webDriverFactory instanceof ChromeWebDriverFactory) {
             UnitTests.setupRecommendedChromeDriver();
         } else if (webDriverFactory instanceof JBrowserDriverFactory) {
+            //noinspection ConstantConditions
             Assume.assumeFalse("JBrowserDriver does not support proxy host bypasses", webDriverFactory instanceof JBrowserDriverFactory);
         } else {
             throw new AssertionError("unhandled driver factory: " + webDriverFactory);
@@ -223,11 +223,11 @@ public class ProxyBypassTest {
         }
         if (httpObject instanceof HttpRequest) {
             HttpRequest request = (HttpRequest) httpObject;
-            return String.format("%s %s %s", request.getClass().getSimpleName(), request.getMethod(), request.getUri());
+            return String.format("%s %s %s", request.getClass().getSimpleName(), request.method(), request.uri());
         }
         if (httpObject instanceof HttpResponse) {
             HttpResponse response = (HttpResponse) httpObject;
-            return String.format("%s %s Content-Type: %s", response.getClass().getSimpleName(), response.getStatus().code(), response.headers().get("Content-Type"));
+            return String.format("%s %s Content-Type: %s", response.getClass().getSimpleName(), response.status().code(), response.headers().get("Content-Type"));
         }
         return httpObject.toString();
     }

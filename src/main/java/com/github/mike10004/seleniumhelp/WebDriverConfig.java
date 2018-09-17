@@ -99,14 +99,7 @@ public interface WebDriverConfig {
             checkState(proxySpecification != null, "proxy spec URI must be set before adding bypass host pattern");
             if (hostPattern != null) {
                 if (!hostPattern.trim().isEmpty()) {
-                    try {
-                        URI rebuilt = new URIBuilder(proxySpecification)
-                                .addParameter(ProxyUris.PARAM_BYPASS, hostPattern)
-                                .build();
-                        return proxy(rebuilt);
-                    } catch (URISyntaxException e) {
-                        throw new IllegalArgumentException(e);
-                    }
+                    return proxy(ProxyUris.addBypass(proxySpecification, hostPattern));
                 }
             }
             return this;
