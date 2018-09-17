@@ -34,6 +34,8 @@ import java.util.stream.Stream;
 @SuppressWarnings({"unused", "StatementWithEmptyBody", "BooleanParameter", "SimplifiableIfStatement"})
 public class BrAwareServerResponseCaptureFilter  extends ServerResponseCaptureFilter {
 
+    private static final String SYSPROP_PRINT_DECODER_ERROR_STACKTRACE = "selenium-help.responseCapture.decoding.errors.printStackTraces";
+
     public static final String HEADER_VALUE_BROTLI_ENCODING = "br";
 
     private static final Logger log = LoggerFactory.getLogger(BrAwareServerResponseCaptureFilter.class);
@@ -248,7 +250,12 @@ public class BrAwareServerResponseCaptureFilter  extends ServerResponseCaptureFi
                 fullResponseContents = decompressContents(getRawResponseContents(), decompressor);
                 decompressionSuccessful = true;
             } catch (RuntimeException | IOException e) {
-                log.warn("Failed to decompress response with encodings " + contentEncodings + " when decoding request from " + originalRequest.getUri(), e);
+                if (Boolean.parseBoolean(System.getProperty(SYSPROP_PRINT_DECODER_ERROR_STACKTRACE))) {
+                    log.warn("Failed to decompress response with encodings " + contentEncodings + " when decoding request from " + originalRequest.getUri(), e);
+                } else {
+                    log.warn("Failed to decompress response with encodings " + contentEncodings + " when decoding request from " + originalRequest.getUri() + " due to " + e.toString());
+                }
+
             }
         } else {
             log.warn("Cannot decode unsupported content encoding type {}", contentEncodings);
