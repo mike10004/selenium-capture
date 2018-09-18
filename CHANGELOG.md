@@ -1,6 +1,18 @@
 Changelog
 =========
 
+0.46
+----
+
+* upgrade some dependencies
+* add more debug output to unit tests
+* migrate to non-deprecated Netty methods 
+
+0.45
+----
+
+* specify upstream proxy with URI in TrafficCollector.Builder URI
+
 0.44
 ----
 
