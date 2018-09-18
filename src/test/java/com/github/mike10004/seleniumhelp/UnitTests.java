@@ -8,6 +8,7 @@ import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import io.github.bonigarcia.wdm.ChromeDriverManager;
 import io.github.bonigarcia.wdm.FirefoxDriverManager;
+import org.apache.commons.lang3.StringEscapeUtils;
 import org.jsoup.Jsoup;
 import org.openqa.selenium.Platform;
 import org.openqa.selenium.chrome.ChromeOptions;
@@ -19,8 +20,10 @@ import javax.annotation.Nullable;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.List;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
@@ -42,8 +45,25 @@ public class UnitTests {
     public static final String SYSPROP_OPENSSL_TESTS_SKIP = "selenium-help.openssl.tests.skip";
     private static final String SYSPROP_OPENSSL_EXECUTABLE = "selenium-help.openssl.executable.path";
     private static final String SYSPROP_CHROME_HEADLESS_TESTS_DISABLED = "selenium-help.chrome.headless.tests.disabled";
-
+    private static final String SYSPROP_DEBUG_ENVIRONMENT = "selenium-help.build.environment.debug";
     private UnitTests() {}
+
+    private static void print(String key, @Nullable String value, PrintStream out) {
+        value = value == null ? "" : StringEscapeUtils.escapeJava(value);
+        out.format("%s=%s%n", key, value);
+    }
+
+    static {
+        if (Boolean.parseBoolean(System.getProperty(SYSPROP_DEBUG_ENVIRONMENT))) {
+            for (String envVarName : new String[]{"CHROMEDRIVER_VERSION", "GECKODRIVER_VERSION", "DISPLAY"}) {
+                print(envVarName, System.getenv(envVarName), System.err);
+            }
+            for (String syspropName : new String[]{SYSPROP_CHROME_OPTIONS_EXTRA_ARGS, SYSPROP_FIREFOX_EXECUTABLE_PATH, SYSPROP_CHROME_EXECUTABLE_PATH, }) {
+                String value = System.getProperty(syspropName);
+                print(syspropName, value, System.err);
+            }
+        }
+    }
 
     /**
      * Downloads and configures the JVM for use of a recommended version of ChromeDriver.

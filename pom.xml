@@ -64,8 +64,17 @@
                             <artifactId>maven-surefire-plugin</artifactId>
                             <configuration>
                                 <systemPropertyVariables>
+                                    <selenium-help.build.environment.debug>true</selenium-help.build.environment.debug>
                                     <selenium-help.chrome.headless.tests.disabled>${chrome.headless.tests.disabled}</selenium-help.chrome.headless.tests.disabled>
-                                    <selenium-help.chrome.options.extraArgs>--no-sandbox</selenium-help.chrome.options.extraArgs>
+                                    <selenium-help.chrome.options.extraArgs>--no-sandbox --disable-dev-shm-usage</selenium-help.chrome.options.extraArgs>
+                                    <!--suppress MavenModelInspection -->
+                                    <wdm.chromeDriverVersion>${env.CHROMEDRIVER_VERSION}</wdm.chromeDriverVersion>
+                                    <!--suppress MavenModelInspection -->
+                                    <wdm.geckodriverVersion>${env.GECKODRIVER_VERSION}</wdm.geckodriverVersion>
+                                    <!--suppress MavenModelInspection -->
+                                    <wdm.gitHubTokenName>${env.GITHUB_TOKEN_NAME}</wdm.gitHubTokenName>
+                                    <!--suppress MavenModelInspection -->
+                                    <wdm.gitHubTokenSecret>${env.GITHUB_TOKEN_SECRET}</wdm.gitHubTokenSecret>
                                 </systemPropertyVariables>
                             </configuration>
                         </plugin>
