@@ -16,7 +16,6 @@ import org.junit.rules.TemporaryFolder;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -49,6 +48,7 @@ public class WebDriverFactoryDelegateTest {
         Path scratchDir = temporaryFolder.getRoot().toPath();
         testUseLocalhostCookie((env, cookies) -> {
             return ChromeWebDriverFactory.builder()
+                    .chromeOptions(UnitTests.createChromeOptions())
                     .cookiePreparer(ChromeWebDriverFactory.makeCookieImplanter(scratchDir, () -> cookies))
                     .environment(env)
                     .build();
@@ -59,6 +59,7 @@ public class WebDriverFactoryDelegateTest {
     public void useLocalhostCookie_firefox() throws Exception {
         testUseLocalhostCookie((env, cookies) -> {
             return FirefoxWebDriverFactory.builder()
+                    .binary(UnitTests.createFirefoxBinarySupplier())
                     .addCookies(cookies)
                     .environment(env)
                     .build();
@@ -70,12 +71,6 @@ public class WebDriverFactoryDelegateTest {
     }
 
     private void testUseLocalhostCookie(FactoryFactory webDriverFactoryFactory) throws Exception {
-//        DeserializableCookie cookie = DeserializableCookie.builder("foo", "bar")
-//                .domain("localhost")
-//                .path("/")
-//                .expiry(Date.from(Instant.now().plus(Duration.ofDays(7))))
-//                .build();
-//        List<DeserializableCookie> cookies = Collections.singletonList(cookie);
         Gson gson = new GsonBuilder()
                 .setPrettyPrinting()
                 .disableHtmlEscaping()
@@ -107,7 +102,7 @@ public class WebDriverFactoryDelegateTest {
     @SuppressWarnings("unused")
     private List<DeserializableCookie> makeCookies(NanoServer server, FactoryFactory webDriverFactoryFactory) {
         DeserializableCookie cookie = DeserializableCookie.builder("myCookie", "blahblahblah")
-                .expiry(Date.from(Instant.now().plus(Duration.ofDays(365))))
+                .expiry(Instant.now().plus(Duration.ofDays(365)))
                 .path("/")
                 .domain("localhost")
                 .attribute("domain", "localhost")

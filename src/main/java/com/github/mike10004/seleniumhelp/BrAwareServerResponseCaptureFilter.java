@@ -251,9 +251,9 @@ public class BrAwareServerResponseCaptureFilter  extends ServerResponseCaptureFi
                 decompressionSuccessful = true;
             } catch (RuntimeException | IOException e) {
                 if (Boolean.parseBoolean(System.getProperty(SYSPROP_PRINT_DECODER_ERROR_STACKTRACE))) {
-                    log.warn("Failed to decompress response with encodings " + contentEncodings + " when decoding request from " + originalRequest.getUri(), e);
+                    log.warn("Failed to decompress response with encodings " + contentEncodings + " when decoding request from " + originalRequest.uri(), e);
                 } else {
-                    log.warn("Failed to decompress response with encodings " + contentEncodings + " when decoding request from " + originalRequest.getUri() + " due to " + e.toString());
+                    log.warn("Failed to decompress response with encodings " + contentEncodings + " when decoding request from " + originalRequest.uri() + " due to " + e.toString());
                 }
 
             }

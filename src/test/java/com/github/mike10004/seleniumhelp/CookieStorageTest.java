@@ -21,6 +21,7 @@ public class CookieStorageTest {
     public void testFirefox() throws Exception {
         UnitTests.setupRecommendedGeckoDriver();
         testWithDriverFactory(FirefoxWebDriverFactory.builder()
+                .binary(UnitTests.createFirefoxBinarySupplier())
                 .environment(xvfb.getController().newEnvironment())
                 .build());
     }

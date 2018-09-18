@@ -324,7 +324,7 @@ public class BrAwareHarCaptureFilter extends HttpsAwareFiltersAdapter {
     protected void captureQueryParameters(HttpRequest httpRequest) {
         // capture query parameters. it is safe to assume the query string is UTF-8, since it "should" be in US-ASCII (a subset of UTF-8),
         // but sometimes does include UTF-8 characters.
-        QueryStringDecoder queryStringDecoder = new QueryStringDecoder(httpRequest.getUri(), StandardCharsets.UTF_8);
+        QueryStringDecoder queryStringDecoder = new QueryStringDecoder(httpRequest.uri(), StandardCharsets.UTF_8);
 
         try {
             for (Map.Entry<String, List<String>> entry : queryStringDecoder.parameters().entrySet()) {
@@ -335,13 +335,13 @@ public class BrAwareHarCaptureFilter extends HttpsAwareFiltersAdapter {
         } catch (IllegalArgumentException e) {
             // QueryStringDecoder will throw an IllegalArgumentException if it cannot interpret a query string. rather than cause the entire request to
             // fail by propagating the exception, simply skip the query parameter capture.
-            harEntry.setComment("Unable to decode query parameters on URI: " + httpRequest.getUri());
-            log.info("Unable to decode query parameters on URI: " + httpRequest.getUri(), e);
+            harEntry.setComment("Unable to decode query parameters on URI: " + httpRequest.uri());
+            log.info("Unable to decode query parameters on URI: " + httpRequest.uri(), e);
         }
     }
 
     protected void captureRequestHeaderSize(HttpRequest httpRequest) {
-        String requestLine = httpRequest.getMethod().toString() + ' ' + httpRequest.getUri() + ' ' + httpRequest.getProtocolVersion().toString();
+        String requestLine = httpRequest.method().toString() + ' ' + httpRequest.uri() + ' ' + httpRequest.protocolVersion().toString();
         // +2 => CRLF after status line, +4 => header/data separation
         long requestHeadersSize = requestLine.length() + 6;
 
@@ -394,7 +394,7 @@ public class BrAwareHarCaptureFilter extends HttpsAwareFiltersAdapter {
 
         String contentType = HttpHeaders.getHeader(httpRequest, HttpHeaders.Names.CONTENT_TYPE);
         if (contentType == null) {
-            log.warn("No content type specified in request to {}. Content will be treated as {}", httpRequest.getUri(), BrowserMobHttpUtil.UNKNOWN_CONTENT_TYPE);
+            log.warn("No content type specified in request to {}. Content will be treated as {}", httpRequest.uri(), BrowserMobHttpUtil.UNKNOWN_CONTENT_TYPE);
             contentType = BrowserMobHttpUtil.UNKNOWN_CONTENT_TYPE;
         }
 
@@ -489,7 +489,7 @@ public class BrAwareHarCaptureFilter extends HttpsAwareFiltersAdapter {
     }
 
     protected void captureResponse(HttpResponse httpResponse) {
-        HarResponse response = new HarResponse(httpResponse.getStatus().code(), httpResponse.getStatus().reasonPhrase(), httpResponse.getProtocolVersion().text());
+        HarResponse response = new HarResponse(httpResponse.status().code(), httpResponse.status().reasonPhrase(), httpResponse.protocolVersion().text());
         harEntry.setResponse(response);
 
         captureResponseHeaderSize(httpResponse);
@@ -556,12 +556,11 @@ public class BrAwareHarCaptureFilter extends HttpsAwareFiltersAdapter {
     }
 
     protected void captureResponseHeaderSize(HttpResponse httpResponse) {
-        String statusLine = httpResponse.getProtocolVersion().toString() + ' ' + httpResponse.getStatus().toString();
+        String statusLine = httpResponse.protocolVersion().toString() + ' ' + httpResponse.status().toString();
         // +2 => CRLF after status line, +4 => header/data separation
         long responseHeadersSize = statusLine.length() + 6;
         HttpHeaders headers = httpResponse.headers();
         responseHeadersSize += BrowserMobHttpUtil.getHeaderSize(headers);
-
         harEntry.getResponse().setHeadersSize(responseHeadersSize);
     }
 

@@ -18,7 +18,6 @@ import org.openqa.selenium.os.ExecutableFinder;
 
 import javax.annotation.Nullable;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.file.Files;
@@ -45,8 +44,12 @@ public class UnitTests {
     private static final String SYSPROP_OPENSSL_EXECUTABLE = "selenium-help.openssl.executable.path";
     private static final String SYSPROP_CHROME_HEADLESS_TESTS_DISABLED = "selenium-help.chrome.headless.tests.disabled";
     private static final String SYSPROP_DEBUG_ENVIRONMENT = "selenium-help.build.environment.debug";
+    private static final String ENV_FIREFOX_BIN = "FIREFOX_BIN";
+    private static final String ENV_CHROME_BIN = "CHROME_BIN";
+
     private UnitTests() {}
 
+    @SuppressWarnings("SameParameterValue")
     private static void print(String key, @Nullable String value, PrintStream out) {
         value = value == null ? "" : StringEscapeUtils.escapeJava(value);
         out.format("%s=%s%n", key, value);
@@ -56,7 +59,7 @@ public class UnitTests {
         if (Boolean.parseBoolean(System.getProperty(SYSPROP_DEBUG_ENVIRONMENT))) {
             System.err.format("%s=true; describing build environment...%n%n", SYSPROP_DEBUG_ENVIRONMENT);
             System.err.format("environment variables:%n%n");
-            for (String envVarName : new String[]{"CHROMEDRIVER_VERSION", "GECKODRIVER_VERSION", "DISPLAY", "CHROME_BIN", "FIREFOX_BIN"}) {
+            for (String envVarName : new String[]{"CHROMEDRIVER_VERSION", "GECKODRIVER_VERSION", "DISPLAY", ENV_CHROME_BIN, ENV_FIREFOX_BIN}) {
                 print(envVarName, System.getenv(envVarName), System.err);
             }
             System.err.format("%nsystem properties:%n%n");
@@ -95,7 +98,7 @@ public class UnitTests {
     @SuppressWarnings("deprecation")
     @Nullable
     static String getFirefoxExecutablePath() {
-        return getExecutablePath(SYSPROP_FIREFOX_EXECUTABLE_PATH, "FIREFOX_BIN", () -> {
+        return getExecutablePath(SYSPROP_FIREFOX_EXECUTABLE_PATH, ENV_FIREFOX_BIN, () -> {
             if (Platforms.getPlatform().isWindows()) {
                 Stream<Executable> executables = locateFirefoxBinariesFromPlatform();
                 File file = executables.map(Executable::getFile).filter(File::isFile).findFirst().orElse(null);
@@ -124,7 +127,7 @@ public class UnitTests {
 
     @Nullable
     static String getChromeExecutablePath() {
-        return getExecutablePath(SYSPROP_CHROME_EXECUTABLE_PATH, "CHROME_BIN", () -> null);
+        return getExecutablePath(SYSPROP_CHROME_EXECUTABLE_PATH, ENV_CHROME_BIN, () -> null);
     }
 
     // Licensed to the Software Freedom Conservancy (SFC) under one
@@ -209,17 +212,17 @@ public class UnitTests {
         return executables.build().stream();
     }
 
-    public static Supplier<FirefoxBinary> createFirefoxBinarySupplier() throws IOException {
+    public static Supplier<FirefoxBinary> createFirefoxBinarySupplier() {
         String executablePath = getFirefoxExecutablePath();
         if (Strings.isNullOrEmpty(executablePath)) {
             return FirefoxBinary::new;
         } else {
             File executableFile = new File(executablePath);
             if (!executableFile.isFile()) {
-                throw new FileNotFoundException(executablePath);
+                throw new RuntimeException("not found: " + executablePath);
             }
             if (!executableFile.canExecute()) {
-                throw new IOException("not executable: " + executableFile);
+                throw new RuntimeException("not executable: " + executableFile);
             }
             return () -> new FirefoxBinary(executableFile);
         }
@@ -241,8 +244,15 @@ public class UnitTests {
     }
 
     /**
-     * Creates a Chrome options object suitable for unit tests.
-     * @return
+     * Creates a Chrome options object suitable for unit tests. Some build environments
+     * (I'm looking at you, Travis) require some tweaks to the way Chrome is executed,
+     * and this allows you to specify those tweaks with a system property. The value
+     * of the property is tokenized on breaking whitespace, so there's no way to include
+     * an actual space within an argument, but the need for that completeness is uncommon
+     * enough that we'll ignore it for now. This also sets the Chrome executable from
+     * system property {@link #SYSPROP_CHROME_EXECUTABLE_PATH} or environment variable
+     * {@link #ENV_CHROME_BIN}.
+     * @return an options object with parameters set
      */
     public static ChromeOptions createChromeOptions() {
         ChromeOptions options = new ChromeOptions();

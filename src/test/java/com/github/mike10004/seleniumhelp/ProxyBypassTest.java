@@ -31,6 +31,7 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebDriverException;
 import org.openqa.selenium.WebElement;
 
+import java.io.IOException;
 import java.net.URI;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -67,14 +68,22 @@ public class ProxyBypassTest {
     public static final XvfbRule xvfbRule = XvfbRule.builder().disabled(SHOW_BROWSER).build();
 
     @Parameterized.Parameters
-    public static List<WebDriverFactory> testCases() {
+    public static List<WebDriverFactory> testCases() throws IOException {
         Supplier<Map<String, String>> envSupplier = () -> {
             return xvfbRule.getController().newEnvironment();
         };
+        WebDriverFactory chromeFactory = ChromeWebDriverFactory.builder()
+                .chromeOptions(UnitTests.createChromeOptions())
+                .environment(envSupplier)
+                .build();
+        WebDriverFactory firefoxFactory = FirefoxWebDriverFactory.builder()
+                .binary(UnitTests.createFirefoxBinarySupplier())
+                .environment(envSupplier)
+                .build();
         //noinspection RedundantArrayCreation
         return Arrays.asList(new WebDriverFactory[]{
-                FirefoxWebDriverFactory.builder().environment(envSupplier).build(),
-                ChromeWebDriverFactory.builder().environment(envSupplier).build(),
+                firefoxFactory,
+                chromeFactory,
                 new JBrowserDriverFactory(),
         });
     }

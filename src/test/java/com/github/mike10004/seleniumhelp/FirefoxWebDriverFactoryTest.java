@@ -53,7 +53,10 @@ public class FirefoxWebDriverFactoryTest {
     @Test
     public void usesEnvironment() {
         Map<String, String> expected = ImmutableMap.of("foo", "bar");
-        FirefoxWebDriverFactory factory = FirefoxWebDriverFactory.builder().environment(expected).build();
+        // we don't actually launch Firefox, so we don't need to apply UnitTests.createFirefoxBinarySupplier()
+        FirefoxWebDriverFactory factory = FirefoxWebDriverFactory.builder()
+                .environment(expected)
+                .build();
         Map<String, String> actual = factory.environmentSupplier.get();
         assertEquals("environment", expected, actual);
     }

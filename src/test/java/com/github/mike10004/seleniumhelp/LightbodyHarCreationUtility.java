@@ -35,6 +35,8 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  * Program that opens a web browser, records the traffic, and closes upon reading "stop" from standard input.
  * Configure behavior by creating a configuration file in the current directory named "har-creation-config.json",
  * containing JSON structured as specified by {@link LightbodyHarCreationUtility.UtilityConfig}.
+ *
+ * <p>This class has a main method for use in creating HARs to include as test resources.</p>
  */
 public class LightbodyHarCreationUtility {
 

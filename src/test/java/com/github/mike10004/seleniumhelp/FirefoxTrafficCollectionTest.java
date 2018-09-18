@@ -45,8 +45,9 @@ public class FirefoxTrafficCollectionTest {
         public void http() throws Exception {
             String display = xvfb.getController().getDisplay();
             WebDriverFactory webDriverFactory = FirefoxWebDriverFactory.builder()
-                .environment(FirefoxWebDriverFactory.createEnvironmentSupplierForDisplay(display))
-                .build();
+                    .binary(UnitTests.createFirefoxBinarySupplier())
+                    .environment(FirefoxWebDriverFactory.createEnvironmentSupplierForDisplay(display))
+                    .build();
             testTrafficCollector(webDriverFactory);
         }
 
@@ -70,8 +71,9 @@ public class FirefoxTrafficCollectionTest {
         public void https() throws Exception {
             String display = xvfb.getController().getDisplay();
             WebDriverFactory webDriverFactory = FirefoxWebDriverFactory.builder()
-                .environment(FirefoxWebDriverFactory.createEnvironmentSupplierForDisplay(display))
-                .build();
+                    .binary(UnitTests.createFirefoxBinarySupplier())
+                    .environment(FirefoxWebDriverFactory.createEnvironmentSupplierForDisplay(display))
+                    .build();
             testTrafficCollector(webDriverFactory);
         }
 
@@ -80,6 +82,7 @@ public class FirefoxTrafficCollectionTest {
             File zipFile = prepareExtensionZipFile();
             String display = xvfb.getController().getDisplay();
             WebDriverFactory webDriverFactory = FirefoxWebDriverFactory.builder()
+                    .binary(UnitTests.createFirefoxBinarySupplier())
                     .environment(FirefoxWebDriverFactory.createEnvironmentSupplierForDisplay(display))
                     .constructor((service, options) -> {
                         ExtensibleFirefoxDriver driver = new ExtensibleFirefoxDriver(service, options);
