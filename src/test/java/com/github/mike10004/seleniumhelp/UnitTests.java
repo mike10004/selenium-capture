@@ -8,7 +8,7 @@ import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import io.github.bonigarcia.wdm.ChromeDriverManager;
 import io.github.bonigarcia.wdm.FirefoxDriverManager;
-import org.apache.commons.lang3.StringEscapeUtils;
+import org.apache.commons.text.StringEscapeUtils;
 import org.jsoup.Jsoup;
 import org.openqa.selenium.Platform;
 import org.openqa.selenium.chrome.ChromeOptions;
@@ -58,7 +58,13 @@ public class UnitTests {
             for (String envVarName : new String[]{"CHROMEDRIVER_VERSION", "GECKODRIVER_VERSION", "DISPLAY"}) {
                 print(envVarName, System.getenv(envVarName), System.err);
             }
-            for (String syspropName : new String[]{SYSPROP_CHROME_OPTIONS_EXTRA_ARGS, SYSPROP_FIREFOX_EXECUTABLE_PATH, SYSPROP_CHROME_EXECUTABLE_PATH, }) {
+            for (String syspropName : new String[]{
+                    SYSPROP_CHROME_OPTIONS_EXTRA_ARGS,
+                    SYSPROP_FIREFOX_EXECUTABLE_PATH,
+                    SYSPROP_CHROME_EXECUTABLE_PATH,
+                    SYSPROP_OPENSSL_TESTS_SKIP,
+                    SYSPROP_OPENSSL_EXECUTABLE,
+                    SYSPROP_CHROME_HEADLESS_TESTS_DISABLED}) {
                 String value = System.getProperty(syspropName);
                 print(syspropName, value, System.err);
             }

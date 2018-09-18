@@ -11,4 +11,4 @@ before_install:
 notifications:
   email: false
 install: true
-script: mvn --settings travis-maven-settings.xml install -U -B -P travis
+script: mvn --settings travis-maven-settings.xml -U --batch-mode --quiet -P travis install

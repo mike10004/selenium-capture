@@ -11,7 +11,7 @@ import net.lightbody.bmp.core.har.HarContent;
 import net.lightbody.bmp.core.har.HarEntry;
 import net.lightbody.bmp.core.har.HarResponse;
 import net.lightbody.bmp.mitm.CertificateAndKeySource;
-import org.apache.commons.lang3.StringEscapeUtils;
+import org.apache.commons.text.StringEscapeUtils;
 import org.apache.commons.validator.routines.InetAddressValidator;
 import org.apache.http.client.utils.URIBuilder;
 import org.junit.Before;

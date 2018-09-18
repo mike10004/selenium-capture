@@ -2,7 +2,7 @@ package com.github.mike10004.seleniumhelp;
 
 import com.google.common.collect.ImmutableList;
 import com.google.gson.Gson;
-import org.apache.commons.lang3.StringEscapeUtils;
+import org.apache.commons.text.StringEscapeUtils;
 import org.apache.commons.lang3.time.DateUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
