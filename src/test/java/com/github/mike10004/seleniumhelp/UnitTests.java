@@ -23,7 +23,6 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
 import java.util.List;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
@@ -55,7 +54,7 @@ public class UnitTests {
 
     static {
         if (Boolean.parseBoolean(System.getProperty(SYSPROP_DEBUG_ENVIRONMENT))) {
-            for (String envVarName : new String[]{"CHROMEDRIVER_VERSION", "GECKODRIVER_VERSION", "DISPLAY"}) {
+            for (String envVarName : new String[]{"CHROMEDRIVER_VERSION", "GECKODRIVER_VERSION", "DISPLAY", "CHROME_BIN", "FIREFOX_BIN"}) {
                 print(envVarName, System.getenv(envVarName), System.err);
             }
             for (String syspropName : new String[]{
