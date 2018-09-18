@@ -3,7 +3,6 @@ package com.github.mike10004.seleniumhelp;
 import com.google.common.net.HostAndPort;
 import net.lightbody.bmp.BrowserMobProxy;
 import net.lightbody.bmp.mitm.CertificateAndKeySource;
-import org.littleshoot.proxy.ChainedProxyManager;
 import org.littleshoot.proxy.ChainedProxyType;
 import org.littleshoot.proxy.HttpFiltersSource;
 import org.openqa.selenium.WebDriverException;
@@ -135,13 +134,13 @@ public interface TrafficCollector {
             return this;
         }
 
+        public Builder noUpstreamProxy() {
+            return upstreamProxy(ProxyUris.BmpConfigurator.noProxy());
+        }
+
         private Builder upstreamProxy(ProxyUris.BmpConfigurator configurator) {
             this.upstreamConfigurator = requireNonNull(configurator);
             return this;
-        }
-
-        public Builder noUpstreamProxy() {
-            return upstreamProxy(ProxyUris.BmpConfigurator.noProxy());
         }
 
         @Deprecated
@@ -162,17 +161,13 @@ public interface TrafficCollector {
 
         private Builder upstreamProxy(Supplier<HostAndPort> supplier, ChainedProxyType proxyType) {
             requireNonNull(proxyType);
-            return upstreamProxyManager(() -> {
+            return upstreamProxy(() -> {
                 HostAndPort socketAddress = supplier.get();
                 if (socketAddress == null) {
                     return null;
                 }
-                return UpstreamProxy.noCredentials(socketAddress, proxyType);
+                return ProxyUris.createSimple(socketAddress, proxyType);
             });
-        }
-
-        private Builder upstreamProxyManager(Supplier<ChainedProxyManager> chainedProxyManagerSupplier) {
-            return upstreamProxy(ProxyUris.BmpConfigurator.upstream(chainedProxyManagerSupplier));
         }
 
         /**
@@ -182,7 +177,8 @@ public interface TrafficCollector {
          * @return this builder instance
          */
         public Builder upstreamProxy(Supplier<URI> proxySpecificationSupplier) {
-            return upstreamProxy(ProxyUris.BmpConfigurator.fromUriSupplier(proxySpecificationSupplier));
+            this.upstreamConfigurator = ProxyUris.BmpConfigurator.upstream(proxySpecificationSupplier);
+            return this;
         }
 
         public Builder harPostProcessor(HarPostProcessor harPostProcessor) {

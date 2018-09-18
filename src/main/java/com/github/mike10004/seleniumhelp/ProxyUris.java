@@ -1,8 +1,10 @@
 package com.github.mike10004.seleniumhelp;
 
 import com.google.common.base.Strings;
+import com.google.common.net.HostAndPort;
 import net.lightbody.bmp.BrowserMobProxy;
 import net.lightbody.bmp.BrowserMobProxyServer;
+import net.lightbody.bmp.mitm.CertificateAndKeySource;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.client.utils.URLEncodedUtils;
@@ -57,7 +59,11 @@ class ProxyUris {
         return new String[]{null, null};
     }
 
+    @Nullable
     public static UpstreamProxy toUpstreamProxy(URI uri) {
+        if (uri == null) {
+            return null;
+        }
         ChainedProxyType type = ChainedProxyType.HTTP;
         if (isSocks(uri)) {
             @Nullable Integer socksVersion = parseSocksVersionFromUriScheme(uri);
@@ -137,48 +143,145 @@ class ProxyUris {
      */
     private static final String NONPROXY_HOST_PATTERN_DELIMITER = ",";
 
+    @Nullable
+    public static URI createSimple(@Nullable HostAndPort socketAddress, ChainedProxyType proxyType) {
+        if (socketAddress == null) {
+            return null;
+        }
+        try {
+            return new URIBuilder()
+                    .setHost(socketAddress.getHost())
+                    .setPort(socketAddress.getPort())
+                    .setScheme(proxyType.name().toLowerCase())
+                    .build();
+        } catch (URISyntaxException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * Interface of a service class that performs configuration operations relating to proxy instances.
+     */
     interface BmpConfigurator {
 
+        /**
+         * Configures the chained proxy manager of a proxy instance.
+         * @param proxy the proxy to configure
+         */
+        void configureUpstream(BrowserMobProxy proxy);
+
+        /**
+         * Creates a set of webdriving configuration values that are appropriate for the upstream proxy configuration.
+         * @param bmp the proxy
+         * @param certificateAndKeySource the certificate and key source
+         * @return a new webdriving config instance
+         */
+        WebdrivingConfig createWebdrivingConfig(BrowserMobProxy bmp, @Nullable CertificateAndKeySource certificateAndKeySource);
+
+        /**
+         * Returns a configurator that configures a direct connection upstream, meaning no proxy is to be used.
+         * @return a configurator
+         */
         static BmpConfigurator noProxy() {
-            return bmp -> {
-                bmp.setChainedProxy(null);
-                if (bmp instanceof BrowserMobProxyServer) {
-                    ((BrowserMobProxyServer)bmp).setChainedProxyManager(null);
+            return new BmpConfigurator() {
+                @Override
+                public void configureUpstream(BrowserMobProxy bmp) {
+                    bmp.setChainedProxy(null);
+                    if (bmp instanceof BrowserMobProxyServer) {
+                        ((BrowserMobProxyServer)bmp).setChainedProxyManager(null);
+                    }
+                }
+
+                @Override
+                public WebdrivingConfig createWebdrivingConfig(BrowserMobProxy bmp, @Nullable CertificateAndKeySource certificateAndKeySource) {
+                    return WebdrivingConfig.builder()
+                            .proxy(BrowserMobs.getConnectableSocketAddress(bmp))
+                            .certificateAndKeySource(certificateAndKeySource)
+                            .build();
+                }
+
+                @Override
+                public String toString() {
+                    return "TrafficCollectorProxyConfigurator{UPSTREAM_NOPROXY}";
                 }
             };
         }
 
-        static BmpConfigurator fromUriSupplier(Supplier<URI> proxySpecificationSupplier) {
-            return upstream(() -> {
-                URI proxySpec = proxySpecificationSupplier.get();
-                return toUpstreamProxy(proxySpec);
-            });
-        }
-
-        void configure(BrowserMobProxy proxy);
-
+        /**
+         * Returns a configurator that does not act upon a proxy instance.
+         * @return a configurator instance
+         */
         static BmpConfigurator inoperative() {
-            return proxy -> {};
+            return new BmpConfigurator() {
+                @Override
+                public void configureUpstream(BrowserMobProxy proxy) {
+                }
+
+                @Override
+                public WebdrivingConfig createWebdrivingConfig(BrowserMobProxy bmp, @Nullable CertificateAndKeySource certificateAndKeySource) {
+                    return WebdrivingConfig.builder()
+                            .proxy(BrowserMobs.getConnectableSocketAddress(bmp))
+                            .certificateAndKeySource(certificateAndKeySource)
+                            .build();
+                }
+
+                @Override
+                public String toString() {
+                    return "TrafficCollectorProxyConfigurator{INOPERATIVE}";
+                }
+            };
         }
 
-        static BmpConfigurator upstream(Supplier<ChainedProxyManager> chainedProxyManagerSupplier) {
-            requireNonNull(chainedProxyManagerSupplier);
-            return bmp -> {
-                @Nullable ChainedProxyManager chainedProxyManager = chainedProxyManagerSupplier.get();
-                if (chainedProxyManager == null) {
-                    noProxy().configure(bmp);
-                } else {
-                    ((BrowserMobProxyServer)bmp).setChainedProxyManager(chainedProxyManager);
+        /**
+         * Returns a configurator that configures a proxy to use an upstream proxy specified by a URI.
+         * @param proxySpecUriProvider the supplier of the URI
+         * @return a configurator instance
+         */
+        static BmpConfigurator upstream(Supplier<URI> proxySpecUriProvider) {
+            requireNonNull(proxySpecUriProvider);
+            return new BmpConfigurator() {
+                @Override
+                public void configureUpstream(BrowserMobProxy bmp) {
+                    @Nullable URI proxySpecUri = proxySpecUriProvider.get();
+                    if (proxySpecUri == null) {
+                        noProxy().configureUpstream(bmp);
+                    } else {
+                        ChainedProxyManager chainedProxyManager = toUpstreamProxy(proxySpecUri);
+                        ((BrowserMobProxyServer)bmp).setChainedProxyManager(chainedProxyManager);
+                    }
+                }
+
+                @Override
+                public WebdrivingConfig createWebdrivingConfig(BrowserMobProxy bmp, @Nullable CertificateAndKeySource certificateAndKeySource) {
+                    URI proxySpecUri = proxySpecUriProvider.get();
+                    List<String> hostBypassPatterns = getProxyBypassesFromQueryString(proxySpecUri);
+                    return WebdrivingConfig.builder()
+                            .proxy(BrowserMobs.getConnectableSocketAddress(bmp), hostBypassPatterns)
+                            .certificateAndKeySource(certificateAndKeySource)
+                            .build();
                 }
             };
         }
 
     }
 
+    /**
+     * Constructs a URI based on a given URI but with an additional proxy host bypass pattern.
+     * @param proxyUri the original proxy URI
+     * @param hostPattern the new host bypass pattern
+     * @return the new URI
+     */
     public static URI addBypass(URI proxyUri, String hostPattern) {
+        requireNonNull(hostPattern, "hostPattern");
         return addBypasses(proxyUri, Collections.singleton(hostPattern));
     }
 
+    /**
+     * Constructs a URI with host bypass patterns. The new URI is based on the old URI.
+     * @param proxyUri the original proxy URI
+     * @param bypasses a collection of host bypass patterns
+     * @return the new URI
+     */
     public static URI addBypasses(URI proxyUri, Collection<String> bypasses) {
         if (bypasses.isEmpty()) {
             return proxyUri;

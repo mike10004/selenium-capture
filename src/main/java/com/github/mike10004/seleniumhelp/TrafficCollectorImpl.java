@@ -129,11 +129,8 @@ public class TrafficCollectorImpl implements TrafficCollector {
     }
 
     private <R> R invokeGenerate(BrowserMobProxy bmp, TrafficGenerator<R> generator, @Nullable TrafficMonitor monitor) throws IOException, WebDriverException {
-        WebdrivingConfig config = WebdrivingConfig.builder()
-                .proxy(BrowserMobs.getConnectableSocketAddress(bmp))
-                .certificateAndKeySource(certificateAndKeySource)
-                .build();
-        try (WebdrivingSession session = webDriverFactory.createWebdrivingSession(config)) {
+        WebdrivingConfig config = upstreamConfigurator.createWebdrivingConfig(bmp, certificateAndKeySource);
+        try (WebdrivingSession session = webDriverFactory.startWebdriving(config)) {
             WebDriver webdriver = session.getWebDriver();
             if (monitor != null) {
                 monitor.sessionCreated(new WeakReference<>(session));
@@ -199,7 +196,7 @@ public class TrafficCollectorImpl implements TrafficCollector {
             bmp.addLastHttpFilterFactory(new MonitorFiltersSource(trafficMonitor));
         }
         httpFiltersSources.forEach(bmp::addLastHttpFilterFactory);
-        upstreamConfigurator.configure(bmp);
+        upstreamConfigurator.configureUpstream(bmp);
     }
 
     @Override
