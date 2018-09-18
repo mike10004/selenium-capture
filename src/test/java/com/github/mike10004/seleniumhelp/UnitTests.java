@@ -39,60 +39,31 @@ public class UnitTests {
     private static final String SYSPROP_CHROME_OPTIONS_EXTRA_ARGS = "selenium-help.chrome.options.extraArgs";
     private static final String SYSPROP_FIREFOX_EXECUTABLE_PATH = "selenium-help.firefox.executable.path";
     private static final String SYSPROP_CHROME_EXECUTABLE_PATH = "selenium-help.chrome.executable.path";
-    private static final String SYSPROP_CHROMEDRIVER_VERSION = "selenium-help.chromedriver.version";
     public static final String SYSPROP_OPENSSL_TESTS_SKIP = "selenium-help.openssl.tests.skip";
     private static final String SYSPROP_OPENSSL_EXECUTABLE = "selenium-help.openssl.executable.path";
     private static final String SYSPROP_CHROME_HEADLESS_TESTS_DISABLED = "selenium-help.chrome.headless.tests.disabled";
 
-    /**
-     * Recommended version of ChromeDriver.
-     *
-     * TODO: determine this based on the version of Chrome installed
-     *
-     * Each ChromeDriver release (https://chromedriver.storage.googleapis.com/)
-     * supports a range of Chrome versions, and a new version may not support a
-     * Chrome version that the previous driver release did support. (That is, it's a
-     * moving window that does not prize backward compatibility.) Therefore, we should
-     * actually determine which version of the driver to use based on the version
-     * of Chrome installed on the build system. Otherwise we're just hoping that
-     * the latest version of Chrome is installed.
-     */
-    private static final String DEFAULT_RECOMMENDED_CHROMEDRIVER_VERSION_ = "2.39";
-
     private UnitTests() {}
-
-    private static String getRecommendedChromedriverVersion() {
-        String val = System.getProperty(SYSPROP_CHROMEDRIVER_VERSION);
-        if (Strings.isNullOrEmpty(val)) {
-            val = DEFAULT_RECOMMENDED_CHROMEDRIVER_VERSION_;
-        }
-        return val;
-    }
 
     /**
      * Downloads and configures the JVM for use of a recommended version of ChromeDriver.
      */
     public static void setupRecommendedChromeDriver() {
-        String version = getRecommendedChromedriverVersion();
-        ChromeDriverManager.getInstance().version(version).setup();
+        ChromeDriverManager.getInstance().setup(); // use system property wdm.chromeDriverManager to specify a chromedriver version
     }
 
     /**
      * Downloads and configures the JVM for use of a recommended version of GeckoDriver.
      */
     public static void setupRecommendedGeckoDriver() {
-        String geckodriverVersion = getRecommendedGeckodriverVersion();
-        FirefoxDriverManager.getInstance().version(geckodriverVersion).setup();
-    }
-
-    public static String getRecommendedGeckodriverVersion() {
-        return FirefoxGeckoVersionMapping.getRecommendedGeckodriverVersion();
+        FirefoxDriverManager.getInstance().setup();
     }
 
     public static boolean isHeadlessChromeTestsDisabled() {
         return Boolean.parseBoolean(System.getProperty(SYSPROP_CHROME_HEADLESS_TESTS_DISABLED, "false"));
     }
 
+    @SuppressWarnings("deprecation")
     @Nullable
     static String getFirefoxExecutablePath() {
         return getExecutablePath(SYSPROP_FIREFOX_EXECUTABLE_PATH, "FIREFOX_BIN", () -> {
@@ -143,12 +114,14 @@ public class UnitTests {
     // KIND, either express or implied.  See the License for the
     // specific language governing permissions and limitations
     // under the License.
+
     /**
      * Locates the firefox binary by platform.
-     *
+     * <p>
      * Copied from Selenium's FirefoxBinary.java. See license above.
      */
-   private static Stream<Executable> locateFirefoxBinariesFromPlatform() {
+    @SuppressWarnings("deprecation")
+    private static Stream<Executable> locateFirefoxBinariesFromPlatform() {
         ImmutableList.Builder<Executable> executables = new ImmutableList.Builder<>();
 
         Platform current = Platform.getCurrent();
@@ -206,6 +179,7 @@ public class UnitTests {
 
         return executables.build().stream();
     }
+
     public static Supplier<FirefoxBinary> createFirefoxBinarySupplier() throws IOException {
         String executablePath = getFirefoxExecutablePath();
         if (Strings.isNullOrEmpty(executablePath)) {
