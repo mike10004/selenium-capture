@@ -5,6 +5,8 @@ import com.google.common.io.BaseEncoding;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.HttpContent;
+import io.netty.handler.codec.http.HttpHeaderNames;
+import io.netty.handler.codec.http.HttpHeaderValues;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpObject;
 import io.netty.handler.codec.http.HttpRequest;
@@ -316,7 +318,7 @@ public class BrAwareHarCaptureFilter extends HttpsAwareFiltersAdapter {
         // the full URL consists of the scheme + host + port (if non-standard) + path + query params + fragment.
         String url = getFullUrl(httpRequest);
 
-        return new HarRequest(httpRequest.getMethod().toString(), url, httpRequest.getProtocolVersion().text());
+        return new HarRequest(httpRequest.getMethod().toString(), url, httpRequest.protocolVersion().text());
     }
 
     //TODO: add unit tests for these utility-like capture() methods
@@ -352,7 +354,7 @@ public class BrAwareHarCaptureFilter extends HttpsAwareFiltersAdapter {
     }
 
     protected void captureRequestCookies(HttpRequest httpRequest) {
-        String cookieHeader = httpRequest.headers().get(HttpHeaders.Names.COOKIE);
+        String cookieHeader = httpRequest.headers().get(HttpHeaderNames.COOKIE);
         if (cookieHeader == null) {
             return;
         }
@@ -392,7 +394,7 @@ public class BrAwareHarCaptureFilter extends HttpsAwareFiltersAdapter {
             return;
         }
 
-        String contentType = HttpHeaders.getHeader(httpRequest, HttpHeaders.Names.CONTENT_TYPE);
+        String contentType = HttpHeaders.getHeader(httpRequest, HttpHeaderNames.CONTENT_TYPE);
         if (contentType == null) {
             log.warn("No content type specified in request to {}. Content will be treated as {}", httpRequest.uri(), BrowserMobHttpUtil.UNKNOWN_CONTENT_TYPE);
             contentType = BrowserMobHttpUtil.UNKNOWN_CONTENT_TYPE;
@@ -404,7 +406,7 @@ public class BrAwareHarCaptureFilter extends HttpsAwareFiltersAdapter {
         postData.setMimeType(contentType);
 
         boolean urlEncoded;
-        if (contentType.startsWith(HttpHeaders.Values.APPLICATION_X_WWW_FORM_URLENCODED)) {
+        if (contentType.startsWith(HttpHeaderValues.APPLICATION_X_WWW_FORM_URLENCODED.toString())) {
             urlEncoded = true;
         } else {
             urlEncoded = false;
@@ -451,7 +453,7 @@ public class BrAwareHarCaptureFilter extends HttpsAwareFiltersAdapter {
         // force binary if the content encoding is not supported
         boolean forceBinary = false;
 
-        String contentType = HttpHeaders.getHeader(httpResponse, HttpHeaders.Names.CONTENT_TYPE);
+        String contentType = httpResponse.headers().get(HttpHeaderNames.CONTENT_TYPE);
         if (contentType == null) {
             log.warn("No content type specified in response from {}. Content will be treated as {}", originalRequest.getUri(), BrowserMobHttpUtil.UNKNOWN_CONTENT_TYPE);
             contentType = BrowserMobHttpUtil.UNKNOWN_CONTENT_TYPE;
@@ -474,7 +476,7 @@ public class BrAwareHarCaptureFilter extends HttpsAwareFiltersAdapter {
         if (charset == null) {
             // no charset specified, so use the default -- but log a message since this might not encode the data correctly
             charset = BrowserMobHttpUtil.DEFAULT_HTTP_CHARSET;
-            log.debug("No charset specified; using charset {} to decode contents from {}", charset, originalRequest.getUri());
+            log.debug("No charset specified; using charset {} to decode contents from {}", charset, originalRequest.uri());
         }
 
         if (!forceBinary && BrowserMobHttpUtil.hasTextualContent(contentType)) {
@@ -510,7 +512,7 @@ public class BrAwareHarCaptureFilter extends HttpsAwareFiltersAdapter {
     }
 
     protected void captureResponseMimeType(HttpResponse httpResponse) {
-        String contentType = HttpHeaders.getHeader(httpResponse, HttpHeaders.Names.CONTENT_TYPE);
+        String contentType = httpResponse.headers().get(HttpHeaderNames.CONTENT_TYPE);
         // don't set the mimeType to null, since mimeType is a required field
         if (contentType != null) {
             harEntry.getResponse().getContent().setMimeType(contentType);
@@ -518,7 +520,7 @@ public class BrAwareHarCaptureFilter extends HttpsAwareFiltersAdapter {
     }
 
     protected void captureResponseCookies(HttpResponse httpResponse) {
-        List<String> setCookieHeaders = httpResponse.headers().getAll(HttpHeaders.Names.SET_COOKIE);
+        List<String> setCookieHeaders = httpResponse.headers().getAll(HttpHeaderNames.SET_COOKIE);
         if (setCookieHeaders == null) {
             return;
         }
@@ -572,7 +574,7 @@ public class BrAwareHarCaptureFilter extends HttpsAwareFiltersAdapter {
     }
 
     protected void captureRedirectUrl(HttpResponse httpResponse) {
-        String locationHeaderValue = HttpHeaders.getHeader(httpResponse, HttpHeaders.Names.LOCATION);
+        String locationHeaderValue = httpResponse.headers().get(HttpHeaderNames.LOCATION);
         if (locationHeaderValue != null) {
             harEntry.getResponse().setRedirectURL(locationHeaderValue);
         }
@@ -632,7 +634,7 @@ public class BrAwareHarCaptureFilter extends HttpsAwareFiltersAdapter {
                 log.trace("Unable to find cached IP address for host: {}. IP address in HAR entry will be blank.", serverHost);
             }
         } else {
-            log.warn("Unable to identify host from request uri: {}", httpRequest.getUri());
+            log.warn("Unable to identify host from request uri: {}", httpRequest.uri());
         }
     }
 

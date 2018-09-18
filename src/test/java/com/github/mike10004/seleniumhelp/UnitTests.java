@@ -69,7 +69,10 @@ public class UnitTests {
                     SYSPROP_CHROME_EXECUTABLE_PATH,
                     SYSPROP_OPENSSL_TESTS_SKIP,
                     SYSPROP_OPENSSL_EXECUTABLE,
-                    SYSPROP_CHROME_HEADLESS_TESTS_DISABLED}) {
+                    SYSPROP_CHROME_HEADLESS_TESTS_DISABLED,
+                    "wdm.chromeDriverVersion",
+                    "wdm.geckoDriverVersion",
+            }) {
                 String value = System.getProperty(syspropName);
                 print(syspropName, value, System.err);
             }
