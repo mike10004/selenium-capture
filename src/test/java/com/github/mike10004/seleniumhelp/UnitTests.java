@@ -54,9 +54,12 @@ public class UnitTests {
 
     static {
         if (Boolean.parseBoolean(System.getProperty(SYSPROP_DEBUG_ENVIRONMENT))) {
+            System.err.format("%s=true; describing build environment...%n%n", SYSPROP_DEBUG_ENVIRONMENT);
+            System.err.format("environment variables:%n%n");
             for (String envVarName : new String[]{"CHROMEDRIVER_VERSION", "GECKODRIVER_VERSION", "DISPLAY", "CHROME_BIN", "FIREFOX_BIN"}) {
                 print(envVarName, System.getenv(envVarName), System.err);
             }
+            System.err.format("%nsystem properties:%n%n");
             for (String syspropName : new String[]{
                     SYSPROP_CHROME_OPTIONS_EXTRA_ARGS,
                     SYSPROP_FIREFOX_EXECUTABLE_PATH,
@@ -67,6 +70,7 @@ public class UnitTests {
                 String value = System.getProperty(syspropName);
                 print(syspropName, value, System.err);
             }
+            System.err.println();
         }
     }
 
