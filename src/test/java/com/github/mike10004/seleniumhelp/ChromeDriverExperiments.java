@@ -187,7 +187,7 @@ public class ChromeDriverExperiments {
             crxSource.copyTo(com.google.common.io.Files.asByteSink(extensionCrxFile));
             try (InputStream in = new FileInputStream(extensionCrxFile)) {
                 CrxMetadata metadata = CrxParser.getDefault().parseMetadata(in);
-                extensionId = metadata.id;
+                extensionId = metadata.getId();
             }
             options.addExtensions(extensionCrxFile);
         }
