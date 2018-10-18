@@ -34,8 +34,6 @@ import static java.util.Objects.requireNonNull;
  * {@link BasicClientCookie}, which does not have
  * a no-args constructor, during deserialization by a 
  * {@link Gson} instance.
- * 
- * @author mchaberski
  */
 public class DeserializableCookie implements ClientCookie {
 
