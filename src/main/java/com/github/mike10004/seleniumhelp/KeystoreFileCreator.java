@@ -1,6 +1,6 @@
 package com.github.mike10004.seleniumhelp;
 
-import com.github.mike10004.nativehelper.subprocess.ProcessResult;
+import io.github.mike10004.subprocess.ProcessResult;
 import com.google.common.base.Strings;
 import com.google.common.io.BaseEncoding;
 

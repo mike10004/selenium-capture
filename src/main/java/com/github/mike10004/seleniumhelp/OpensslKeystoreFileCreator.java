@@ -1,7 +1,7 @@
 package com.github.mike10004.seleniumhelp;
 
-import com.github.mike10004.nativehelper.subprocess.ProcessResult;
-import com.github.mike10004.nativehelper.subprocess.Subprocess;
+import io.github.mike10004.subprocess.ProcessResult;
+import io.github.mike10004.subprocess.Subprocess;
 import com.google.common.io.Files;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;

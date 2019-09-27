@@ -1,7 +1,7 @@
 package com.github.mike10004.seleniumhelp;
 
-import com.github.mike10004.nativehelper.subprocess.ProcessResult;
-import com.github.mike10004.nativehelper.subprocess.Subprocess;
+import io.github.mike10004.subprocess.ProcessResult;
+import io.github.mike10004.subprocess.Subprocess;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Converter;
 import com.google.common.collect.ImmutableList;

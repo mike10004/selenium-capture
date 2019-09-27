@@ -1,7 +1,7 @@
 package com.github.mike10004.seleniumhelp;
 
 import com.github.mike10004.nativehelper.Whicher;
-import com.github.mike10004.nativehelper.subprocess.Subprocess;
+import io.github.mike10004.subprocess.Subprocess;
 
 import javax.annotation.Nullable;
 import java.io.File;

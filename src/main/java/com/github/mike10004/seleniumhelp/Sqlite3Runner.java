@@ -2,8 +2,8 @@ package com.github.mike10004.seleniumhelp;
 
 import com.github.mike10004.nativehelper.Platform;
 import com.github.mike10004.nativehelper.Platforms;
-import com.github.mike10004.nativehelper.subprocess.ProcessResult;
-import com.github.mike10004.nativehelper.subprocess.Subprocess;
+import io.github.mike10004.subprocess.ProcessResult;
+import io.github.mike10004.subprocess.Subprocess;
 import com.google.common.io.ByteSource;
 import com.google.common.io.CharSource;
 import com.google.common.io.Files;
