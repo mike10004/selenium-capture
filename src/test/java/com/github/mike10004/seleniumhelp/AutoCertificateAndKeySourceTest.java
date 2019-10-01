@@ -86,7 +86,7 @@ public class AutoCertificateAndKeySourceTest {
                 throw e;
             }
             Files.write(Base64.getDecoder().decode(serializableForm.keystoreBase64), keystoreFile);
-            TrafficCollector collector = TrafficCollector.builder(UnitTests.defaultWebDriverFactory())
+            TrafficCollector collector = TrafficCollector.builder(UnitTests.headlessWebDriverFactory())
                     .collectHttps(certificateAndKeySource)
                     .build();
             String url = "https://example.com/";

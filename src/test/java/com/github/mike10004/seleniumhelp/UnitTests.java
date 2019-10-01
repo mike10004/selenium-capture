@@ -320,6 +320,8 @@ public class UnitTests {
 
     public static Map<String, Object> createFirefoxPreferences() {
         Map<String, Object> p = new HashMap<>();
+        p.put("browser.chrome.site_icons", false);
+        p.put("browser.chrome.favicons", false);
         // TODO support setting additional prefs from sysprops and environment
         return p;
     }

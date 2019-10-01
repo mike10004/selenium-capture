@@ -36,8 +36,7 @@
         <slf4j.version>1.7.25</slf4j.version>
         <xvfb-manager.version>0.19</xvfb-manager.version>
         <test.log.level>info</test.log.level>
-<!--        <selenium.version>3.141.59</selenium.version>-->
-        <selenium.version>3.141.0</selenium.version>
+        <selenium.version>3.141.59</selenium.version>
         <chrome-cookie-implant.version>1.5.14</chrome-cookie-implant.version>
         <antiprint.version>0.15</antiprint.version>
         <common-helper.version>10.0.0</common-helper.version>
@@ -453,6 +452,11 @@
             <groupId>com.github.mike10004</groupId>
             <artifactId>nitsick-junit</artifactId>
             <version>0.1</version>
+        </dependency>
+        <dependency>
+            <groupId>com.github.mike10004</groupId>
+            <artifactId>extensible-firefox-webdriver</artifactId>
+            <version>${selenium.version}x${antiprint.version}</version>
         </dependency>
     </dependencies>
 </project>

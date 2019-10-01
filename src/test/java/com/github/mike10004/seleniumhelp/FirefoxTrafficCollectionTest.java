@@ -1,8 +1,8 @@
 package com.github.mike10004.seleniumhelp;
 
-//import io.github.mike10004.extensibleffdriver.AddonInstallRequest;
-//import io.github.mike10004.extensibleffdriver.AddonPersistence;
-//import io.github.mike10004.extensibleffdriver.ExtensibleFirefoxDriver;
+import io.github.mike10004.extensibleffdriver.AddonInstallRequest;
+import io.github.mike10004.extensibleffdriver.AddonPersistence;
+import io.github.mike10004.extensibleffdriver.ExtensibleFirefoxDriver;
 import org.apache.commons.io.FileUtils;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -41,6 +41,7 @@ public class FirefoxTrafficCollectionTest {
             }
         }
 
+        @org.junit.Ignore(UnitTests.IGNORE_BECAUSE_UPGRADE_INSECURE_REQUESTS_UNAVOIDABLE)
         @Test
         public void http() throws Exception {
             String display = xvfb.getController().getDisplay();
@@ -77,28 +78,28 @@ public class FirefoxTrafficCollectionTest {
             testTrafficCollector(webDriverFactory);
         }
 
-//        @Test
-//        public void useWebExtensionsExtensionZip() throws Exception {
-//            File zipFile = prepareExtensionZipFile();
-//            String display = xvfb.getController().getDisplay();
-//            WebDriverFactory webDriverFactory = FirefoxWebDriverFactory.builder()
-//                    .binary(UnitTests.createFirefoxBinarySupplier())
-//                    .environment(FirefoxWebDriverFactory.createEnvironmentSupplierForDisplay(display))
-//                    .constructor((service, options) -> {
-//                        ExtensibleFirefoxDriver driver = new ExtensibleFirefoxDriver(service, options);
-//                        driver.installAddon(AddonInstallRequest.fromFile(zipFile, AddonPersistence.TEMPORARY));
-//                        return driver;
-//                    }).build();
-//            // Using a local HTTP server seems to cause some trouble here, so we visit example.com instead
-//            HarPlus<String> injectedContentCollection = testTrafficCollector(webDriverFactory, driver -> {
-//                driver.get("https://www.example.com/");
-//                WebElement element = new WebDriverWait(driver, 5)
-//                        .until(ExpectedConditions.presenceOfElementLocated(By.id("firefox-webext-content-injection")));
-//                return element.getText();
-//            });
-//            String elementText = injectedContentCollection.result.trim();
-//            assertEquals("element text", "Hello, world", elementText);
-//        }
+        @Test
+        public void useWebExtensionsExtensionZip() throws Exception {
+            File zipFile = prepareExtensionZipFile();
+            String display = xvfb.getController().getDisplay();
+            WebDriverFactory webDriverFactory = FirefoxWebDriverFactory.builder()
+                    .binary(UnitTests.createFirefoxBinarySupplier())
+                    .environment(FirefoxWebDriverFactory.createEnvironmentSupplierForDisplay(display))
+                    .constructor((service, options) -> {
+                        ExtensibleFirefoxDriver driver = new ExtensibleFirefoxDriver(service, options);
+                        driver.installAddon(AddonInstallRequest.fromFile(zipFile, AddonPersistence.TEMPORARY));
+                        return driver;
+                    }).build();
+            // Using a local HTTP server seems to cause some trouble here, so we visit example.com instead
+            HarPlus<String> injectedContentCollection = testTrafficCollector(webDriverFactory, driver -> {
+                driver.get("https://www.example.com/");
+                WebElement element = new WebDriverWait(driver, 5)
+                        .until(ExpectedConditions.presenceOfElementLocated(By.id("firefox-webext-content-injection")));
+                return element.getText();
+            });
+            String elementText = injectedContentCollection.result.trim();
+            assertEquals("element text", "Hello, world", elementText);
+        }
 
         private File prepareExtensionZipFile() throws IOException, URISyntaxException {
             File directory = new File(getClass().getResource("/firefox-example-extension/manifest.json").toURI()).getParentFile();

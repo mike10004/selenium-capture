@@ -16,7 +16,6 @@ import org.openqa.selenium.WebDriver;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.stream.Collectors;
@@ -66,7 +65,7 @@ public class TrafficMonitoringTest {
     }
 
     private static WebDriverFactory createWebDriverFactory() {
-        return UnitTests.defaultWebDriverFactory();
+        return UnitTests.headlessWebDriverFactory();
     }
 
     @Test
@@ -92,6 +91,10 @@ public class TrafficMonitoringTest {
             return driver.getPageSource();
         }, monitor);
         System.out.format("interactions:%n%s%n", Joiner.on("\n").join(monitor.interactions));
+        // We disable the favicon request in UnitTests.createFirefoxPreferences();
+        // Otherwise there would be at least one more request here. If this test is
+        // modified to use Chrome/Chromium instead, it will likely have to account for
+        // the many automatic requests that browser makes.
         assertEquals("interactions count", 1, monitor.interactions.size());
         HttpInteraction interaction = monitor.interactions.iterator().next();
         assertEquals("url", url, interaction.request.url);

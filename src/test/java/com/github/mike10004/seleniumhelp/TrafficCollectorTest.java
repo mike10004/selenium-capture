@@ -8,6 +8,7 @@ import com.google.common.primitives.UnsignedInts;
 import io.github.mike10004.nanochamp.server.NanoControl;
 import io.github.mike10004.nanochamp.server.NanoResponse;
 import io.github.mike10004.nanochamp.server.NanoServer;
+import io.github.mike10004.nitsick.junit.TimeoutRules;
 import io.netty.handler.codec.http.DefaultFullHttpRequest;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpObject;
@@ -17,7 +18,9 @@ import net.lightbody.bmp.core.har.HarRequest;
 import net.lightbody.bmp.mitm.CertificateAndKeySource;
 import net.lightbody.bmp.mitm.manager.ImpersonatingMitmManager;
 import org.apache.http.client.utils.URIBuilder;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.Timeout;
 import org.littleshoot.proxy.MitmManager;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
@@ -37,6 +40,9 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 public class TrafficCollectorTest {
+
+    @Rule
+    public Timeout timeout = TimeoutRules.from(UnitTests.Settings).getLongRule();
 
     @Test
     public void createMitmManager() throws Exception {
@@ -68,7 +74,7 @@ public class TrafficCollectorTest {
                 return text;
             }
         };
-        TrafficCollector collector = TrafficCollector.builder(UnitTests.defaultWebDriverFactory())
+        TrafficCollector collector = TrafficCollector.builder(UnitTests.headlessWebDriverFactory())
                 .filter(rejectingFiltersSource)
                 .build();
         Set<String> nonRejectTargets = ImmutableSet.of("http://checkip.amazonaws.com/");
@@ -121,7 +127,7 @@ public class TrafficCollectorTest {
         NanoServer nano = NanoServer.builder().getPath("/hello", session -> NanoResponse.status(200).plainTextUtf8(expected)).build();
         String bodyText;
         try (NanoControl ctrl = nano.startServer()) {
-            TrafficCollector collector = TrafficCollector.builder(UnitTests.defaultWebDriverFactory()).build();
+            TrafficCollector collector = TrafficCollector.builder(UnitTests.headlessWebDriverFactory()).build();
             bodyText = collector.drive(driver -> {
                 try {
                     driver.get(new URIBuilder(ctrl.baseUri()).setPath("/hello").build().toString());

@@ -1,6 +1,5 @@
 package com.github.mike10004.seleniumhelp;
 
-import io.github.bonigarcia.wdm.DriverManagerType;
 import net.lightbody.bmp.core.har.HarContent;
 import net.lightbody.bmp.core.har.HarResponse;
 import org.junit.Assume;
