@@ -1,10 +1,8 @@
 package com.github.mike10004.seleniumhelp;
 
-import com.github.mike10004.nativehelper.Platforms;
+import com.google.common.collect.ImmutableMap;
 import io.github.mike10004.subprocess.ProcessResult;
 import io.github.mike10004.subprocess.Subprocess;
-import com.google.common.collect.ImmutableMap;
-import org.junit.Assume;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -49,7 +47,6 @@ public class Sqlite3RunnerTest {
      */
     @Test
     public void escapeSqlite3Token() throws Exception {
-        Assume.assumeTrue("only makes sense on windows", Platforms.getPlatform().isWindows());
         File folder = tmp.newFolder();
         String[] filenames = {
                 "regular.sqlite",

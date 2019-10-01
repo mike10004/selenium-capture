@@ -36,7 +36,7 @@ public class FirefoxCookieDbTest {
     }
 
     @Test
-    @org.junit.Ignore // still on the to-do list
+    @org.junit.Ignore("exporting Firefox cookies is not yet supported") // still on the to-do list
     public void exporter_exportCookies() throws Exception {
         File cookieDbFile = new File(getClass().getResource("/firefox-cookies-db-with-google-cookie.sqlite").toURI());
         List<DeserializableCookie> cookies = FirefoxCookieDb.getExporter().exportCookies(cookieDbFile);

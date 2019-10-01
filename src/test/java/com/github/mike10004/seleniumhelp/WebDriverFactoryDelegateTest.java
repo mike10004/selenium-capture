@@ -28,7 +28,7 @@ import static org.junit.Assert.assertTrue;
  * to the cookieDomain field. The test can probably be deleted, but it should be noted in the documentation somewhere
  * that Firefox has this quirk.
  */
-@org.junit.Ignore
+@org.junit.Ignore("just a demonstration of a firefox quirk")
 public class WebDriverFactoryDelegateTest {
 
     @ClassRule

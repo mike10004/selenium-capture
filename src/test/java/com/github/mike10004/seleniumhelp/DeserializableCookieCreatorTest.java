@@ -17,9 +17,8 @@ import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 
-@org.junit.Ignore
+@org.junit.Ignore("the parsers exhibit varying behavior, but it is not clear who is at fault")
 public class DeserializableCookieCreatorTest {
-
 
     @Test
     public void testApacheParsing() throws Exception {
