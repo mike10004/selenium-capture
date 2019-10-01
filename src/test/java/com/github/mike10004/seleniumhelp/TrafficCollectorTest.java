@@ -68,7 +68,7 @@ public class TrafficCollectorTest {
                 return text;
             }
         };
-        TrafficCollector collector = TrafficCollector.builder(new JBrowserDriverFactory())
+        TrafficCollector collector = TrafficCollector.builder(UnitTests.defaultWebDriverFactory())
                 .filter(rejectingFiltersSource)
                 .build();
         Set<String> nonRejectTargets = ImmutableSet.of("http://checkip.amazonaws.com/");
@@ -121,7 +121,7 @@ public class TrafficCollectorTest {
         NanoServer nano = NanoServer.builder().getPath("/hello", session -> NanoResponse.status(200).plainTextUtf8(expected)).build();
         String bodyText;
         try (NanoControl ctrl = nano.startServer()) {
-            TrafficCollector collector = TrafficCollector.builder(new JBrowserDriverFactory()).build();
+            TrafficCollector collector = TrafficCollector.builder(UnitTests.defaultWebDriverFactory()).build();
             bodyText = collector.drive(driver -> {
                 try {
                     driver.get(new URIBuilder(ctrl.baseUri()).setPath("/hello").build().toString());

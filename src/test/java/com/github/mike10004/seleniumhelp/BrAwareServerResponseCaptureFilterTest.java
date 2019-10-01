@@ -55,8 +55,8 @@ public class BrAwareServerResponseCaptureFilterTest {
     }
 
     @Before
-    public void setUp() throws Exception {
-        WebDriverTestParameter.doDriverManagerSetup(testParameter);
+    public void setUp() {
+        testParameter.doDriverManagerSetup();
     }
 
     @Test

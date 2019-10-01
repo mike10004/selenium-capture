@@ -66,10 +66,7 @@ public class TrafficMonitoringTest {
     }
 
     private static WebDriverFactory createWebDriverFactory() {
-        return ChromeWebDriverFactory.builder()
-//                .headless()
-                .chromeOptions(UnitTests.createChromeOptions())
-                .build();
+        return UnitTests.defaultWebDriverFactory();
     }
 
     @Test

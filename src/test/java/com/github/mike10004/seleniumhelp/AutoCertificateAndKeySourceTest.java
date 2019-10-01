@@ -86,7 +86,7 @@ public class AutoCertificateAndKeySourceTest {
                 throw e;
             }
             Files.write(Base64.getDecoder().decode(serializableForm.keystoreBase64), keystoreFile);
-            TrafficCollector collector = TrafficCollector.builder(new JBrowserDriverFactory(pemFile))
+            TrafficCollector collector = TrafficCollector.builder(UnitTests.defaultWebDriverFactory())
                     .collectHttps(certificateAndKeySource)
                     .build();
             String url = "https://example.com/";

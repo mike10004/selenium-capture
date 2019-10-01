@@ -1,6 +1,6 @@
 package com.github.mike10004.seleniumhelp;
 
-import io.github.bonigarcia.wdm.ChromeDriverManager;
+import io.github.bonigarcia.wdm.WebDriverManager;
 import org.apache.commons.io.FileUtils;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
@@ -12,7 +12,7 @@ import java.nio.file.Path;
 public class ReadmeExample {
 
     public static void main(String[] args) throws IOException {
-        ChromeDriverManager.getInstance().setup();
+        WebDriverManager.chromedriver().setup();
         ChromeOptions options = new ChromeOptions();
         ChromeWebDriverFactory factory = ChromeWebDriverFactory.builder()
                 .chromeOptions(options)

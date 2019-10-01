@@ -58,6 +58,7 @@ public interface WebDriverTestParameter {
         @Override
         public WebDriverFactory createWebDriverFactory(XvfbRule xvfb) {
             return FirefoxWebDriverFactory.builder()
+                    .binary(UnitTests.createFirefoxBinarySupplier())
                     .putPreferences(UnitTests.createFirefoxPreferences())
                     .environment(xvfb.getController().newEnvironment())
                     .build();
@@ -81,8 +82,8 @@ public interface WebDriverTestParameter {
 
     }
 
-    static void doDriverManagerSetup(WebDriverTestParameter testParameter) {
-        DriverManagerSetupCache.doSetup(testParameter.getDriverManagerType());
+    default void doDriverManagerSetup() {
+        DriverManagerSetupCache.doSetup(getDriverManagerType());
     }
 
     class DriverManagerSetupCache {

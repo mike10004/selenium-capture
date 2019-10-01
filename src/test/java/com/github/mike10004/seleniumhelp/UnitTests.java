@@ -320,4 +320,8 @@ public class UnitTests {
     static byte[] loadBrotliCompressedSample() throws IOException {
         return Resources.toByteArray(BrAwareServerResponseCaptureFilterTest.class.getResource("/brotli/a100.txt.br"));
     }
+
+    public static WebDriverFactory defaultWebDriverFactory() {
+        throw new UnsupportedOperationException("not yet implemented");
+    }
 }

@@ -16,6 +16,7 @@
 package com.github.mike10004.seleniumhelp;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.io.BaseEncoding;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpObject;
@@ -39,7 +40,6 @@ import org.littleshoot.proxy.impl.ProxyUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.xml.bind.DatatypeConverter;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.charset.Charset;
@@ -349,7 +349,7 @@ public class TrafficMonitorFilter extends HttpsAwareFiltersAdapter {
             String text = BrowserMobHttpUtil.getContentAsString(fullMessage, charset);
             harResponse.getContent().setText(text);
         } else {
-            harResponse.getContent().setText(DatatypeConverter.printBase64Binary(fullMessage));
+            harResponse.getContent().setText(BaseEncoding.base64().encode(fullMessage));
             harResponse.getContent().setEncoding("base64");
         }
 

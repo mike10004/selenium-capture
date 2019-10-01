@@ -143,7 +143,7 @@ public class TrafficCollectorImpl implements TrafficCollector {
 
         private final TrafficMonitor monitor;
 
-        private MonitorFiltersSource(TrafficMonitor monitor) {
+        public MonitorFiltersSource(TrafficMonitor monitor) {
             this.monitor = requireNonNull(monitor);
         }
 

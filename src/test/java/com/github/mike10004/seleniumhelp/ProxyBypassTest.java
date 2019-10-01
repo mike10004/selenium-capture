@@ -20,6 +20,7 @@ import net.lightbody.bmp.BrowserMobProxy;
 import net.lightbody.bmp.BrowserMobProxyServer;
 import net.lightbody.bmp.filters.HttpsAwareFiltersAdapter;
 import org.junit.Assume;
+import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -58,34 +59,23 @@ public class ProxyBypassTest {
 
     private static final boolean SHOW_BROWSER = false;
 
-    private final WebDriverFactory webDriverFactory;
+    private final WebDriverTestParameter testParameter;
 
-    public ProxyBypassTest(WebDriverFactory webDriverFactory) {
-        this.webDriverFactory = webDriverFactory;
+    public ProxyBypassTest(WebDriverTestParameter testParameter) {
+        this.testParameter = testParameter;
     }
 
     @ClassRule
     public static final XvfbRule xvfbRule = XvfbRule.builder().disabled(SHOW_BROWSER).build();
 
     @Parameterized.Parameters
-    public static List<WebDriverFactory> testCases() throws IOException {
-        Supplier<Map<String, String>> envSupplier = () -> {
-            return xvfbRule.getController().newEnvironment();
-        };
-        WebDriverFactory chromeFactory = ChromeWebDriverFactory.builder()
-                .chromeOptions(UnitTests.createChromeOptions())
-                .environment(envSupplier)
-                .build();
-        WebDriverFactory firefoxFactory = FirefoxWebDriverFactory.builder()
-                .binary(UnitTests.createFirefoxBinarySupplier())
-                .environment(envSupplier)
-                .build();
-        //noinspection RedundantArrayCreation
-        return Arrays.asList(new WebDriverFactory[]{
-                firefoxFactory,
-                chromeFactory,
-                new JBrowserDriverFactory(),
-        });
+    public static List<WebDriverTestParameter> testCases() throws IOException {
+        return WebDriverTestParameter.all();
+    }
+
+    @Before
+    public void setUpWebdriver() {
+        testParameter.doDriverManagerSetup();
     }
 
     /**
@@ -95,9 +85,8 @@ public class ProxyBypassTest {
      */
     @Test
     public void bypassLocalhost() throws Exception {
-        System.out.format("bypass: testing with %s%n", webDriverFactory.getClass().getSimpleName());
-        prepareWebdriver();
-        Map<URI, String> bodyTexts = testBypass(webDriverFactory, host -> true);
+        System.out.format("bypass: testing with %s%n", testParameter.getClass().getSimpleName());
+        Map<URI, String> bodyTexts = testBypass(host -> true);
         assertEquals("expect to be bypassed", Collections.singleton(MESSAGE_NOT_INTERCEPTED), new HashSet<>(bodyTexts.values()));
     }
 
@@ -109,16 +98,15 @@ public class ProxyBypassTest {
      */
     @Test
     public void nobypass() throws Exception {
-        System.out.format("nobypass: testing with %s%n", webDriverFactory.getClass().getSimpleName());
-        prepareWebdriver();
-        Map<URI, String> bodyTexts = testBypass(webDriverFactory, host -> false);
+        System.out.format("nobypass: testing with %s%n", testParameter.getClass().getSimpleName());
+        Map<URI, String> bodyTexts = testBypass(host -> false);
         assertEquals("expect no bypass", Collections.singleton(MESSAGE_INTERCEPTED), new HashSet<>(bodyTexts.values()));
     }
 
     private static final String MESSAGE_NOT_INTERCEPTED = "Reached the target server", MESSAGE_INTERCEPTED = "Intercepted by proxy";
     private static final int MAX_BUFFER_SIZE_BYTES = 0; //2 * 1024 * 1024;
 
-    private Map<URI, String> testBypass(WebDriverFactory webDriverFactory, Predicate<? super String> bypassFilter) throws Exception {
+    private Map<URI, String> testBypass(Predicate<? super String> bypassFilter) throws Exception {
         NanoServer server1 = NanoServer.builder()
                 .get(whatever -> NanoResponse.status(200).plainTextUtf8(MESSAGE_NOT_INTERCEPTED))
                 .build();
@@ -148,7 +136,7 @@ public class ProxyBypassTest {
                         URI.create(String.format("http://%s/", targetSocketAddress2)),
                 };
                 Map<URI, String> texts = new LinkedHashMap<>();
-                try (WebdrivingSession session = webDriverFactory.startWebdriving(config)) {
+                try (WebdrivingSession session = testParameter.createWebDriverFactory(xvfbRule).startWebdriving(config)) {
                     WebDriver driver = session.getWebDriver();
                     for (URI url : urls) {
                         try {
@@ -232,19 +220,6 @@ public class ProxyBypassTest {
 
         }
 
-    }
-
-    private void prepareWebdriver() {
-        if (webDriverFactory instanceof FirefoxWebDriverFactory) {
-            UnitTests.setupRecommendedGeckoDriver();
-        } else if (webDriverFactory instanceof ChromeWebDriverFactory) {
-            UnitTests.setupRecommendedChromeDriver();
-        } else if (webDriverFactory instanceof JBrowserDriverFactory) {
-            //noinspection ConstantConditions
-            Assume.assumeFalse("JBrowserDriver does not support proxy host bypasses, even though the ProxyConfig API gives the appearance that it does", webDriverFactory instanceof JBrowserDriverFactory);
-        } else {
-            throw new AssertionError("unhandled driver factory: " + webDriverFactory);
-        }
     }
 
     private static String describe(HttpObject httpObject) {

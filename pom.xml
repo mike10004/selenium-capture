@@ -402,19 +402,6 @@
             <version>${chrome-cookie-implant.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.machinepublishers</groupId>
-            <artifactId>jbrowserdriver</artifactId>
-            <version>1.1.1</version>
-            <scope>test</scope>
-            <exclusions>
-                <!-- jbrowserdriver frequently uses an older version of Selenium -->
-                <exclusion>
-                    <groupId>org.seleniumhq.selenium</groupId>
-                    <artifactId>*</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
             <groupId>org.brotli</groupId>
             <artifactId>dec</artifactId>
             <version>0.1.1</version>
@@ -441,12 +428,6 @@
             <artifactId>commons-io</artifactId>
             <version>2.6</version>
         </dependency>
-<!--        <dependency>-->
-<!--            <groupId>com.github.mike10004</groupId>-->
-<!--            <artifactId>extensible-firefox-webdriver</artifactId>-->
-<!--            <version>${selenium.version}x${antiprint.version}</version>-->
-<!--            <scope>test</scope>-->
-<!--        </dependency>-->
         <dependency>
             <groupId>commons-validator</groupId>
             <artifactId>commons-validator</artifactId>

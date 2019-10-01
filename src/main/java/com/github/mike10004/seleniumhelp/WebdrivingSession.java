@@ -31,8 +31,8 @@ public interface WebdrivingSession extends java.io.Closeable {
 
     /**
      * Tries to make the webdriver quit, imposing a timeout.
-     * @param quitTimeout
-     * @throws WebdriverQuitException
+     * @param quitTimeout duration to wait before throwing an exception
+     * @throws WebdriverQuitException exception thrown if {@link WebDriver#quit()} does not return before the timeout elapses
      */
     void tryQuit(Duration quitTimeout) throws WebdriverQuitException;
 

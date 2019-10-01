@@ -9,6 +9,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import io.github.bonigarcia.wdm.ChromeDriverManager;
 import io.github.bonigarcia.wdm.FirefoxDriverManager;
+import io.github.bonigarcia.wdm.WebDriverManager;
 import net.lightbody.bmp.core.har.Har;
 import org.apache.commons.io.FileUtils;
 import org.openqa.selenium.WebDriver;
@@ -110,12 +111,12 @@ public class LightbodyHarCreationUtility {
     protected WebDriverFactory createWebDriverFactory(File scratchDir) throws IOException {
         switch (config.browserBrand) {
             case chrome:
-                ChromeDriverManager.getInstance().setup();
+                WebDriverManager.chromedriver().setup();
                 return ChromeWebDriverFactory.builder()
                         .chromeOptions(toChromeOptions(scratchDir, config))
                         .build();
             case firefox:
-                FirefoxDriverManager.getInstance().setup();
+                WebDriverManager.firefoxdriver().setup();
                 return FirefoxWebDriverFactory.builder().build();
             default:
                 throw new IllegalArgumentException("unrecognized browser brand: " + config.browserBrand);

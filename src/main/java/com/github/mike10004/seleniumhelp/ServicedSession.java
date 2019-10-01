@@ -23,7 +23,11 @@ class ServicedSession extends SimpleWebdrivingSession {
         h.add("driver", getWebDriver());
         h.add("service", service);
         h.add("service.running", service.isRunning());
-        return h.toString();
+        try {
+            return h.toString();
+        } catch (RuntimeException e) {
+            return "ServicedSession{exceptionInToString}";
+        }
     }
 
     @Nullable

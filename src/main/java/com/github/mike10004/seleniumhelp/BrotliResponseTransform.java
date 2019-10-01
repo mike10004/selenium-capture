@@ -25,6 +25,8 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static java.util.Objects.requireNonNull;
+
 /**
  * Service class that cleans a HAR by decoding responses that were Brotli-encoded.
  */
@@ -35,7 +37,14 @@ public class BrotliResponseTransform {
 
     static final String HEADER_VALUE_BROTLI_ENCODED = "br";
 
+    private final JavascriptValidator javascriptValidator;
+
     public BrotliResponseTransform() {
+        this(JavascriptValidator.getInstance());
+    }
+
+    public BrotliResponseTransform(JavascriptValidator javascriptValidator) {
+        this.javascriptValidator = requireNonNull(javascriptValidator);
     }
 
     public HarPostProcessor asPostProcessor() {
@@ -174,15 +183,6 @@ public class BrotliResponseTransform {
      * @return true if it is valid javascript
      */
     protected boolean isValidJavascript(String sourceCode) {
-        jdk.nashorn.internal.runtime.options.Options options = new jdk.nashorn.internal.runtime.options.Options("nashorn");
-        options.set("anon.functions", true);
-        options.set("parse.only", true);
-        options.set("scripting", true);
-        jdk.nashorn.internal.runtime.ErrorManager errors = new jdk.nashorn.internal.runtime.ErrorManager();
-        jdk.nashorn.internal.runtime.Context context = new jdk.nashorn.internal.runtime.Context(options, errors, Thread.currentThread().getContextClassLoader());
-        jdk.nashorn.internal.runtime.Source source   =  jdk.nashorn.internal.runtime.Source.sourceFor("test", sourceCode);
-        jdk.nashorn.internal.parser.Parser parser = new jdk.nashorn.internal.parser.Parser(context.getEnv(), source, errors);
-        parser.parse();
-        return !errors.hasErrors();
+        return javascriptValidator.evaluate(sourceCode) == JavascriptValidator.GOOD;
     }
 }

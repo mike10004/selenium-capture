@@ -50,7 +50,7 @@ public class SimpleWebdrivingSession implements WebdrivingSession {
 
     @Override
     public String toString() {
-        return String.format("SimpleWebdrivingSession{driver=%s}", driver);
+        return String.format("SimpleWebdrivingSession{driver=%s}", driver.getClass().getName());
     }
 
     public static void tryQuit(WebDriver driver, Duration quitTimeout, ExecutorService service) throws WebdriverQuitException {
