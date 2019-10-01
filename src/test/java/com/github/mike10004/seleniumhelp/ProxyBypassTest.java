@@ -19,7 +19,6 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 import net.lightbody.bmp.BrowserMobProxy;
 import net.lightbody.bmp.BrowserMobProxyServer;
 import net.lightbody.bmp.filters.HttpsAwareFiltersAdapter;
-import org.junit.Assume;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -36,7 +35,6 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -48,7 +46,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -69,7 +66,7 @@ public class ProxyBypassTest {
     public static final XvfbRule xvfbRule = XvfbRule.builder().disabled(SHOW_BROWSER).build();
 
     @Parameterized.Parameters
-    public static List<WebDriverTestParameter> testCases() throws IOException {
+    public static List<WebDriverTestParameter> testCases() {
         return WebDriverTestParameter.all();
     }
 
@@ -81,7 +78,6 @@ public class ProxyBypassTest {
     /**
      * Exercises a webdriver with an intercepting proxy, confirming that we can configure the webdriver
      * to bypass the proxy for certain addresses.
-     * @throws Exception
      */
     @Test
     public void bypassLocalhost() throws Exception {
@@ -94,7 +90,6 @@ public class ProxyBypassTest {
      * Makes sure we're not getting a false positive on the {@link #bypassLocalhost()} test.
      * This exercises the webdriver with an intercepting proxy and no bypasses, and it makes sure that we get only
      * what the proxy serves.
-     * @throws Exception
      */
     @Test
     public void nobypass() throws Exception {
@@ -170,7 +165,7 @@ public class ProxyBypassTest {
         }
 
         @Override
-        public String call() throws Exception {
+        public String call() {
             String url = this.url.toString();
             System.out.format("using %s to fetch %s%n", driver.getClass().getSimpleName(), url);
             driver.get(url);

@@ -31,6 +31,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
@@ -126,7 +127,7 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
         }
         FirefoxOptions options = createFirefoxOptions();
         @Nullable URI proxyUri = config.getProxySpecification();
-        org.openqa.selenium.Proxy seleniumProxy = ProxyUris.createSeleniumProxy(proxyUri);
+        @Nullable org.openqa.selenium.Proxy seleniumProxy = ProxyUris.createSeleniumProxy(proxyUri, createBypassListPopulator());
         options.setProxy(seleniumProxy);
         /*
          * As of 2018-09-17, if you don't override this setting, Firefox defaults to
@@ -138,6 +139,10 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
         overrideProxyBypasses(config.getProxyBypasses(), profile);
         options.setProfile(profile);
         return options;
+    }
+
+    private Function<List<String>, List<String>> createBypassListPopulator() {
+        return Function.identity();
     }
 
     private void setAutomaticConnectionPrefs(FirefoxProfile profile) {

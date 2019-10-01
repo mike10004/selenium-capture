@@ -20,6 +20,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -109,7 +110,7 @@ class ProxyUris {
      * @author {@link net.lightbody.bmp.client.ClientUtil}
      */
     @Nullable
-    public static org.openqa.selenium.Proxy createSeleniumProxy(URI proxySpecification) {
+    public static org.openqa.selenium.Proxy createSeleniumProxy(URI proxySpecification, Function<List<String>, List<String>> bypassListPopulator) {
         if (proxySpecification == null) {
             return null;
         }
@@ -129,7 +130,8 @@ class ProxyUris {
             proxy.setHttpProxy(socketAddress);
             proxy.setSslProxy(socketAddress);
         }
-        List<String> bypassPatterns = getProxyBypassesFromQueryString(proxySpecification);
+        List<String> bypassParameterValues = getProxyBypassesFromQueryString(proxySpecification);
+        List<String> bypassPatterns = bypassListPopulator.apply(bypassParameterValues);
         String joinedBypassPatterns = bypassPatterns.stream()
                 .filter(Objects::nonNull)
                 .filter(s -> !s.trim().isEmpty())

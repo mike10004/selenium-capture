@@ -15,8 +15,10 @@ import java.net.URI;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -98,8 +100,24 @@ public class ChromeWebDriverFactory extends EnvironmentWebDriverFactory {
      */
     protected void configureProxy(ChromeOptions options, WebdrivingConfig config) {
         @Nullable URI proxySpecification = config.getProxySpecification();
-        @Nullable org.openqa.selenium.Proxy seleniumProxy = ProxyUris.createSeleniumProxy(proxySpecification);
+        @Nullable org.openqa.selenium.Proxy seleniumProxy = ProxyUris.createSeleniumProxy(proxySpecification, createBypassListPopulator());
         options.setProxy(seleniumProxy);
+    }
+
+    /**
+     * Returns a list of bypass patterns, given the list of bypass patterns specified as proxy URI parameter values.
+     * Special attention is required when the bypass list does not include localhost (or any loopback address),
+     * as noted here: https://bugs.chromium.org/p/chromium/issues/detail?id=899126#c18
+     * @return a function that returns a singleton list containing {@code <-loopback>} if no bypasses are specified,
+     * or else returns the argument list
+     */
+    private Function<List<String>, List<String>> createBypassListPopulator() {
+        return specified -> {
+            if (!specified.isEmpty()) {
+                return specified;
+            }
+            return Collections.singletonList("<-loopback>");
+        };
     }
 
     @VisibleForTesting
