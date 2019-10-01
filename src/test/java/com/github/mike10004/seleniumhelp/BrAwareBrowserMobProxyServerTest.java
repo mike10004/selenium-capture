@@ -13,7 +13,7 @@ import static org.junit.Assert.assertNotNull;
 public class BrAwareBrowserMobProxyServerTest {
 
     @Rule
-    public XvfbRule xvfbRule = new XvfbRule();
+    public XvfbRule xvfbRule = UnitTests.xvfbRuleBuilder().build();
 
     @BeforeClass
     public static void setUpClass() {

@@ -23,7 +23,7 @@ import static org.junit.Assert.assertEquals;
 public class BysTest {
 
     @ClassRule
-    public static final XvfbRule xvfb = XvfbRule.builder().build();
+    public static XvfbRule xvfb = UnitTests.xvfbRuleBuilder().build();
 
     @ClassRule
     public static WebDriverManagerRule chromedriverSetupRule = WebDriverManagerRule.chromedriver();

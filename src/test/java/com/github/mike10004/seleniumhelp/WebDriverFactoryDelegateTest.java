@@ -41,7 +41,7 @@ public class WebDriverFactoryDelegateTest {
     public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
     @Rule
-    public XvfbRule xvfbRule = XvfbRule.builder().build();
+    public XvfbRule xvfbRule = UnitTests.xvfbRuleBuilder().build();
 
     @Test
     public void useLocalhostCookie_chrome() throws Exception {

@@ -54,8 +54,6 @@ import static org.junit.Assert.assertEquals;
 @RunWith(Parameterized.class)
 public class ProxyBypassTest {
 
-    private static final boolean SHOW_BROWSER = false;
-
     private final WebDriverTestParameter testParameter;
 
     public ProxyBypassTest(WebDriverTestParameter testParameter) {
@@ -63,7 +61,7 @@ public class ProxyBypassTest {
     }
 
     @ClassRule
-    public static final XvfbRule xvfbRule = XvfbRule.builder().disabled(SHOW_BROWSER).build();
+    public static final XvfbRule xvfbRule = UnitTests.xvfbRuleBuilder().build();
 
     @Parameterized.Parameters
     public static List<WebDriverTestParameter> testCases() {

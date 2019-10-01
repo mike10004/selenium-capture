@@ -44,7 +44,7 @@ public class CollectionTestBase {
     private static ChainedProxyType upstreamProxyType_ = null;
 
     @Rule
-    public XvfbRule xvfb = XvfbRule.builder().build();
+    public XvfbRule xvfb = UnitTests.xvfbRuleBuilder().build();
 
     @Nullable
     private final HostAndPort upstreamProxyHostAndPort;

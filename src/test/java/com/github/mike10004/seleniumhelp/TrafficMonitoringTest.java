@@ -40,8 +40,8 @@ public class TrafficMonitoringTest {
     public void monitorWithRejectingFilter() throws Exception {
         RejectingFiltersSource rejectingFiltersSource = new RejectingFiltersSource() {
             @Override
-            protected boolean isRejectTarget(HttpRequest originalRequest, HttpObject httpObject) {
-                System.out.format("isRejectTarget: %s%n", originalRequest.uri());
+            protected boolean isRejectTarget(HttpRequest originalRequest, String fullUrl, HttpObject httpObject) {
+                System.out.format("isRejectTarget: %s%n", fullUrl);
                 return true;
             }
         };
@@ -52,7 +52,7 @@ public class TrafficMonitoringTest {
         String url = "http://checkip.amazonaws.com/";
         collector.monitor(new TrafficGenerator<Void>() {
             @Override
-            public Void generate(WebDriver driver) throws IOException {
+            public Void generate(WebDriver driver) {
                 System.out.format("visiting %s%n", url);
                 driver.get(url);
                 System.out.format("visited %s%n", url);
@@ -108,7 +108,7 @@ public class TrafficMonitoringTest {
             setUpWebdriver();
             RejectingFiltersSource rejectingFiltersSource = new RejectingFiltersSource() {
                 @Override
-                protected boolean isRejectTarget(HttpRequest originalRequest, HttpObject httpObject) {
+                protected boolean isRejectTarget(HttpRequest originalRequest, String fullUrl, HttpObject httpObject) {
                     return true;
                 }
             };
@@ -118,7 +118,7 @@ public class TrafficMonitoringTest {
             RecordingMonitor monitor = new RecordingMonitor();
             collector.monitor(new TrafficGenerator<Void>() {
                 @Override
-                public Void generate(WebDriver driver) throws IOException {
+                public Void generate(WebDriver driver) {
                     System.out.println("ready");
                     try {
                         new CountDownLatch(1).await();

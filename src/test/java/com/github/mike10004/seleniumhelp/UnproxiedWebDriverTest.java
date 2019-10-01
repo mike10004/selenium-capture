@@ -23,7 +23,7 @@ public class UnproxiedWebDriverTest {
     private NanoHTTPD nano;
 
     @Rule
-    public XvfbRule xvfbRule = XvfbRule.builder().build();
+    public XvfbRule xvfbRule = UnitTests.xvfbRuleBuilder().build();
 
     @Before
     public void startNanoServer() throws Exception {
