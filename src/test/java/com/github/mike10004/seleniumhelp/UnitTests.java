@@ -8,6 +8,7 @@ import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.Resources;
+import io.github.bonigarcia.wdm.DriverManagerType;
 import io.github.bonigarcia.wdm.WebDriverManager;
 import io.github.mike10004.nitsick.SettingSet;
 import org.apache.commons.text.StringEscapeUtils;
@@ -219,10 +220,14 @@ public class UnitTests {
         return executables.build().stream();
     }
 
-    public static Supplier<FirefoxBinary> createFirefoxBinarySupplier() {
+    public static Supplier<FirefoxBinary> createFirefoxBinarySupplier(String...moreCommandLineOptions) {
         String executablePath = getFirefoxExecutablePath();
         if (Strings.isNullOrEmpty(executablePath)) {
-            return FirefoxBinary::new;
+            return () -> {
+                FirefoxBinary b = new FirefoxBinary();
+                b.addCommandLineOptions(moreCommandLineOptions);
+                return b;
+            };
         } else {
             File executableFile = new File(executablePath);
             if (!executableFile.isFile()) {
@@ -231,7 +236,11 @@ public class UnitTests {
             if (!executableFile.canExecute()) {
                 throw new RuntimeException("not executable: " + executableFile);
             }
-            return () -> new FirefoxBinary(executableFile);
+            return () -> {
+                FirefoxBinary b = new FirefoxBinary(executableFile);
+                b.addCommandLineOptions(moreCommandLineOptions);
+                return b;
+            };
         }
     }
 
@@ -321,7 +330,12 @@ public class UnitTests {
         return Resources.toByteArray(BrAwareServerResponseCaptureFilterTest.class.getResource("/brotli/a100.txt.br"));
     }
 
-    public static WebDriverFactory defaultWebDriverFactory() {
-        throw new UnsupportedOperationException("not yet implemented");
+    public static WebDriverFactory headlessWebDriverFactory() {
+        WebDriverTestParameter.DriverManagerSetupCache.doSetup(DriverManagerType.FIREFOX);
+        return FirefoxWebDriverFactory.builder()
+                .binary(UnitTests.createFirefoxBinarySupplier())
+                .headless(!isShowBrowserWindowEnabled())
+                .putPreferences(UnitTests.createFirefoxPreferences())
+                .build();
     }
 }

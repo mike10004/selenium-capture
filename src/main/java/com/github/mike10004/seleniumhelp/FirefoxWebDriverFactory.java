@@ -47,6 +47,7 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
     private final ImmutableList<DeserializableCookie> cookies;
     private final Path scratchDir;
     private final InstanceConstructor<? extends WebDriver> constructor;
+    private final boolean headless;
 
     @SuppressWarnings("unused")
     public FirefoxWebDriverFactory() {
@@ -63,6 +64,7 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
         this.profileActions = ImmutableList.copyOf(builder.profileActions);
         this.profileFolderActions = ImmutableList.copyOf(builder.profileFolderActions);
         this.constructor = requireNonNull(builder.instanceConstructor);
+        this.headless = builder.headless;
     }
 
     protected ImmutableList<DeserializableCookie> getCookies() {
@@ -138,6 +140,9 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
          */
         overrideProxyBypasses(config.getProxyBypasses(), profile);
         options.setProfile(profile);
+        if (headless) {
+            options.addArguments("-headless");
+        }
         return options;
     }
 
@@ -373,8 +378,28 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
         private List<FirefoxProfileAction> profileActions = new ArrayList<>();
         private List<FirefoxProfileFolderAction> profileFolderActions = new ArrayList<>();
         private InstanceConstructor<? extends WebDriver> instanceConstructor = FirefoxDriver::new;
+        private boolean headless;
 
         private Builder() {
+        }
+
+        /**
+         * Specifies that the webdriver options should be parameterized as headless.
+         * See: https://developer.mozilla.org/en-US/docs/Mozilla/Firefox/Headless_mode
+         * @param headless true iff headless mode is to be active
+         * @return this builder instance
+         */
+        public Builder headless(boolean headless) {
+            this.headless = headless;
+            return this;
+        }
+
+        /**
+         * Sets headless to true.
+         * @return this builder instance
+         */
+        public Builder headless() {
+            return headless(true);
         }
 
         public Builder constructor(InstanceConstructor<? extends WebDriver> constructor) {
