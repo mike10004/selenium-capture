@@ -16,7 +16,9 @@
 package com.github.mike10004.seleniumhelp;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.MapMaker;
 import com.google.common.io.BaseEncoding;
+import com.google.common.util.concurrent.AtomicLongMap;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpObject;
@@ -40,10 +42,12 @@ import org.littleshoot.proxy.impl.ProxyUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -182,12 +186,48 @@ public class TrafficMonitorFilter extends HttpsAwareFiltersAdapter {
         return super.proxyToClientResponse(httpObject);
     }
 
-    private final Set<HttpObject> responseObjectsAccumulated = new HashSet<>();
+    private final Set<HttpObject> responseObjectsAccumulated = createResponseObjectsSet();
     private transient final Object responseObjectsLock = new Object();
+
+    /**
+     * Creates a set that keeps track of which response object have already been seen and accumulated.
+     * We avoid creating a hash map because the object hash may change over its life (because they are mutable).
+     * We use weak keys just to be safe, even though this filter object should be garbage-collected after the
+     * response is sent.
+     * @return a set appropriate for tracking response objects
+     */
+    private static Set<HttpObject> createResponseObjectsSet() {
+        Map<HttpObject, Boolean> map = new MapMaker().weakKeys().makeMap();
+        return Collections.newSetFromMap(map);
+    }
+
+    static String getSimpleClassName(@Nullable Object object) {
+        if (object == null) {
+            return "null";
+        }
+        Class<?> theClass = object.getClass();
+        String simpleName = theClass.getSimpleName();
+        int iterations = 0;
+        while (theClass != null && (simpleName = theClass.getSimpleName()).isEmpty()) {
+            simpleName = theClass.getSimpleName();
+            theClass = theClass.getSuperclass();
+            iterations++;
+        }
+        simpleName = simpleName + com.google.common.base.Strings.repeat("$", iterations);
+        return simpleName;
+    }
 
     private void accumulateResponse(HttpObject httpObject) {
         synchronized (responseObjectsLock) {
             if (responseObjectsAccumulated.contains(httpObject)) {
+                /*
+                 * TODO figure out whether we should ignore all but the last instead of all but the first appearance of the response object
+                 * Currently the response object is only be captured by the accumulator the
+                 * first time the object is passed to this method. It's possible that what
+                 * we want is for the object to be captured the **last** time it is passed
+                 * to this method, to make sure we capture it final state. If we observe
+                 * data not being captured, we should come back to this and re-evaluate.
+                 */
                 return;
             }
             responseObjectsAccumulated.add(httpObject);
@@ -386,10 +426,14 @@ public class TrafficMonitorFilter extends HttpsAwareFiltersAdapter {
         harResponse.setHeadersSize(responseHeadersSize);
     }
 
+    private AtomicLongMap<Integer> captureResponseHeadersInvocationCount= AtomicLongMap.create();
+
     protected void captureResponseHeaders(HttpResponse httpResponse, HarResponse harResponse) {
         HttpHeaders headers = httpResponse.headers();
         for (Map.Entry<String, String> header : headers.entries()) {
-            harResponse.getHeaders().add(new HarNameValuePair(header.getKey(), header.getValue()));
+            String name = header.getKey();
+            String value = header.getValue();
+            harResponse.getHeaders().add(new HarNameValuePair(name, value));
         }
     }
 
