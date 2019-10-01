@@ -17,7 +17,6 @@ import org.apache.http.client.utils.URIBuilder;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Rule;
-import org.littleshoot.proxy.ChainedProxyManager;
 import org.littleshoot.proxy.ChainedProxyType;
 import org.slf4j.LoggerFactory;
 
@@ -158,7 +157,7 @@ public class CollectionTestBase {
         if (upstreamProxyHostAndPort != null) {
             String expectedOrigin = upstreamProxyHostAndPort.getHost();
             // This is not IPv6 compatible
-            //noinspection deprecation
+            //noinspection
             if (!isIpAddressAlreadyResolved(expectedOrigin)) {
                 InetAddress ipAddress = InetAddress.getByName(expectedOrigin);
                 expectedOrigin = ipAddress.getHostAddress();

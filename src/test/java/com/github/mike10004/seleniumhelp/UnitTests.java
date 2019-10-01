@@ -9,7 +9,6 @@ import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.Resources;
 import io.github.bonigarcia.wdm.DriverManagerType;
-import io.github.bonigarcia.wdm.WebDriverManager;
 import io.github.mike10004.nitsick.SettingSet;
 import org.apache.commons.text.StringEscapeUtils;
 import org.jsoup.Jsoup;
@@ -40,6 +39,11 @@ import static org.openqa.selenium.Platform.WINDOWS;
  */
 public class UnitTests {
 
+    static final String IGNORE_BECAUSE_UPGRADE_INSECURE_REQUESTS_UNAVOIDABLE =
+            "We would like to test HTTPS but requests are sent with header " +
+            "'Upgrade-Insecure-Requests: 0' and there's no way to disable " +
+            "that; in some cases, HTTP connections can only be tested " +
+            "locally (on localhost)";
     private static final String SYSPROP_CHROME_OPTIONS_EXTRA_ARGS = "selenium-help.chrome.options.extraArgs";
     private static final String SYSPROP_FIREFOX_EXECUTABLE_PATH = "selenium-help.firefox.executable.path";
     private static final String SYSPROP_CHROME_EXECUTABLE_PATH = "selenium-help.chrome.executable.path";
@@ -87,16 +91,14 @@ public class UnitTests {
      * Downloads and configures the JVM for use of a recommended version of ChromeDriver.
      */
     public static void setupRecommendedChromeDriver() {
-        String value = System.getProperty("wdm.chromeDriverManager");
-        System.out.format("wdm.chromeDriverManager=%s%n", value);
-        WebDriverManager.chromedriver().version(value).setup(); // use system property wdm.chromeDriverManager to specify a chromedriver version
+        WebDriverTestParameter.DriverManagerSetupCache.doSetup(DriverManagerType.CHROME);
     }
 
     /**
      * Downloads and configures the JVM for use of a recommended version of GeckoDriver.
      */
     public static void setupRecommendedGeckoDriver() {
-        WebDriverManager.firefoxdriver().setup();
+        WebDriverTestParameter.DriverManagerSetupCache.doSetup(DriverManagerType.FIREFOX);
     }
 
     public static boolean isHeadlessChromeTestsDisabled() {

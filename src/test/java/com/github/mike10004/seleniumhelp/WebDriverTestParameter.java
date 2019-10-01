@@ -99,7 +99,7 @@ public interface WebDriverTestParameter {
 
         private DriverManagerSetupCache() {}
 
-        private static void doSetup(DriverManagerType driverManagerType) {
+        public static void doSetup(DriverManagerType driverManagerType) {
             driverManagerSetupCache.getUnchecked(driverManagerType);
         }
     }

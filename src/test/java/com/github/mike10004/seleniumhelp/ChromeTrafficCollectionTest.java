@@ -1,5 +1,6 @@
 package com.github.mike10004.seleniumhelp;
 
+import io.github.bonigarcia.wdm.DriverManagerType;
 import net.lightbody.bmp.core.har.HarContent;
 import net.lightbody.bmp.core.har.HarResponse;
 import org.junit.Assume;
@@ -21,12 +22,10 @@ public class ChromeTrafficCollectionTest {
 
         @BeforeClass
         public static void setUpDriver() {
-            String driverPath = System.getProperty("webdriver.chrome.driver");
-            if (driverPath == null) {
-                UnitTests.setupRecommendedChromeDriver();
-            }
+            UnitTests.setupRecommendedChromeDriver();
         }
 
+        @org.junit.Ignore(UnitTests.IGNORE_BECAUSE_UPGRADE_INSECURE_REQUESTS_UNAVOIDABLE)
         @Test
         public void http() throws Exception {
             String display = xvfb.getController().getDisplay();
@@ -37,6 +36,7 @@ public class ChromeTrafficCollectionTest {
             testTrafficCollector(webDriverFactory);
         }
 
+        @org.junit.Ignore(UnitTests.IGNORE_BECAUSE_UPGRADE_INSECURE_REQUESTS_UNAVOIDABLE)
         @Test
         public void http_headless() throws Exception {
             Assume.assumeFalse("headless tests disabled", UnitTests.isHeadlessChromeTestsDisabled());
