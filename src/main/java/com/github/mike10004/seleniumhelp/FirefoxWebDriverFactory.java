@@ -33,7 +33,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static java.util.Objects.requireNonNull;
@@ -108,38 +107,83 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
         }
         actions.addAll(profileFolderActions);
         FirefoxProfile profile = createFirefoxProfile(actions);
-        profile.setPreference("browser.aboutHomeSnippets.updateUrl", "");
         profile.setPreference("extensions.getAddons.cache.enabled", false);
         profile.setPreference("media.gmp-gmpopenh264.enabled", false);
         profile.setPreference("browser.newtabpage.enabled", false);
-        profile.setPreference("app.update.url", "");
-        profile.setPreference("browser.safebrowsing.provider.mozilla.updateURL", "");
-        profile.setPreference("media.gmp-manager.url", "");
-        profile.setPreference("browser.search.geoip.url", "");
-        profile.setPreference("network.prefetch-next", false);
-        profile.setPreference("network.http.speculative-parallel-limit", 0);
+        profile.setPreference("extensions.screenshots.disabled", true);
+        profile.setPreference("extensions.screenshots.upload-disabled", true);
+        /*
+         * Some protected issue in the Firefox bugzilla was resolved by requiring this
+         * additional preference be set. See:
+         * * https://superuser.com/a/1469276/278576
+         * * https://bugzilla.mozilla.org/show_bug.cgi?id=1535581
+         */
+        profile.setPreference("network.proxy.allow_hijacking_localhost", true);
+        setAutomaticConnectionPrefs(profile);
         applyAdditionalPreferences(profilePreferences, config, certificateAndKeySource, profile);
         for (FirefoxProfileAction profileAction : profileActions) {
             profileAction.perform(profile);
         }
         FirefoxOptions options = createFirefoxOptions();
         @Nullable URI proxyUri = config.getProxySpecification();
-        options.setProxy(ProxyUris.createSeleniumProxy(proxyUri));
+        org.openqa.selenium.Proxy seleniumProxy = ProxyUris.createSeleniumProxy(proxyUri);
+        options.setProxy(seleniumProxy);
         /*
-         * As of 2018-09-17, if you don't override this setting, Firefox defaults to bypassing the proxy for loopback addresses
-         * (or anyway, that's the behavior it exhibits)
+         * As of 2018-09-17, if you don't override this setting, Firefox defaults to
+         * bypassing the proxy for loopback addresses (or anyway, that's the behavior
+         * it exhibits). In theory, the org.openqa.selenium.Proxy object is configured
+         * to use the correct list of bypasses, but here we set it *again* in the
+         * preferences.
          */
         overrideProxyBypasses(config.getProxyBypasses(), profile);
         options.setProfile(profile);
         return options;
     }
 
+    private void setAutomaticConnectionPrefs(FirefoxProfile profile) {
+        profile.setPreference("media.gmp-manager.url", "");
+
+        // https://support.mozilla.org/en-US/kb/how-stop-firefox-making-automatic-connections?redirectlocale=en-US&redirectslug=Firefox+makes+unrequested+connections
+        profile.setPreference("browser.safebrowsing.provider.mozilla.updateURL", "");
+        profile.setPreference("app.update.auto", false);
+        profile.setPreference("app.update.url", "");
+        profile.setPreference("browser.search.geoip.url", "");
+        profile.setPreference("network.prefetch-next", false);
+        profile.setPreference("network.http.speculative-parallel-limit", 0);
+        profile.setPreference("extensions.update.enabled", false);
+        profile.setPreference("extensions.update.url", "");
+        profile.setPreference("extensions.update.background.url", "");
+        profile.setPreference("extensions.systemAddon.update.enabled", false);
+        profile.setPreference("extensions.systemAddon.update.url", "");
+        profile.setPreference("toolkit.telemetry.updatePing.enabled", false);
+        profile.setPreference("services.sync.prefs.sync.browser.search.update", false);
+        profile.setPreference("identity.fxaccounts.enabled", false);
+        profile.setPreference("extensions.blocklist.enabled", false);
+        profile.setPreference("browser.safebrowsing.downloads.remote.enabled", false);
+        profile.setPreference("network.dns.disablePrefetch", true);
+        profile.setPreference("browser.aboutHomeSnippets.updateUrl", "");
+        profile.setPreference("browser.startup.homepage_override.mstone", "ignore");
+        profile.setPreference("extensions.getAddons.cache.enabled", false);
+        profile.setPreference("browser.selfsupport.url", "");
+        profile.setPreference("browser.casting.enabled", false);
+        profile.setPreference("network.captive-portal-service.enabled", false);
+
+        // https://support.mozilla.org/en-US/questions/1148198
+        profile.setPreference("security.ssl.enable_ocsp_stapling", false);
+        // https://bugzilla.mozilla.org/show_bug.cgi?id=110161
+        profile.setPreference("security.OCSP.enabled", 0);
+    }
+
+    /**
+     * Sets the Firefox preference to bypass only proxies specified in the given list.
+     * Note: we do this dance again in {@link ProxyUris#createSeleniumProxy(URI)}.
+     */
     private void overrideProxyBypasses(List<String> bypasses, FirefoxProfile profile) {
         String value;
         if (bypasses.isEmpty()) {
             value = "";
         } else {
-            value = bypasses.stream().collect(Collectors.joining(FIREFOX_PROXY_BYPASS_RULE_DELIM));
+            value = String.join(FIREFOX_PROXY_BYPASS_RULE_DELIM, bypasses);
         }
         profile.setPreference("network.proxy.no_proxies_on", value);
     }

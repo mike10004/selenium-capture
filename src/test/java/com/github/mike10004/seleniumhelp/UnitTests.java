@@ -1,19 +1,20 @@
 package com.github.mike10004.seleniumhelp;
 
 import com.github.mike10004.nativehelper.Platforms;
+import com.github.mike10004.xvfbtesting.XvfbRule;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.CharMatcher;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
-import io.github.bonigarcia.wdm.ChromeDriverManager;
-import io.github.bonigarcia.wdm.FirefoxDriverManager;
+import com.google.common.io.Resources;
+import io.github.bonigarcia.wdm.WebDriverManager;
+import io.github.mike10004.nitsick.SettingSet;
 import org.apache.commons.text.StringEscapeUtils;
 import org.jsoup.Jsoup;
 import org.openqa.selenium.Platform;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.firefox.FirefoxBinary;
-import org.openqa.selenium.firefox.internal.Executable;
 import org.openqa.selenium.os.ExecutableFinder;
 
 import javax.annotation.Nullable;
@@ -22,7 +23,9 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
@@ -30,7 +33,6 @@ import static java.util.stream.Collectors.toList;
 import static org.openqa.selenium.Platform.MAC;
 import static org.openqa.selenium.Platform.UNIX;
 import static org.openqa.selenium.Platform.WINDOWS;
-import static org.openqa.selenium.os.WindowsUtils.getPathsInProgramFiles;
 
 /**
  * Static constants and utility methods to assist with tests.
@@ -84,14 +86,16 @@ public class UnitTests {
      * Downloads and configures the JVM for use of a recommended version of ChromeDriver.
      */
     public static void setupRecommendedChromeDriver() {
-        ChromeDriverManager.getInstance().setup(); // use system property wdm.chromeDriverManager to specify a chromedriver version
+        String value = System.getProperty("wdm.chromeDriverManager");
+        System.out.format("wdm.chromeDriverManager=%s%n", value);
+        WebDriverManager.chromedriver().version(value).setup(); // use system property wdm.chromeDriverManager to specify a chromedriver version
     }
 
     /**
      * Downloads and configures the JVM for use of a recommended version of GeckoDriver.
      */
     public static void setupRecommendedGeckoDriver() {
-        FirefoxDriverManager.getInstance().setup();
+        WebDriverManager.firefoxdriver().setup();
     }
 
     public static boolean isHeadlessChromeTestsDisabled() {
@@ -161,9 +165,9 @@ public class UnitTests {
 
         Platform current = Platform.getCurrent();
         if (current.is(WINDOWS)) {
-            executables.addAll(Stream.of(getPathsInProgramFiles("Mozilla Firefox\\firefox.exe"),
-                    getPathsInProgramFiles("Firefox Developer Edition\\firefox.exe"),
-                    getPathsInProgramFiles("Nightly\\firefox.exe"))
+            executables.addAll(Stream.of(WindowsUtils.getPathsInProgramFiles("Mozilla Firefox\\firefox.exe"),
+                    WindowsUtils.getPathsInProgramFiles("Firefox Developer Edition\\firefox.exe"),
+                    WindowsUtils.getPathsInProgramFiles("Nightly\\firefox.exe"))
                     .flatMap(List::stream)
                     .map(File::new).filter(File::exists)
                     .map(Executable::new).collect(toList()));
@@ -264,6 +268,7 @@ public class UnitTests {
             options.setBinary(executablePath);
         }
         options.addArguments(getChromeOptionsExtraArgs());
+        options.addArguments("--disable-background-networking");
         return options;
     }
 
@@ -288,5 +293,31 @@ public class UnitTests {
     public static String removeHtmlWrapping(String html) {
         org.jsoup.nodes.Document doc = Jsoup.parse(html);
         return doc.text();
+    }
+
+    public static boolean isShowBrowserWindowEnabled() {
+        return Settings.get("showBrowserWindow", false);
+    }
+
+    public static XvfbRule.Builder xvfbRuleBuilder() {
+        return XvfbRule.builder().disabled(UnitTests::isShowBrowserWindowEnabled);
+    }
+
+    private static final String PROPKEY_DOMAIN = "selenium-help.tests";
+
+    public static final SettingSet Settings = SettingSet.global(PROPKEY_DOMAIN);
+
+    public static Map<String, Object> createFirefoxPreferences() {
+        Map<String, Object> p = new HashMap<>();
+        // TODO support setting additional prefs from sysprops and environment
+        return p;
+    }
+
+    static byte[] loadBrotliUncompressedSample() throws IOException {
+        return Resources.toByteArray(BrAwareServerResponseCaptureFilterTest.class.getResource("/brotli/a100.txt"));
+    }
+
+    static byte[] loadBrotliCompressedSample() throws IOException {
+        return Resources.toByteArray(BrAwareServerResponseCaptureFilterTest.class.getResource("/brotli/a100.txt.br"));
     }
 }
