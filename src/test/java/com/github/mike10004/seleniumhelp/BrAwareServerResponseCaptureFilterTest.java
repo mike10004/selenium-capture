@@ -1,6 +1,7 @@
 package com.github.mike10004.seleniumhelp;
 
 import com.github.mike10004.xvfbtesting.XvfbRule;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.net.HttpHeaders;
 import com.google.common.net.MediaType;
 import io.github.mike10004.nanochamp.repackaged.fi.iki.elonen.NanoHTTPD;
@@ -9,6 +10,7 @@ import io.github.mike10004.nanochamp.server.NanoResponse;
 import io.github.mike10004.nanochamp.server.NanoServer;
 import io.github.mike10004.nitsick.junit.TimeoutRules;
 import org.apache.commons.codec.binary.Hex;
+import org.apache.commons.lang3.StringUtils;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -38,7 +40,7 @@ import static org.junit.Assert.assertTrue;
 public class BrAwareServerResponseCaptureFilterTest {
 
     @Rule
-    public final Timeout timeout = TimeoutRules.from(UnitTests.Settings).getMediumRule();
+    public final Timeout timeout = TimeoutRules.from(UnitTests.Settings).getLongRule();
 
     @Rule
     public final XvfbRule xvfb = UnitTests.xvfbRuleBuilder().build();
@@ -98,29 +100,27 @@ public class BrAwareServerResponseCaptureFilterTest {
         }
     }
 
-    @Test
-    public void testMonitorCapturesBrotliResponses_remote_http() throws Exception {
-        testMonitorCapturesBrotliResponses_remote("http");
-    }
+    private static final String SYSPROP_REMOTE_BROLIT_RESOURCE_URL = "selenium-help.tests.remoteBrotliResourceUrl";
+    private static final String DEFAULT_REMOTE_BROTLI_RESOURCE_URL = "https://httpbin.org/brotli";
 
     @Test
-    public void testMonitorCapturesBrotliResponses_remote_https() throws Exception {
-        testMonitorCapturesBrotliResponses_remote("https");
-    }
-
-    private void testMonitorCapturesBrotliResponses_remote(String scheme) throws Exception {
+    public void testMonitorCapturesBrotliResponses_remote() throws Exception {
         WebDriverFactory webDriverFactory = testParameter.createWebDriverFactory(xvfb);
         TrafficCollector collector = TrafficCollector.builder(webDriverFactory).build();
         RecordingMonitor monitor = new RecordingMonitor();
-        String url = scheme + "://httpbin.org/brotli";
+        String url = UnitTests.Settings.get(SYSPROP_REMOTE_BROLIT_RESOURCE_URL);
+        if (url == null) {
+            url = DEFAULT_REMOTE_BROTLI_RESOURCE_URL;
+        }
+        final String finalUrl = url;
         TrafficGenerator<String> generator = driver -> {
-            driver.get(url);
+            driver.get(finalUrl);
             WebElement body = driver.findElement(By.tagName("body"));
             String text = body.getText();
             return text;
         };
         collector.monitor(generator, monitor);
-        checkInteractions(url, monitor);
+        checkInteractions(finalUrl, monitor);
     }
 
     private static byte[] checkInteractions(String url, RecordingMonitor monitor) throws IOException {
@@ -138,7 +138,9 @@ public class BrAwareServerResponseCaptureFilterTest {
         assertTrue("expect value of 'content-encoding' is 'br'", contentEncodingHeaderValues.stream().allMatch("br"::equals));
         byte[] harResponseBytes = response.getContentAsBytes().read();
         String harResponseBytesHex = new String(new Hex().encode(harResponseBytes));
-        System.out.format("response bytes captured by monitor filter:%nbase-16 %s%nbase-10 %s%n", harResponseBytesHex, Arrays.toString(harResponseBytes));
+        System.out.format("response bytes captured by monitor filter:%nbase-16 %s%nbase-10 %s%n",
+                StringUtils.abbreviateMiddle(harResponseBytesHex, "...", 256),
+                StringUtils.abbreviateMiddle(Arrays.toString(harResponseBytes), "...", 256));
         return harResponseBytes;
     }
 
