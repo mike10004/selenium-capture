@@ -18,8 +18,9 @@ package com.github.mike10004.seleniumhelp;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.MapMaker;
 import com.google.common.io.BaseEncoding;
-import com.google.common.util.concurrent.AtomicLongMap;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.handler.codec.http.HttpHeaderNames;
+import io.netty.handler.codec.http.HttpHeaderValues;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpObject;
 import io.netty.handler.codec.http.HttpRequest;
@@ -48,7 +49,6 @@ import java.net.InetSocketAddress;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -258,9 +258,9 @@ public class TrafficMonitorFilter extends HttpsAwareFiltersAdapter {
      * @param httpRequest HTTP request on which the HarRequest will be based
      */
     private void populateHarRequestFromHttpRequest(HttpRequest httpRequest, HarRequest harRequest) {
-        harRequest.setMethod(httpRequest.getMethod().toString());
+        harRequest.setMethod(httpRequest.method().toString());
         harRequest.setUrl(getFullUrl(httpRequest));
-        harRequest.setHttpVersion(httpRequest.getProtocolVersion().text());
+        harRequest.setHttpVersion(httpRequest.protocolVersion().text());
         // the HAR spec defines the request.url field as:
         //     url [string] - Absolute URL of the request (fragments are not included).
         // the URI on the httpRequest may only identify the path of the resource, so find the full URL.
@@ -270,7 +270,7 @@ public class TrafficMonitorFilter extends HttpsAwareFiltersAdapter {
     protected void captureQueryParameters(HttpRequest httpRequest, HarRequest harRequest) {
         // capture query parameters. it is safe to assume the query string is UTF-8, since it "should" be in US-ASCII (a subset of UTF-8),
         // but sometimes does include UTF-8 characters.
-        QueryStringDecoder queryStringDecoder = new QueryStringDecoder(httpRequest.getUri(), StandardCharsets.UTF_8);
+        QueryStringDecoder queryStringDecoder = new QueryStringDecoder(httpRequest.uri(), StandardCharsets.UTF_8);
 
         try {
             for (Map.Entry<String, List<String>> entry : queryStringDecoder.parameters().entrySet()) {
@@ -281,7 +281,7 @@ public class TrafficMonitorFilter extends HttpsAwareFiltersAdapter {
         } catch (IllegalArgumentException e) {
             // QueryStringDecoder will throw an IllegalArgumentException if it cannot interpret a query string. rather than cause the entire request to
             // fail by propagating the exception, simply skip the query parameter capture.
-            log.info("Unable to decode query parameters on URI: " + httpRequest.getUri(), e);
+            log.info("Unable to decode query parameters on URI: " + httpRequest.uri(), e);
         }
     }
 
@@ -306,9 +306,9 @@ public class TrafficMonitorFilter extends HttpsAwareFiltersAdapter {
             return;
         }
 
-        String contentType = HttpHeaders.getHeader(httpRequest, HttpHeaders.Names.CONTENT_TYPE);
+        String contentType = httpRequest.headers().get(HttpHeaderNames.CONTENT_TYPE);
         if (contentType == null) {
-            log.warn("No content type specified in request to {}. Content will be treated as {}", httpRequest.getUri(), BrowserMobHttpUtil.UNKNOWN_CONTENT_TYPE);
+            log.warn("No content type specified in request to {}. Content will be treated as {}", httpRequest.uri(), BrowserMobHttpUtil.UNKNOWN_CONTENT_TYPE);
             contentType = BrowserMobHttpUtil.UNKNOWN_CONTENT_TYPE;
         }
 
@@ -317,20 +317,20 @@ public class TrafficMonitorFilter extends HttpsAwareFiltersAdapter {
 
         postData.setMimeType(contentType);
 
-        final boolean urlEncoded = contentType.startsWith(HttpHeaders.Values.APPLICATION_X_WWW_FORM_URLENCODED);
+        final boolean urlEncoded = contentType.startsWith(HttpHeaderValues.APPLICATION_X_WWW_FORM_URLENCODED.toString());
 
         Charset charset;
         try {
             charset = BrowserMobHttpUtil.readCharsetInContentTypeHeader(contentType);
         } catch (UnsupportedCharsetException e) {
-            log.warn("Found unsupported character set in Content-Type header '{}' in HTTP request to {}. Content will not be captured in HAR.", contentType, httpRequest.getUri(), e);
+            log.warn("Found unsupported character set in Content-Type header '{}' in HTTP request to {}. Content will not be captured in HAR.", contentType, httpRequest.uri(), e);
             return;
         }
 
         if (charset == null) {
             // no charset specified, so use the default -- but log a message since this might not encode the data correctly
             charset = BrowserMobHttpUtil.DEFAULT_HTTP_CHARSET;
-            log.debug("No charset specified; using charset {} to decode contents to {}", charset, httpRequest.getUri());
+            log.debug("No charset specified; using charset {} to decode contents to {}", charset, httpRequest.uri());
         }
 
         if (urlEncoded) {
@@ -360,9 +360,9 @@ public class TrafficMonitorFilter extends HttpsAwareFiltersAdapter {
         // force binary if the content encoding is not supported
         boolean forceBinary = false;
 
-        String contentType = HttpHeaders.getHeader(httpResponse, HttpHeaders.Names.CONTENT_TYPE);
+        String contentType = httpResponse.headers().get(HttpHeaderNames.CONTENT_TYPE);
         if (contentType == null) {
-            log.warn("No content type specified in response from {}. Content will be treated as {}", originalRequest.getUri(), BrowserMobHttpUtil.UNKNOWN_CONTENT_TYPE);
+            log.warn("No content type specified in response from {}. Content will be treated as {}", originalRequest.uri(), BrowserMobHttpUtil.UNKNOWN_CONTENT_TYPE);
             contentType = BrowserMobHttpUtil.UNKNOWN_CONTENT_TYPE;
         }
 
@@ -375,14 +375,14 @@ public class TrafficMonitorFilter extends HttpsAwareFiltersAdapter {
         try {
             charset = BrowserMobHttpUtil.readCharsetInContentTypeHeader(contentType);
         } catch (UnsupportedCharsetException e) {
-            log.warn("Found unsupported character set in Content-Type header '{}' in HTTP response from {}. Content will not be captured in HAR.", contentType, originalRequest.getUri(), e);
+            log.warn("Found unsupported character set in Content-Type header '{}' in HTTP response from {}. Content will not be captured in HAR.", contentType, originalRequest.uri(), e);
             return;
         }
 
         if (charset == null) {
             // no charset specified, so use the default -- but log a message since this might not encode the data correctly
             charset = BrowserMobHttpUtil.DEFAULT_HTTP_CHARSET;
-            log.debug("No charset specified; using charset {} to decode contents from {}", charset, originalRequest.getUri());
+            log.debug("No charset specified; using charset {} to decode contents from {}", charset, originalRequest.uri());
         }
 
         if (!forceBinary && BrowserMobHttpUtil.hasTextualContent(contentType)) {
@@ -397,9 +397,9 @@ public class TrafficMonitorFilter extends HttpsAwareFiltersAdapter {
     }
 
     protected void captureResponse(HttpResponse httpResponse, HarResponse harResponse) {
-        harResponse.setStatus(httpResponse.getStatus().code());
-        harResponse.setStatusText(httpResponse.getStatus().reasonPhrase());
-        harResponse.setHttpVersion(httpResponse.getProtocolVersion().text());
+        harResponse.setStatus(httpResponse.status().code());
+        harResponse.setStatusText(httpResponse.status().reasonPhrase());
+        harResponse.setHttpVersion(httpResponse.protocolVersion().text());
         captureResponseHeaderSize(httpResponse, harResponse);
         captureResponseMimeType(httpResponse, harResponse);
         captureResponseHeaders(httpResponse, harResponse);
@@ -409,7 +409,7 @@ public class TrafficMonitorFilter extends HttpsAwareFiltersAdapter {
     }
 
     protected void captureResponseMimeType(HttpResponse httpResponse, HarResponse harResponse) {
-        String contentType = HttpHeaders.getHeader(httpResponse, HttpHeaders.Names.CONTENT_TYPE);
+        String contentType = httpResponse.headers().get(HttpHeaderNames.CONTENT_TYPE);
         // don't set the mimeType to null, since mimeType is a required field
         if (contentType != null) {
             harResponse.getContent().setMimeType(contentType);
@@ -417,7 +417,7 @@ public class TrafficMonitorFilter extends HttpsAwareFiltersAdapter {
     }
 
     protected void captureResponseHeaderSize(HttpResponse httpResponse, HarResponse harResponse) {
-        String statusLine = httpResponse.getProtocolVersion().toString() + ' ' + httpResponse.getStatus().toString();
+        String statusLine = httpResponse.protocolVersion().toString() + ' ' + httpResponse.status().toString();
         // +2 => CRLF after status line, +4 => header/data separation
         long responseHeadersSize = statusLine.length() + 6;
         HttpHeaders headers = httpResponse.headers();
@@ -425,8 +425,6 @@ public class TrafficMonitorFilter extends HttpsAwareFiltersAdapter {
 
         harResponse.setHeadersSize(responseHeadersSize);
     }
-
-    private AtomicLongMap<Integer> captureResponseHeadersInvocationCount= AtomicLongMap.create();
 
     protected void captureResponseHeaders(HttpResponse httpResponse, HarResponse harResponse) {
         HttpHeaders headers = httpResponse.headers();
@@ -438,7 +436,7 @@ public class TrafficMonitorFilter extends HttpsAwareFiltersAdapter {
     }
 
     protected void captureRedirectUrl(HttpResponse httpResponse, HarResponse harResponse) {
-        String locationHeaderValue = HttpHeaders.getHeader(httpResponse, HttpHeaders.Names.LOCATION);
+        String locationHeaderValue = httpResponse.headers().get(HttpHeaderNames.LOCATION);
         if (locationHeaderValue != null) {
             harResponse.setRedirectURL(locationHeaderValue);
         }
@@ -463,7 +461,7 @@ public class TrafficMonitorFilter extends HttpsAwareFiltersAdapter {
                 log.trace("Unable to find cached IP address for host: {}. IP address in HAR entry will be blank.", serverHost);
             }
         } else {
-            log.warn("Unable to identify host from request uri: {}", httpRequest.getUri());
+            log.warn("Unable to identify host from request uri: {}", httpRequest.uri());
         }
     }
 

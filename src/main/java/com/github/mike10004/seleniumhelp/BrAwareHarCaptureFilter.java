@@ -318,7 +318,7 @@ public class BrAwareHarCaptureFilter extends HttpsAwareFiltersAdapter {
         // the full URL consists of the scheme + host + port (if non-standard) + path + query params + fragment.
         String url = getFullUrl(httpRequest);
 
-        return new HarRequest(httpRequest.getMethod().toString(), url, httpRequest.protocolVersion().text());
+        return new HarRequest(httpRequest.method().toString(), url, httpRequest.protocolVersion().text());
     }
 
     //TODO: add unit tests for these utility-like capture() methods
@@ -394,7 +394,7 @@ public class BrAwareHarCaptureFilter extends HttpsAwareFiltersAdapter {
             return;
         }
 
-        String contentType = HttpHeaders.getHeader(httpRequest, HttpHeaderNames.CONTENT_TYPE);
+        String contentType = httpRequest.headers().get(HttpHeaderNames.CONTENT_TYPE);
         if (contentType == null) {
             log.warn("No content type specified in request to {}. Content will be treated as {}", httpRequest.uri(), BrowserMobHttpUtil.UNKNOWN_CONTENT_TYPE);
             contentType = BrowserMobHttpUtil.UNKNOWN_CONTENT_TYPE;
@@ -405,25 +405,20 @@ public class BrAwareHarCaptureFilter extends HttpsAwareFiltersAdapter {
 
         postData.setMimeType(contentType);
 
-        boolean urlEncoded;
-        if (contentType.startsWith(HttpHeaderValues.APPLICATION_X_WWW_FORM_URLENCODED.toString())) {
-            urlEncoded = true;
-        } else {
-            urlEncoded = false;
-        }
+        boolean urlEncoded = contentType.startsWith(HttpHeaderValues.APPLICATION_X_WWW_FORM_URLENCODED.toString());
 
         Charset charset;
         try {
             charset = BrowserMobHttpUtil.readCharsetInContentTypeHeader(contentType);
         } catch (UnsupportedCharsetException e) {
-            log.warn("Found unsupported character set in Content-Type header '{}' in HTTP request to {}. Content will not be captured in HAR.", contentType, httpRequest.getUri(), e);
+            log.warn("Found unsupported character set in Content-Type header '{}' in HTTP request to {}. Content will not be captured in HAR.", contentType, httpRequest.uri(), e);
             return;
         }
 
         if (charset == null) {
             // no charset specified, so use the default -- but log a message since this might not encode the data correctly
             charset = BrowserMobHttpUtil.DEFAULT_HTTP_CHARSET;
-            log.debug("No charset specified; using charset {} to decode contents to {}", charset, httpRequest.getUri());
+            log.debug("No charset specified; using charset {} to decode contents to {}", charset, httpRequest.uri());
         }
 
         if (urlEncoded) {
@@ -455,7 +450,7 @@ public class BrAwareHarCaptureFilter extends HttpsAwareFiltersAdapter {
 
         String contentType = httpResponse.headers().get(HttpHeaderNames.CONTENT_TYPE);
         if (contentType == null) {
-            log.warn("No content type specified in response from {}. Content will be treated as {}", originalRequest.getUri(), BrowserMobHttpUtil.UNKNOWN_CONTENT_TYPE);
+            log.warn("No content type specified in response from {}. Content will be treated as {}", originalRequest.uri(), BrowserMobHttpUtil.UNKNOWN_CONTENT_TYPE);
             contentType = BrowserMobHttpUtil.UNKNOWN_CONTENT_TYPE;
         }
 
@@ -469,7 +464,7 @@ public class BrAwareHarCaptureFilter extends HttpsAwareFiltersAdapter {
         try {
             charset = BrowserMobHttpUtil.readCharsetInContentTypeHeader(contentType);
         } catch (UnsupportedCharsetException e) {
-            log.warn("Found unsupported character set in Content-Type header '{}' in HTTP response from {}. Content will not be captured in HAR.", contentType, originalRequest.getUri(), e);
+            log.warn("Found unsupported character set in Content-Type header '{}' in HTTP response from {}. Content will not be captured in HAR.", contentType, originalRequest.uri(), e);
             return;
         }
 

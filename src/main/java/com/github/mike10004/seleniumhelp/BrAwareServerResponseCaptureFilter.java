@@ -6,6 +6,7 @@ import com.jcraft.jzlib.GZIPInputStream;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.HttpContent;
+import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpObject;
 import io.netty.handler.codec.http.HttpRequest;
@@ -221,7 +222,7 @@ public class BrAwareServerResponseCaptureFilter  extends ServerResponseCaptureFi
 
     protected DecompressionFilter createDecompressor(String singleEncoding) throws UnsupportedContentEncodingException {
         switch (singleEncoding) {
-            case HttpHeaders.Values.GZIP:
+            case "gzip":
                 return DecompressionFilter.namedForConstructor(GZIPInputStream::new, GZIPInputStream.class);
             case HEADER_VALUE_BROTLI_ENCODING:
                 return DecompressionFilter.namedForConstructor(BrotliInputStream::new, BrotliInputStream.class);
@@ -269,7 +270,7 @@ public class BrAwareServerResponseCaptureFilter  extends ServerResponseCaptureFi
         //                 proxyToClientResponse. So now we check that the encodings list is not
         //                 already populated.
         if (contentEncodings.isEmpty()) {
-            String value = HttpHeaders.getHeader(httpResponse, HttpHeaders.Names.CONTENT_ENCODING);
+            String value = httpResponse.headers().get(HttpHeaderNames.CONTENT_ENCODING);
             if (value != null) {
                 contentEncodings.add(value);
             }
@@ -282,7 +283,7 @@ public class BrAwareServerResponseCaptureFilter  extends ServerResponseCaptureFi
 
         // technically, the Content-Encoding header can be in a trailing header, although this is excruciatingly uncommon
         if (trailingHeaders != null) {
-            String trailingContentEncoding = trailingHeaders.get(HttpHeaders.Names.CONTENT_ENCODING);
+            String trailingContentEncoding = trailingHeaders.get(HttpHeaderNames.CONTENT_ENCODING);
             if (trailingContentEncoding != null) {
                 contentEncodings.add(trailingContentEncoding);
             }

@@ -42,7 +42,7 @@ public class ImmutableHttpHeaders extends HttpHeaders {
     }
 
     public static java.util.function.Supplier<HttpHeaders> memoize(final HttpMessage message) {
-        return Suppliers.memoize(asSupplier(message)::get)::get;
+        return Suppliers.memoize(asSupplier(message)::get);
     }
 
     @Override
