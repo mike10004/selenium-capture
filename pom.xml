@@ -135,6 +135,23 @@
                 </pluginManagement>
             </build>
         </profile>
+        <profile>
+            <id>remote-brotli-keycdn</id>
+            <build>
+                <pluginManagement>
+                    <plugins>
+                        <plugin>
+                            <artifactId>maven-surefire-plugin</artifactId>
+                            <configuration>
+                                <systemPropertyVariables>
+                                    <selenium-help.tests.remoteBrotliResourceUrl>https://www.keycdn.com/js/app-4db80e0e1e.js</selenium-help.tests.remoteBrotliResourceUrl>
+                                </systemPropertyVariables>
+                            </configuration>
+                        </plugin>
+                    </plugins>
+                </pluginManagement>
+            </build>
+        </profile>
     </profiles>
     <distributionManagement>
         <snapshotRepository>
