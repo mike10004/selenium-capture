@@ -1,6 +1,17 @@
 Changelog
 =========
 
+0.48
+----
+
+* upgrade some dependencies (e.g. Selenium 3.141.59)
+* support Firefox headless mode
+* avoid bypassing proxy for loopback addresses in Firefox and Chrome
+* RejectingFiltersSource removed from main classpath; copy from test sources if you need it
+* remove tests that examined insecure http (non-https) interactions; this means the 
+  library is not confirmed to be as stable as before, but it's not easy these days
+  to force Firefox or Chrome to interact without https
+
 0.47
 ----
 
