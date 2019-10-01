@@ -1,7 +1,6 @@
 package com.github.mike10004.seleniumhelp;
 
 import com.github.mike10004.xvfbtesting.XvfbRule;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.net.HttpHeaders;
 import com.google.common.net.MediaType;
 import io.github.mike10004.nanochamp.repackaged.fi.iki.elonen.NanoHTTPD;
@@ -144,21 +143,4 @@ public class BrAwareServerResponseCaptureFilterTest {
         return harResponseBytes;
     }
 
-    public static class DemoBrotliPageForManualInspection {
-        public static void main(String[] args) throws Exception {
-            byte[] brotliBytes = UnitTests.loadBrotliCompressedSample();
-            NanoHTTPD.Response compressedResponse = NanoResponse.status(200)
-                    .header(HttpHeaders.CONTENT_ENCODING, "br")
-                    .content(MediaType.PLAIN_TEXT_UTF_8, brotliBytes)
-                    .build();
-            System.out.format("prepared response with compressed bytes: %s%n", new String(new Hex().encode(brotliBytes)));
-            NanoServer server = NanoServer.builder().get(session -> compressedResponse).build();
-            String url;
-            try (NanoControl ctrl = server.startServer()) {
-                url = ctrl.baseUri().toString();
-                System.out.format("%s is the URL to visit%n", url);
-                new java.util.concurrent.CountDownLatch(1).await();
-            }
-        }
-    }
 }

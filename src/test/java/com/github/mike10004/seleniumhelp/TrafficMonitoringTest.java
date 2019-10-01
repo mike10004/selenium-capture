@@ -17,7 +17,6 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
@@ -103,30 +102,4 @@ public class TrafficMonitoringTest {
         assertEquals("content-type values", 1, contentTypeValues.size());
     }
 
-    public static class DemoRejectingFilter {
-        public static void main(String[] args) throws Exception {
-            setUpWebdriver();
-            RejectingFiltersSource rejectingFiltersSource = new RejectingFiltersSource() {
-                @Override
-                protected boolean isRejectTarget(HttpRequest originalRequest, String fullUrl, HttpObject httpObject) {
-                    return true;
-                }
-            };
-            TrafficCollector collector = TrafficCollector.builder(createWebDriverFactory())
-                    .filter(rejectingFiltersSource)
-                    .build();
-            RecordingMonitor monitor = new RecordingMonitor();
-            collector.monitor(new TrafficGenerator<Void>() {
-                @Override
-                public Void generate(WebDriver driver) {
-                    System.out.println("ready");
-                    try {
-                        new CountDownLatch(1).await();
-                    } catch (InterruptedException ignore) {
-                    }
-                    return null;
-                }
-            }, monitor);
-        }
-    }
 }

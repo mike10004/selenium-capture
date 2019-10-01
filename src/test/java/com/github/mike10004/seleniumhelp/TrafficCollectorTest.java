@@ -1,11 +1,9 @@
 package com.github.mike10004.seleniumhelp;
 
-import com.google.common.base.CharMatcher;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
-import com.google.common.net.InternetDomainName;
 import com.google.common.primitives.UnsignedInts;
 import io.github.mike10004.nanochamp.server.NanoControl;
 import io.github.mike10004.nanochamp.server.NanoResponse;
@@ -28,7 +26,6 @@ import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 
 import javax.net.ssl.SSLEngine;
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -142,44 +139,4 @@ public class TrafficCollectorTest {
         assertEquals("body text", expected, bodyText);
     }
 
-    public static class DemoRejectingHangs {
-        public static void main(String[] args) throws Exception {
-            CharMatcher alphabet = CharMatcher.inRange('a', 'z').or(CharMatcher.inRange('A', 'Z'));
-            RejectingFiltersSource rejector = new RejectingFiltersSource() {
-                @Override
-                protected boolean isRejectTarget(HttpRequest originalRequest, String fullUrl, HttpObject httpObject) {
-                    try {
-                        InternetDomainName domain = InternetDomainName.from(URI.create(fullUrl).getHost()).topPrivateDomain();
-                        if (alphabet.matchesAnyOf(domain.toString())) {
-                            return domain.toString().endsWith(".com");
-                        }
-                    } catch (Exception e) {
-                        System.out.format("%s %s - error while determining rejection status: %s%n", originalRequest.method(), originalRequest.uri(), e);
-                    }
-                    return false;
-                }
-
-                @Override
-                protected String constructRejectionText(HttpRequest originalRequest, String fullUrl, HttpObject httpObject) {
-                    return "This request is rejected: " + fullUrl;
-                }
-            };
-            TrafficCollector collector = TrafficCollector.builder(FirefoxWebDriverFactory.builder().build())
-                    .collectHttps(TestCertificateAndKeySource.create())
-                    .filter(rejector)
-                    .build();
-            UnitTests.setupRecommendedGeckoDriver();
-            collector.collect(new TrafficGenerator<Void>() {
-                @Override
-                public Void generate(WebDriver driver) {
-                    try {
-                        new java.util.concurrent.CountDownLatch(1).await();
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                    return (Void) null;
-                }
-            });
-        }
-    }
 }
