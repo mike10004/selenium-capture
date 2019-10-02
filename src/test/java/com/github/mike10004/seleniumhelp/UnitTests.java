@@ -39,18 +39,21 @@ import static org.openqa.selenium.Platform.WINDOWS;
  */
 public class UnitTests {
 
+    private static final String PROPKEY_DOMAIN = "selenium-help.tests";
+    public static final SettingSet Settings = SettingSet.global(PROPKEY_DOMAIN);
+
     static final String IGNORE_BECAUSE_UPGRADE_INSECURE_REQUESTS_UNAVOIDABLE =
             "We would like to test HTTPS but requests are sent with header " +
             "'Upgrade-Insecure-Requests: 0' and there's no way to disable " +
             "that; in some cases, HTTP connections can only be tested " +
             "locally (on localhost)";
-    private static final String SYSPROP_CHROME_OPTIONS_EXTRA_ARGS = "selenium-help.chrome.options.extraArgs";
-    private static final String SYSPROP_FIREFOX_EXECUTABLE_PATH = "selenium-help.firefox.executable.path";
-    private static final String SYSPROP_CHROME_EXECUTABLE_PATH = "selenium-help.chrome.executable.path";
-    public static final String SYSPROP_OPENSSL_TESTS_SKIP = "selenium-help.openssl.tests.skip";
-    private static final String SYSPROP_OPENSSL_EXECUTABLE = "selenium-help.openssl.executable.path";
-    private static final String SYSPROP_CHROME_HEADLESS_TESTS_DISABLED = "selenium-help.chrome.headless.tests.disabled";
-    private static final String SYSPROP_DEBUG_ENVIRONMENT = "selenium-help.build.environment.debug";
+    private static final String SETTING_CHROME_OPTIONS_EXTRA_ARGS = "chrome.options.extraArgs";
+    private static final String SETTING_FIREFOX_EXECUTABLE_PATH = "firefox.executable.path";
+    private static final String SETTING_CHROME_EXECUTABLE_PATH = "chrome.executable.path";
+    private static final String SETTING_OPENSSL_TESTS_SKIP = "openssl.skip";
+    private static final String SETTING_OPENSSL_EXECUTABLE_PATH = "openssl.executable.path";
+    private static final String SETTING_CHROME_HEADLESS_TESTS_DISABLED = "chrome.headless.tests.disabled";
+    private static final String SETTING_DEBUG_ENVIRONMENT = "environment.debug";
     private static final String ENV_FIREFOX_BIN = "FIREFOX_BIN";
     private static final String ENV_CHROME_BIN = "CHROME_BIN";
 
@@ -63,20 +66,26 @@ public class UnitTests {
     }
 
     static {
-        if (Boolean.parseBoolean(System.getProperty(SYSPROP_DEBUG_ENVIRONMENT))) {
-            System.err.format("%s=true; describing build environment...%n%n", SYSPROP_DEBUG_ENVIRONMENT);
+        if (Settings.get(SETTING_DEBUG_ENVIRONMENT, false)) {
+            System.err.format("%s.%s=true; describing build environment...%n%n", PROPKEY_DOMAIN, SETTING_DEBUG_ENVIRONMENT);
             System.err.format("environment variables:%n%n");
-            for (String envVarName : new String[]{"CHROMEDRIVER_VERSION", "GECKODRIVER_VERSION", "DISPLAY", ENV_CHROME_BIN, ENV_FIREFOX_BIN}) {
+            for (String envVarName : new String[]{
+                    "CHROMEDRIVER_VERSION",
+                    "GECKODRIVER_VERSION",
+                    "DISPLAY",
+                    ENV_CHROME_BIN,
+                    ENV_FIREFOX_BIN,
+                    "SELENIUMHELP_TESTS_OPENSSL_EXECUTABLE_PATH"}) {
                 print(envVarName, System.getenv(envVarName), System.err);
             }
             System.err.format("%nsystem properties:%n%n");
             for (String syspropName : new String[]{
-                    SYSPROP_CHROME_OPTIONS_EXTRA_ARGS,
-                    SYSPROP_FIREFOX_EXECUTABLE_PATH,
-                    SYSPROP_CHROME_EXECUTABLE_PATH,
-                    SYSPROP_OPENSSL_TESTS_SKIP,
-                    SYSPROP_OPENSSL_EXECUTABLE,
-                    SYSPROP_CHROME_HEADLESS_TESTS_DISABLED,
+                    PROPKEY_DOMAIN + "." + SETTING_CHROME_OPTIONS_EXTRA_ARGS,
+                    PROPKEY_DOMAIN + "." + SETTING_FIREFOX_EXECUTABLE_PATH,
+                    PROPKEY_DOMAIN + "." + SETTING_CHROME_EXECUTABLE_PATH,
+                    PROPKEY_DOMAIN + "." + SETTING_OPENSSL_TESTS_SKIP,
+                    PROPKEY_DOMAIN + "." + SETTING_OPENSSL_EXECUTABLE_PATH,
+                    PROPKEY_DOMAIN + "." + SETTING_CHROME_HEADLESS_TESTS_DISABLED,
                     "wdm.chromeDriverVersion",
                     "wdm.geckoDriverVersion",
             }) {
@@ -102,13 +111,13 @@ public class UnitTests {
     }
 
     public static boolean isHeadlessChromeTestsDisabled() {
-        return Boolean.parseBoolean(System.getProperty(SYSPROP_CHROME_HEADLESS_TESTS_DISABLED, "false"));
+        return Settings.get(SETTING_CHROME_HEADLESS_TESTS_DISABLED, false);
     }
 
     @SuppressWarnings("deprecation")
     @Nullable
     static String getFirefoxExecutablePath() {
-        return getExecutablePath(SYSPROP_FIREFOX_EXECUTABLE_PATH, ENV_FIREFOX_BIN, () -> {
+        return getExecutablePath(SETTING_FIREFOX_EXECUTABLE_PATH, ENV_FIREFOX_BIN, () -> {
             if (Platforms.getPlatform().isWindows()) {
                 Stream<Executable> executables = locateFirefoxBinariesFromPlatform();
                 File file = executables.map(Executable::getFile).filter(File::isFile).findFirst().orElse(null);
@@ -124,8 +133,8 @@ public class UnitTests {
      * Gets an executable path.
      * @return the executable path, or whatever is supplied by the defaulter; can be null if the defaulter returns null
      */
-    private static String getExecutablePath(String systemPropertyName, String environmentVariableName, Supplier<String> defaulter) {
-        String executablePath = Strings.emptyToNull(System.getProperty(systemPropertyName));
+    private static String getExecutablePath(String settingName, String environmentVariableName, Supplier<String> defaulter) {
+        String executablePath = Strings.emptyToNull(Settings.get(settingName));
         if (executablePath == null && environmentVariableName != null) {
             executablePath = Strings.emptyToNull(System.getenv(environmentVariableName));
         }
@@ -137,7 +146,7 @@ public class UnitTests {
 
     @Nullable
     static String getChromeExecutablePath() {
-        return getExecutablePath(SYSPROP_CHROME_EXECUTABLE_PATH, ENV_CHROME_BIN, () -> null);
+        return getExecutablePath(SETTING_CHROME_EXECUTABLE_PATH, ENV_CHROME_BIN, () -> null);
     }
 
     // Licensed to the Software Freedom Conservancy (SFC) under one
@@ -247,7 +256,7 @@ public class UnitTests {
     }
 
     private static List<String> getChromeOptionsExtraArgs() {
-        String tokensStr = System.getProperty(SYSPROP_CHROME_OPTIONS_EXTRA_ARGS);
+        String tokensStr = Settings.get(SETTING_CHROME_OPTIONS_EXTRA_ARGS);
         return getChromeOptionsExtraArgs(tokensStr);
     }
 
@@ -268,9 +277,10 @@ public class UnitTests {
      * of the property is tokenized on breaking whitespace, so there's no way to include
      * an actual space within an argument, but the need for that completeness is uncommon
      * enough that we'll ignore it for now. This also sets the Chrome executable from
-     * system property {@link #SYSPROP_CHROME_EXECUTABLE_PATH} or environment variable
-     * {@link #ENV_CHROME_BIN}.
+     * system property or environment variable.
      * @return an options object with parameters set
+     * @see #SETTING_CHROME_EXECUTABLE_PATH
+     * @see #ENV_CHROME_BIN
      */
     public static ChromeOptions createChromeOptions() {
         ChromeOptions options = new ChromeOptions();
@@ -284,7 +294,7 @@ public class UnitTests {
     }
 
     public static ExecutableConfig makeOpensslConfig() {
-        String path = Strings.emptyToNull(System.getProperty(SYSPROP_OPENSSL_EXECUTABLE));
+        String path = Settings.get(SETTING_OPENSSL_EXECUTABLE_PATH);
         if (path != null) {
             File file = new File(path);
             System.out.format("using openssl executable at %s%n", file);
@@ -298,7 +308,7 @@ public class UnitTests {
     }
 
     public static boolean isSkipOpensslTests() {
-        return Boolean.parseBoolean(System.getProperty(SYSPROP_OPENSSL_TESTS_SKIP, "false"));
+        return Settings.get(SETTING_OPENSSL_TESTS_SKIP, false);
     }
 
     public static String removeHtmlWrapping(String html) {
@@ -313,10 +323,6 @@ public class UnitTests {
     public static XvfbRule.Builder xvfbRuleBuilder() {
         return XvfbRule.builder().disabled(UnitTests::isShowBrowserWindowEnabled);
     }
-
-    private static final String PROPKEY_DOMAIN = "selenium-help.tests";
-
-    public static final SettingSet Settings = SettingSet.global(PROPKEY_DOMAIN);
 
     public static Map<String, Object> createFirefoxPreferences() {
         Map<String, Object> p = new HashMap<>();

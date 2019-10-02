@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.github.mike10004</groupId>
     <artifactId>selenium-help</artifactId>
-    <version>0.48</version>
+    <version>0.49-SNAPSHOT</version>
     <name>selenium-help</name>
     <description>Library that helps you use Selenium WebDriver in Java</description>
     <url>https://github.com/mike10004/selenium-help</url>
@@ -41,14 +41,14 @@
         <antiprint.version>0.15</antiprint.version>
         <common-helper.version>10.0.0</common-helper.version>
         <!--suppress CheckTagEmptyBody -->
-        <selenium-help.test.proxy.http></selenium-help.test.proxy.http>
-        <chrome.headless.tests.disabled>false</chrome.headless.tests.disabled>
+        <proxy.http></proxy.http>
+        <headlessChromeTestsDisabled>false</headlessChromeTestsDisabled>
         <!--suppress CheckTagEmptyBody -->
-        <selenium-help.firefox.executable.path></selenium-help.firefox.executable.path>
+        <firefox.executable.path></firefox.executable.path>
         <!--suppress UnresolvedMavenProperty -->
         <chromedriver.version>${env.CHROMEDRIVER_VERSION}</chromedriver.version>
 <!--        <wdm.chromeDriverManager>76.0.3809.126</wdm.chromeDriverManager>-->
-        <tests.showBrowserWindow>false</tests.showBrowserWindow>
+        <showBrowserWindow>false</showBrowserWindow>
     </properties>
     <profiles>
         <profile>
@@ -69,11 +69,9 @@
                             <artifactId>maven-surefire-plugin</artifactId>
                             <configuration>
                                 <systemPropertyVariables>
-                                    <selenium-help.build.environment.debug>true</selenium-help.build.environment.debug>
-                                    <selenium-help.chrome.headless.tests.disabled>${chrome.headless.tests.disabled}
-                                    </selenium-help.chrome.headless.tests.disabled>
-                                    <selenium-help.chrome.options.extraArgs>--no-sandbox --disable-dev-shm-usage
-                                    </selenium-help.chrome.options.extraArgs>
+                                    <selenium-help.tests.environment.debug>true</selenium-help.tests.environment.debug>
+                                    <selenium-help.tests.headlessChromeTestsDisabled>${headlessChromeTestsDisabled}</selenium-help.tests.headlessChromeTestsDisabled>
+                                    <selenium-help.tests.chrome.options.extraArgs>--no-sandbox --disable-dev-shm-usage</selenium-help.tests.chrome.options.extraArgs>
                                     <!--suppress MavenModelInspection -->
                                     <wdm.chromeDriverVersion>${env.CHROMEDRIVER_VERSION}</wdm.chromeDriverVersion>
                                     <!--suppress MavenModelInspection -->
@@ -152,6 +150,23 @@
                 </pluginManagement>
             </build>
         </profile>
+        <profile>
+            <id>choco-openssl</id>
+            <build>
+                <pluginManagement>
+                    <plugins>
+                        <plugin>
+                            <artifactId>maven-surefire-plugin</artifactId>
+                            <configuration>
+                                <systemPropertyVariables>
+                                    <selenium-help.tests.openssl.executable.path>c:/program files/openssl-win64/bin/openssl.exe</selenium-help.tests.openssl.executable.path>
+                                </systemPropertyVariables>
+                            </configuration>
+                        </plugin>
+                    </plugins>
+                </pluginManagement>
+            </build>
+        </profile>
     </profiles>
     <distributionManagement>
         <snapshotRepository>
@@ -197,11 +212,10 @@
                             <java.io.tmpdir>${project.build.directory}</java.io.tmpdir>
                             <wdm.targetPath>${project.build.directory}/webdriver</wdm.targetPath>
                             <org.slf4j.simpleLogger.defaultLogLevel>${test.log.level}</org.slf4j.simpleLogger.defaultLogLevel>
-                            <selenium-help.test.proxy.http>${selenium-help.test.proxy.http}</selenium-help.test.proxy.http>
-                            <selenium-help.chrome.headless.tests.disabled>${chrome.headless.tests.disabled}</selenium-help.chrome.headless.tests.disabled>
-                            <selenium-help.firefox.executable.path>${selenium-help.firefox.executable.path}</selenium-help.firefox.executable.path>
-                            <wdm.chromeDriverManager>${chromedriver.version}</wdm.chromeDriverManager>
-                            <selenium-help.tests.showBrowserWindow>${tests.showBrowserWindow}</selenium-help.tests.showBrowserWindow>
+                            <selenium-help.tests.proxy.http>${proxy.http}</selenium-help.tests.proxy.http>
+                            <selenium-help.tests.headlessChromeTestsDisabled>${headlessChromeTestsDisabled}</selenium-help.tests.headlessChromeTestsDisabled>
+                            <selenium-help.tests.firefox.executable.path>${firefox.executable.path}</selenium-help.tests.firefox.executable.path>
+                            <selenium-help.tests.showBrowserWindow>${showBrowserWindow}</selenium-help.tests.showBrowserWindow>
                         </systemPropertyVariables>
                     </configuration>
                 </plugin>
@@ -468,7 +482,8 @@
         <dependency>
             <groupId>com.github.mike10004</groupId>
             <artifactId>nitsick-junit</artifactId>
-            <version>0.1</version>
+            <version>0.2</version>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>com.github.mike10004</groupId>

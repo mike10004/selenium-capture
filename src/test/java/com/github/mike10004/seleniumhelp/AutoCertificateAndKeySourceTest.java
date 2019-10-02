@@ -105,6 +105,6 @@ public class AutoCertificateAndKeySourceTest {
     }
 
     private void assumeOpensslNotSkipped() {
-        Assume.assumeFalse("openssl tests are skipped by property " + UnitTests.SYSPROP_OPENSSL_TESTS_SKIP, UnitTests.isSkipOpensslTests());
+        Assume.assumeFalse("openssl tests are skipped by setting selenium-help.tests.openssl.skip", UnitTests.isSkipOpensslTests());
     }
 }
