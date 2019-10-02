@@ -6,10 +6,14 @@ build_script:
 
     choco install sqlite
 
+    choco install openssl
+
+    echo "environment: SELENIUMHELP_TESTS_OPENSSL_EXECUTABLE_PATH=%SELENIUMHELP_TESTS_OPENSSL_EXECUTABLE_PATH%"
+
     mvn --version
 
     echo "github token name: %GITHUB_TOKEN_NAME%"
 
     echo "environment: CHROMEDRIVER_VERSION=%CHROMEDRIVER_VERSION%"
 
-    mvn install --quiet --batch-mode -Dopenssl.tests.skip=true -Dwdm.gitHubTokenName=%GITHUB_TOKEN_NAME% -Dwdm.gitHubTokenSecret=%GITHUB_TOKEN_SECRET% -Dselenium-help.chromedriver.version=%CHROMEDRIVER_VERSION%
+    mvn install -B -V %MORE_MAVEN_OPTS% -Dwdm.gitHubTokenName=%GITHUB_TOKEN_NAME% -Dwdm.gitHubTokenSecret=%GITHUB_TOKEN_SECRET% -Dselenium-help.chromedriver.version=%CHROMEDRIVER_VERSION%
