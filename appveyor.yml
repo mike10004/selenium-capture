@@ -10,6 +10,8 @@ build_script:
 
     echo "environment: SELENIUMHELP_TESTS_OPENSSL_EXECUTABLE_PATH=%SELENIUMHELP_TESTS_OPENSSL_EXECUTABLE_PATH%"
 
+    %SELENIUMHELP_TESTS_OPENSSL_EXECUTABLE_PATH% version
+
     mvn --version
 
     echo "github token name: %GITHUB_TOKEN_NAME%"
