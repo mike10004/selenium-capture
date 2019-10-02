@@ -1,6 +1,13 @@
 Changelog
 =========
 
+0.49
+----
+
+* remove junit from main classpath (whoops)
+* in unit tests, make usage of system properties and environment variables 
+  more consistent
+
 0.48
 ----
 
