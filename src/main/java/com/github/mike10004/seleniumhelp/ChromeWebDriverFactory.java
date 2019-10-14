@@ -1,6 +1,7 @@
 package com.github.mike10004.seleniumhelp;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import org.openqa.selenium.WebDriverException;
 import org.openqa.selenium.chrome.ChromeDriver;
@@ -11,14 +12,11 @@ import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
-import java.net.URI;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -99,25 +97,33 @@ public class ChromeWebDriverFactory extends EnvironmentWebDriverFactory {
      * @param config the config instance
      */
     protected void configureProxy(ChromeOptions options, WebdrivingConfig config) {
-        @Nullable URI proxySpecification = config.getProxySpecification();
-        @Nullable org.openqa.selenium.Proxy seleniumProxy = ProxyUris.createSeleniumProxy(proxySpecification, createBypassListPopulator());
+        @Nullable ProxySpecification proxySpecification = config.getProxySpecification();
+        @Nullable org.openqa.selenium.Proxy seleniumProxy = null;
+        if (proxySpecification != null) {
+            seleniumProxy = maybeModifyBypassList(proxySpecification.createSeleniumProxy());
+        }
         options.setProxy(seleniumProxy);
     }
 
     /**
-     * Returns a list of bypass patterns, given the list of bypass patterns specified as proxy URI parameter values.
+     * Adjusts the list of bypass patterns if necessary.
+     *
      * Special attention is required when the bypass list does not include localhost (or any loopback address),
      * as noted here: https://bugs.chromium.org/p/chromium/issues/detail?id=899126#c18
-     * @return a function that returns a singleton list containing {@code <-loopback>} if no bypasses are specified,
-     * or else returns the argument list
+     *
+     * If no bypasses are specified -- meaning the proxy should <i>not</i> be bypassed even for localhost --
+     * then we have to explicitly say so by actually want to specify is {@code <-loopback>}.
+     * @return an adjusted proxy instance
      */
-    private Function<List<String>, List<String>> createBypassListPopulator() {
-        return specified -> {
-            if (!specified.isEmpty()) {
-                return specified;
-            }
-            return Collections.singletonList("<-loopback>");
-        };
+    @Nullable
+    private org.openqa.selenium.Proxy maybeModifyBypassList(@Nullable org.openqa.selenium.Proxy proxy) {
+        if (proxy == null) {
+            return null;
+        }
+        if (Strings.isNullOrEmpty(proxy.getNoProxy())) {
+            proxy.setNoProxy("<-loopback>");
+        }
+        return proxy;
     }
 
     @VisibleForTesting

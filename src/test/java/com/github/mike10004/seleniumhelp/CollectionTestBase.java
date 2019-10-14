@@ -176,7 +176,7 @@ public class CollectionTestBase {
             }
             try {
                 return new URIBuilder()
-                        .setScheme(ProxyUris.toScheme(upstreamProxyType))
+                        .setScheme(UriProxySpecification.toScheme(upstreamProxyType))
                         .setHost(upstreamProxyHostAndPort.getHost())
                         .setPort(upstreamProxyHostAndPort.getPort())
                         .build();

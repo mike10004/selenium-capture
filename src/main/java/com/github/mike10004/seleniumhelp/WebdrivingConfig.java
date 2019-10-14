@@ -20,16 +20,11 @@ import static com.google.common.base.Preconditions.checkState;
 public interface WebdrivingConfig {
 
     /**
-     * Gets the proxy specifiation, or null if no proxy is to be used. The proxy host and port
-     * must be specified by the URI, and the URI may additionally specify credentials with
-     * {@link URI#getUserInfo()} and type, SOCKS or HTTP, with the URI scheme. If the scheme
-     * does not specify the type, then it is assumed that the proxy is an HTTP proxy server.
-     * Patterns of hosts to bypass may be supplied as values of query parameters with name
-     * {@link ProxyUris#PARAM_BYPASS}.
-     * @return the socket address of the proxy
+     * Gets the proxy specifiation, or null if no proxy is to be used.
+     * @return  proxy specification
      */
     @Nullable
-    URI getProxySpecification();
+    ProxySpecification getProxySpecification();
 
     /**
      * Gets the certificate and key source to be used when proxying HTTPS traffic.
@@ -42,16 +37,6 @@ public interface WebdrivingConfig {
         return Builder.EMPTY;
     }
 
-    /**
-     * Gets a list of patterns that specify hosts to bypass the proxy for. These are specified
-     * as values of query parameters with name {@link ProxyUris#PARAM_BYPASS} in the
-     * {@link #getProxySpecification() proxy specification URI}.
-     * @return the bypass pattern list
-     */
-    default List<String> getProxyBypasses() {
-        return ProxyUris.getProxyBypassesFromQueryString(getProxySpecification());
-    }
-
     static Builder builder() {
         return new Builder();
     }
@@ -59,7 +44,7 @@ public interface WebdrivingConfig {
     @SuppressWarnings("ResultOfMethodCallIgnored")
     final class Builder {
 
-        private URI proxySpecification;
+        private ProxySpecification proxySpecification;
 
         private CertificateAndKeySource certificateAndKeySource;
 
@@ -68,9 +53,13 @@ public interface WebdrivingConfig {
 
         private static final WebdrivingConfig EMPTY = new Builder().build();
 
-        public Builder proxy(URI proxySpecification) {
+        public Builder proxy(ProxySpecification proxySpecification) {
             this.proxySpecification = proxySpecification;
             return this;
+        }
+
+        public Builder proxy(URI proxySpecification) {
+            return proxy(UriProxySpecification.of(proxySpecification));
         }
 
         public Builder proxy(HostAndPort proxyAddress) {
@@ -81,7 +70,7 @@ public interface WebdrivingConfig {
             try {
                 URIBuilder b = new URIBuilder().setHost(proxyAddress.getHost()).setPort(proxyAddress.getPort());
                 for (String bypass : proxyBypasses) {
-                    b.addParameter(ProxyUris.PARAM_BYPASS, bypass);
+                    b.addParameter(UriProxySpecification.PARAM_BYPASS, bypass);
                 }
                 return proxy(b.build());
             } catch (URISyntaxException e) {
@@ -94,27 +83,6 @@ public interface WebdrivingConfig {
             return this;
         }
 
-        /**
-         * @deprecated use {@link #proxy(URI)} or {@link #proxy(HostAndPort, List)} instead
-         */
-        @Deprecated
-        public Builder bypassHost(String hostPattern) {
-            checkState(proxySpecification != null, "proxy spec URI must be set before adding bypass host pattern");
-            if (hostPattern != null) {
-                if (!hostPattern.trim().isEmpty()) {
-                    return proxy(ProxyUris.addBypass(proxySpecification, hostPattern));
-                }
-            }
-            return this;
-        }
-
-        @SuppressWarnings("ResultOfMethodCallIgnored")
-        @Deprecated
-        public Builder bypassHosts(List<String> hostPatterns) {
-            hostPatterns.forEach(this::bypassHost);
-            return this;
-        }
-
         public WebdrivingConfig build() {
             return new WebdrivingConfigImpl(this);
         }
@@ -122,23 +90,14 @@ public interface WebdrivingConfig {
         private static class WebdrivingConfigImpl implements WebdrivingConfig {
 
             @Nullable
-            private final URI proxyUri;
+            private final ProxySpecification proxySpecification;
 
             @Nullable
             private final CertificateAndKeySource certificateAndKeySource;
 
-            private final ImmutableList<String> hostBypassPatterns;
-
             public WebdrivingConfigImpl(Builder builder) {
-                proxyUri = builder.proxySpecification;
+                proxySpecification = builder.proxySpecification;
                 certificateAndKeySource = builder.certificateAndKeySource;
-                // cache this because it is immutable
-                hostBypassPatterns = ImmutableList.copyOf(ProxyUris.getProxyBypassesFromQueryString(proxyUri));
-            }
-
-            @Override
-            public List<String> getProxyBypasses() {
-                return hostBypassPatterns;
             }
 
             /**
@@ -147,8 +106,8 @@ public interface WebdrivingConfig {
              */
             @Override
             @Nullable
-            public URI getProxySpecification() {
-                return proxyUri;
+            public ProxySpecification getProxySpecification() {
+                return proxySpecification;
             }
 
             /**
@@ -165,7 +124,7 @@ public interface WebdrivingConfig {
             @Override
             public String toString() {
                 MoreObjects.ToStringHelper h = MoreObjects.toStringHelper("WebdrivingSessionConfig");
-                if (proxyUri != null) h.add("proxySpecification", proxyUri);
+                if (proxySpecification != null) h.add("proxySpecification", proxySpecification);
                 if (certificateAndKeySource != null) h.add("certificateAndKeySource", certificateAndKeySource);
                 return h.toString();
             }

@@ -23,7 +23,6 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
-import java.net.URI;
 import java.nio.file.Path;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -31,7 +30,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
@@ -128,17 +126,7 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
             profileAction.perform(profile);
         }
         FirefoxOptions options = createFirefoxOptions();
-        @Nullable URI proxyUri = config.getProxySpecification();
-        @Nullable org.openqa.selenium.Proxy seleniumProxy = ProxyUris.createSeleniumProxy(proxyUri, createBypassListPopulator());
-        options.setProxy(seleniumProxy);
-        /*
-         * As of 2018-09-17, if you don't override this setting, Firefox defaults to
-         * bypassing the proxy for loopback addresses (or anyway, that's the behavior
-         * it exhibits). In theory, the org.openqa.selenium.Proxy object is configured
-         * to use the correct list of bypasses, but here we set it *again* in the
-         * preferences.
-         */
-        overrideProxyBypasses(config.getProxyBypasses(), profile);
+        configureProxy(options, profile, config);
         options.setProfile(profile);
         if (headless) {
             options.addArguments("-headless");
@@ -146,8 +134,46 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
         return options;
     }
 
-    private Function<List<String>, List<String>> createBypassListPopulator() {
-        return Function.identity();
+    private void configureProxy(FirefoxOptions options, FirefoxProfile profile, WebdrivingConfig config) {
+        @Nullable ProxySpecification proxySpecification = config.getProxySpecification();
+        new FirefoxOptionsProxyConfigurator().configureProxy(options, profile, proxySpecification);
+    }
+
+    public static class FirefoxOptionsProxyConfigurator {
+
+        public void configureProxy(FirefoxOptions options, FirefoxProfile profile, @Nullable ProxySpecification proxySpecification) {
+            @Nullable org.openqa.selenium.Proxy seleniumProxy = null;
+            if (proxySpecification != null) {
+                seleniumProxy = proxySpecification.createSeleniumProxy();
+                /*
+                 * As of 2018-09-17, if you don't override this setting, Firefox defaults to
+                 * bypassing the proxy for loopback addresses (or anyway, that's the behavior
+                 * it exhibits). In theory, the org.openqa.selenium.Proxy object is configured
+                 * to use the correct list of bypasses, but here we set it *again* in the
+                 * preferences.
+                 */
+                List<String> proxyBypasses = SeleniumProxies.getProxyBypasses(seleniumProxy);
+                overrideProxyBypasses(proxyBypasses, profile);
+            }
+            options.setProxy(seleniumProxy);
+        }
+
+        /**
+         * Sets the Firefox preference to bypass only proxies specified in the given list.
+         * Note: we do this dance again in {@link ProxySpecification#createSeleniumProxy()}.
+         */
+        private void overrideProxyBypasses(List<String> bypasses, FirefoxProfile profile) {
+            String value;
+            if (bypasses.isEmpty()) {
+                value = "";
+            } else {
+                value = String.join(FIREFOX_PROXY_BYPASS_RULE_DELIM, bypasses);
+            }
+            profile.setPreference("network.proxy.no_proxies_on", value);
+        }
+
+        private static final String FIREFOX_PROXY_BYPASS_RULE_DELIM = ",";
+
     }
 
     private void setAutomaticConnectionPrefs(FirefoxProfile profile) {
@@ -183,22 +209,6 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
         // https://bugzilla.mozilla.org/show_bug.cgi?id=110161
         profile.setPreference("security.OCSP.enabled", 0);
     }
-
-    /**
-     * Sets the Firefox preference to bypass only proxies specified in the given list.
-     * Note: we do this dance again in {@link ProxyUris#createSeleniumProxy(URI)}.
-     */
-    private void overrideProxyBypasses(List<String> bypasses, FirefoxProfile profile) {
-        String value;
-        if (bypasses.isEmpty()) {
-            value = "";
-        } else {
-            value = String.join(FIREFOX_PROXY_BYPASS_RULE_DELIM, bypasses);
-        }
-        profile.setPreference("network.proxy.no_proxies_on", value);
-    }
-
-    private static final String FIREFOX_PROXY_BYPASS_RULE_DELIM = ",";
 
     /**
      * Applies additional preferences, drawn from a map, to a profile. Subclasses may overr

@@ -15,12 +15,11 @@ public class WebdrivingConfigTest {
         WebdrivingConfig config = WebdrivingConfig.builder()
                 .proxy(HostAndPort.fromParts("127.0.0.1", 46632), Arrays.asList("one", "two"))
                 .build();
-        URI actual = config.getProxySpecification();
+        ProxySpecification actual = config.getProxySpecification();
         assertNotNull(actual);
-        assertEquals("path", "", actual.getPath());
-        assertNull("user info", actual.getUserInfo());
-        assertEquals("specification with bypass patterns", "//127.0.0.1:46632?bypass=one&bypass=two", actual.toString());
-
+        assertTrue(actual instanceof UriProxySpecification);
+        URI uri = ((UriProxySpecification)actual).getUri();
+        assertEquals("specification with bypass patterns", "//127.0.0.1:46632?bypass=one&bypass=two", uri.toString());
     }
 
     @Test
@@ -28,10 +27,12 @@ public class WebdrivingConfigTest {
         WebdrivingConfig config = WebdrivingConfig.builder()
                 .proxy(HostAndPort.fromParts("127.0.0.1", 46632))
                 .build();
-        URI actual = config.getProxySpecification();
-        assertNotNull(actual);
-        assertEquals("host", "127.0.0.1", actual.getHost());
-        assertEquals("port", 46632, actual.getPort());
-        assertNull("scheme", actual.getScheme());
+        ProxySpecification specification = config.getProxySpecification();
+        assertNotNull(specification);
+        assertTrue(specification instanceof UriProxySpecification);
+        URI uri = ((UriProxySpecification)specification).getUri();
+        assertEquals("host", "127.0.0.1", uri.getHost());
+        assertEquals("port", 46632, uri.getPort());
+        assertNull("scheme", uri.getScheme());
     }
 }
