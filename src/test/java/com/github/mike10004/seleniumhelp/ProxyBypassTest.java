@@ -121,7 +121,7 @@ public class ProxyBypassTest {
                         .map(Object::toString)
                         .filter(bypassFilter)
                         .collect(Collectors.toList());
-                WebdrivingConfig config = WebdrivingConfig.builder()
+                WebdrivingConfig config = WebdrivingConfigs.builder()
                         .proxy(HostAndPort.fromParts(proxyHost, proxyPort), bypasses)
                         .build();
                 URI[] urls = {

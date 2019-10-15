@@ -12,7 +12,7 @@ public class WebdrivingConfigTest {
 
     @Test
     public void bypassPatterns() throws Exception {
-        WebdrivingConfig config = WebdrivingConfig.builder()
+        WebdrivingConfig config = WebdrivingConfigs.builder()
                 .proxy(HostAndPort.fromParts("127.0.0.1", 46632), Arrays.asList("one", "two"))
                 .build();
         ProxySpecification actual = config.getProxySpecification();
@@ -24,7 +24,7 @@ public class WebdrivingConfigTest {
 
     @Test
     public void buildUriFromHostAndPort() throws Exception {
-        WebdrivingConfig config = WebdrivingConfig.builder()
+        WebdrivingConfig config = WebdrivingConfigs.builder()
                 .proxy(HostAndPort.fromParts("127.0.0.1", 46632))
                 .build();
         ProxySpecification specification = config.getProxySpecification();

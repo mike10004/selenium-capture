@@ -44,7 +44,7 @@ public abstract class ProxySpecificationBase implements ProxySpecification {
             proxy.setSocksPassword(getPassword());
         } else {
             if (!Strings.isNullOrEmpty(userInfo)) {
-                LoggerFactory.getLogger(ProxyUris.class).warn("HTTP proxy server credentials may not be specified in the proxy specification URI (and I'm not sure what to suggest instead); only SOCKS proxy server credentials may be specified in the proxy specification URI");
+                LoggerFactory.getLogger(getClass()).warn("HTTP proxy server credentials may not be specified in the proxy specification URI (and I'm not sure what to suggest instead); only SOCKS proxy server credentials may be specified in the proxy specification URI");
             }
             proxy.setHttpProxy(socketAddress);
             proxy.setSslProxy(socketAddress);

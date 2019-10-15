@@ -1,10 +1,7 @@
 package com.github.mike10004.seleniumhelp;
 
-import com.google.common.base.MoreObjects;
 import net.lightbody.bmp.BrowserMobProxy;
-import net.lightbody.bmp.BrowserMobProxyServer;
 import net.lightbody.bmp.mitm.CertificateAndKeySource;
-import org.littleshoot.proxy.ChainedProxyManager;
 
 import javax.annotation.Nullable;
 import java.net.URI;
@@ -13,6 +10,9 @@ import static java.util.Objects.requireNonNull;
 
 /**
  * Interface of a service class that performs configuration operations relating to Browsermob proxy instances.
+ * An implementations of this class must provide a {@link WebdrivingConfig} that specifies a given Browsermob
+ * proxy instance is the proxy through which the webdriven browser instance sends network requests, and it may
+ * also configure the Browsermob proxy server instance to relay requests to an upstream proxy.
  */
 interface BmpConfigurator {
 
@@ -29,45 +29,6 @@ interface BmpConfigurator {
      * @return a new webdriving config instance
      */
     WebdrivingConfig createWebdrivingConfig(BrowserMobProxy bmp, @Nullable CertificateAndKeySource certificateAndKeySource);
-
-    class BasicBmpConfigurator implements BmpConfigurator {
-
-        @Nullable
-        private final URI upstreamProxyUri;
-
-        private BasicBmpConfigurator(@Nullable URI upstreamProxyUri) {
-            this.upstreamProxyUri = upstreamProxyUri;
-        }
-
-        @Override
-        public void configureUpstream(BrowserMobProxy bmp) {
-            if (upstreamProxyUri == null) {
-                bmp.setChainedProxy(null);
-                if (bmp instanceof BrowserMobProxyServer) {
-                    ((BrowserMobProxyServer) bmp).setChainedProxyManager(null);
-                }
-            } else {
-                ProxySpecification proxySpecification = UriProxySpecification.of(upstreamProxyUri);
-                ChainedProxyManager chainedProxyManager = proxySpecification.toUpstreamProxy();
-                ((BrowserMobProxyServer)bmp).setChainedProxyManager(chainedProxyManager);
-            }
-        }
-
-        @Override
-        public WebdrivingConfig createWebdrivingConfig(BrowserMobProxy bmp, @Nullable CertificateAndKeySource certificateAndKeySource) {
-            return WebdrivingConfig.builder()
-                    .proxy(BrowserMobs.getConnectableSocketAddress(bmp))
-                    .certificateAndKeySource(certificateAndKeySource)
-                    .build();
-        }
-
-        @Override
-        public String toString() {
-            MoreObjects.ToStringHelper h = MoreObjects.toStringHelper(this);
-            if (upstreamProxyUri != null) h.add("upstreamProxyUri", upstreamProxyUri);
-            return h.toString();
-        }
-    }
 
     /**
      * Returns a configurator that configures a direct connection upstream, meaning no proxy is to be used.
