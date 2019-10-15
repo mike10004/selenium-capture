@@ -5,8 +5,13 @@ import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.net.HostAndPort;
+import com.google.common.net.MediaType;
 import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.handler.codec.http.HttpObject;
+import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.HttpResponse;
 import net.lightbody.bmp.core.har.HarContent;
 import net.lightbody.bmp.core.har.HarEntry;
 import net.lightbody.bmp.core.har.HarResponse;
@@ -16,8 +21,12 @@ import org.apache.commons.validator.routines.InetAddressValidator;
 import org.apache.http.client.utils.URIBuilder;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Rule;
 import org.littleshoot.proxy.ChainedProxyType;
+import org.littleshoot.proxy.HttpFilters;
+import org.littleshoot.proxy.HttpFiltersAdapter;
+import org.littleshoot.proxy.HttpFiltersSourceAdapter;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
@@ -27,8 +36,11 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
@@ -43,8 +55,8 @@ public class CollectionTestBase {
     private static HostAndPort upstreamProxyHostAndPort_ = null;
     private static ChainedProxyType upstreamProxyType_ = null;
 
-    @Rule
-    public XvfbRule xvfb = UnitTests.xvfbRuleBuilder().build();
+    @ClassRule
+    public static final XvfbRule xvfb = UnitTests.xvfbRuleBuilder().build();
 
     @Nullable
     private final HostAndPort upstreamProxyHostAndPort;
@@ -112,7 +124,7 @@ public class CollectionTestBase {
 
     public static class HttpBinGetResponseData {
         public String url;
-        public Map<String, String[]> args = ImmutableMap.of();
+        public Map<String, ArrayList<String>> args = ImmutableMap.of();
         public Map<String, String> headers = ImmutableMap.of();
         public String origin;
 
@@ -127,8 +139,28 @@ public class CollectionTestBase {
         }
     }
 
+    protected static Supplier<Map<String, String>> createEnvironmentSupplierForDisplay(boolean headless) {
+        if (headless) {
+            return HashMap::new;
+        } else {
+            return () -> {
+                String display = CollectionTestBase.xvfb.getController().getDisplay();
+                return EnvironmentWebDriverFactory.createEnvironmentForDisplay(display);
+            };
+        }
+    }
+
     @SuppressWarnings("UnusedReturnValue")
-    protected HarContent testTrafficCollector(WebDriverFactory webDriverFactory) throws IOException {
+    protected HarContent testTrafficCollectorOnExampleDotCom(WebDriverFactory webDriverFactory) throws IOException {
+        // example.com doesn't upgrade insecure requests, so we can use it down test non-https collection
+        HarResponse response = testTrafficCollector(webDriverFactory, new URL(protocol, "example.com", getPort(), "/"));
+        HarContent content = response.getContent();
+        assertEquals("mime type", "text/html", MediaType.parse(content.getMimeType()).withoutParameters().toString());
+        return content;
+    }
+
+    @SuppressWarnings("UnusedReturnValue")
+    protected HarContent testTrafficCollectorOnHttpbin(WebDriverFactory webDriverFactory) throws IOException {
         int port = getPort();
         System.out.format("testing collector on port %d with %s%n", port, webDriverFactory);
         URL url = new URL(protocol, "httpbin.org", port, "/get?foo=bar&foo=baz");
@@ -212,8 +244,11 @@ public class CollectionTestBase {
     }
 
     protected <T> HarPlus<T> testTrafficCollector(WebDriverFactory webDriverFactory, TrafficGenerator<T> pageSourceTrafficGenerator) throws IOException {
-        TrafficCollectorImpl.Builder tcBuilder = TrafficCollector.builder(webDriverFactory)
-                .upstreamProxy(new TestProxySupplier());
+        TrafficCollectorImpl.Builder tcBuilder = TrafficCollector.builder(webDriverFactory);
+        URI upstreamProxy = new TestProxySupplier().get();
+        if (upstreamProxy != null) {
+            tcBuilder.upstreamProxy(upstreamProxy);
+        }
         if ("https".equals(protocol)) {
             CertificateAndKeySource certificateAndKeySource = TestCertificateAndKeySource.create();
             tcBuilder.collectHttps(certificateAndKeySource);

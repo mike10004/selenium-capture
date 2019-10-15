@@ -24,26 +24,24 @@ public class ChromeTrafficCollectionTest {
             UnitTests.setupRecommendedChromeDriver();
         }
 
-        @org.junit.Ignore(UnitTests.IGNORE_BECAUSE_UPGRADE_INSECURE_REQUESTS_UNAVOIDABLE)
         @Test
         public void http() throws Exception {
-            String display = xvfb.getController().getDisplay();
-            WebDriverFactory webDriverFactory = ChromeWebDriverFactory.builder()
-                    .chromeOptions(UnitTests.createChromeOptions())
-                    .environment(ChromeWebDriverFactory.createEnvironmentSupplierForDisplay(display))
-                    .build();
-            testTrafficCollector(webDriverFactory);
+            testhttp(false);
         }
 
-        @org.junit.Ignore(UnitTests.IGNORE_BECAUSE_UPGRADE_INSECURE_REQUESTS_UNAVOIDABLE)
         @Test
         public void http_headless() throws Exception {
-            Assume.assumeFalse("headless tests disabled", UnitTests.isHeadlessChromeTestsDisabled());
+            testhttp(true);
+        }
+
+        private void testhttp(boolean headless) throws Exception {
+            Assume.assumeFalse("headless tests disabled", headless && UnitTests.isHeadlessChromeTestsDisabled());
             WebDriverFactory webDriverFactory = ChromeWebDriverFactory.builder()
+                    .headless(headless)
                     .chromeOptions(UnitTests.createChromeOptions())
-                    .headless()
+                    .environment(createEnvironmentSupplierForDisplay(headless))
                     .build();
-            testTrafficCollector(webDriverFactory);
+            testTrafficCollectorOnExampleDotCom(webDriverFactory);
         }
 
         @Test
@@ -75,12 +73,22 @@ public class ChromeTrafficCollectionTest {
 
         @Test
         public void https() throws Exception {
-            String display = xvfb.getController().getDisplay();
+            testhttps(false);
+        }
+
+        @Test
+        public void https_headless() throws Exception {
+            testhttps(true);
+        }
+
+        private void testhttps(boolean headless) throws Exception {
+            Assume.assumeFalse("headless tests disabled", UnitTests.isHeadlessChromeTestsDisabled());
             WebDriverFactory webDriverFactory = ChromeWebDriverFactory.builder()
                     .chromeOptions(UnitTests.createChromeOptions())
-                    .environment(ChromeWebDriverFactory.createEnvironmentSupplierForDisplay(display))
+                    .headless()
+                    .environment(createEnvironmentSupplierForDisplay(headless))
                     .build();
-            testTrafficCollector(webDriverFactory);
+            testTrafficCollectorOnHttpbin(webDriverFactory);
         }
 
     }

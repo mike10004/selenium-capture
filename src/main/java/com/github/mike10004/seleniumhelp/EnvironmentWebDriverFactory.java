@@ -17,6 +17,18 @@ public abstract class EnvironmentWebDriverFactory implements WebDriverFactory {
         this.environmentSupplier = checkNotNull(builder.environmentSupplier);
     }
 
+    static Map<String, String> createEnvironmentForDisplay(@Nullable String display) {
+        Map<String, String> env = new HashMap<>();
+        setDisplayEnvironmentVariable(env, display);
+        return env;
+    }
+
+    static void setDisplayEnvironmentVariable(Map<String, String> env, @Nullable String display) {
+        if (display != null) {
+            env.put("DISPLAY", display);
+        }
+    }
+
     static Supplier<Map<String, String>> createEnvironmentSupplierForDisplay(@Nullable String display) {
         if (display == null) {
             return ImmutableMap::of;

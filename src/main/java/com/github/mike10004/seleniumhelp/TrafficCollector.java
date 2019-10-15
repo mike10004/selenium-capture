@@ -3,7 +3,6 @@ package com.github.mike10004.seleniumhelp;
 import com.google.common.net.HostAndPort;
 import net.lightbody.bmp.BrowserMobProxy;
 import net.lightbody.bmp.mitm.CertificateAndKeySource;
-import org.littleshoot.proxy.ChainedProxyType;
 import org.littleshoot.proxy.HttpFiltersSource;
 import org.openqa.selenium.WebDriverException;
 
@@ -81,7 +80,7 @@ public interface TrafficCollector {
         private final WebDriverFactory webDriverFactory;
         private CertificateAndKeySource certificateAndKeySource = null;
         private final List<HttpFiltersSource> httpFiltersSources = new ArrayList<>();
-        private ProxyUris.BmpConfigurator upstreamConfigurator = ProxyUris.BmpConfigurator.inoperative();
+        private BmpConfigurator upstreamConfigurator = BmpConfigurator.noUpstreamProxy();
         private Supplier<? extends BrowserMobProxy> interceptingProxyInstantiator = BrAwareBrowserMobProxyServer::new;
         private final List<HarPostProcessor> harPostProcessors = new ArrayList<>();
         private ExceptionReactor exceptionReactor = ExceptionReactor.PROPAGATE;
@@ -135,21 +134,12 @@ public interface TrafficCollector {
         }
 
         public Builder noUpstreamProxy() {
-            return upstreamProxy(ProxyUris.BmpConfigurator.noProxy());
+            return upstreamProxy(BmpConfigurator.noUpstreamProxy());
         }
 
-        private Builder upstreamProxy(ProxyUris.BmpConfigurator configurator) {
+        private Builder upstreamProxy(BmpConfigurator configurator) {
             this.upstreamConfigurator = requireNonNull(configurator);
             return this;
-        }
-
-        @Deprecated
-        public Builder upstreamProxy(InetSocketAddress address, ChainedProxyType proxyType) {
-            if (address == null) {
-                return noUpstreamProxy();
-            } else {
-                return upstreamProxy(() -> literalize(address), proxyType);
-            }
         }
 
         private static HostAndPort literalize(InetSocketAddress socketAddress) {
@@ -159,25 +149,14 @@ public interface TrafficCollector {
             return HostAndPort.fromParts(socketAddress.getHostString(), socketAddress.getPort());
         }
 
-        private Builder upstreamProxy(Supplier<HostAndPort> supplier, ChainedProxyType proxyType) {
-            requireNonNull(proxyType);
-            return upstreamProxy(() -> {
-                HostAndPort socketAddress = supplier.get();
-                if (socketAddress == null) {
-                    return null;
-                }
-                return ProxyUris.createSimple(socketAddress, proxyType);
-            });
-        }
-
         /**
          * Configures the collector to use an upstream proxy specified by a URI. The URI components
          * must be as described in {@link WebdrivingConfig#getProxySpecification()}.
-         * @param proxySpecificationSupplier
+         * @param proxySpecification
          * @return this builder instance
          */
-        public Builder upstreamProxy(Supplier<URI> proxySpecificationSupplier) {
-            this.upstreamConfigurator = ProxyUris.BmpConfigurator.upstream(proxySpecificationSupplier);
+        public Builder upstreamProxy(URI proxySpecification) {
+            this.upstreamConfigurator = BmpConfigurator.usingUpstreamProxy(proxySpecification);
             return this;
         }
 

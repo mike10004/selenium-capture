@@ -8,14 +8,6 @@ import java.io.IOException;
 public interface WebDriverFactory {
 
     /**
-     * @deprecated use {@link #startWebdriving(WebdrivingConfig)} instead; method has been renamed for clarity
-     */
-    @Deprecated
-    default WebdrivingSession createWebdrivingSession(WebdrivingConfig config) throws IOException {
-        return startWebdriving(config);
-    }
-
-    /**
      * Creates a webdriving session with the given configuration.
      * @param config the configuration
      * @return the session

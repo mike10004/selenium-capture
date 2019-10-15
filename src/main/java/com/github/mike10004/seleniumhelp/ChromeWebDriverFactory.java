@@ -192,7 +192,11 @@ public class ChromeWebDriverFactory extends EnvironmentWebDriverFactory {
         }
 
         public Builder headless() {
-            headless = true;
+            return headless(true);
+        }
+
+        public Builder headless(boolean headless) {
+            this.headless = headless;
             return this;
         }
 

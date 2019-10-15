@@ -4,6 +4,7 @@ import io.github.mike10004.extensibleffdriver.AddonInstallRequest;
 import io.github.mike10004.extensibleffdriver.AddonPersistence;
 import io.github.mike10004.extensibleffdriver.ExtensibleFirefoxDriver;
 import org.apache.commons.io.FileUtils;
+import org.junit.Assume;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.runners.Enclosed;
@@ -41,15 +42,24 @@ public class FirefoxTrafficCollectionTest {
             }
         }
 
-        @org.junit.Ignore(UnitTests.IGNORE_BECAUSE_UPGRADE_INSECURE_REQUESTS_UNAVOIDABLE)
         @Test
         public void http() throws Exception {
-            String display = xvfb.getController().getDisplay();
+            testhttp(false);
+        }
+
+        @Test
+        public void http_headless() throws Exception {
+            testhttp(true);
+        }
+
+        private void testhttp(boolean headless) throws Exception {
+            Assume.assumeFalse("headless tests disabled", headless && UnitTests.isHeadlessChromeTestsDisabled());
             WebDriverFactory webDriverFactory = FirefoxWebDriverFactory.builder()
                     .binary(UnitTests.createFirefoxBinarySupplier())
-                    .environment(FirefoxWebDriverFactory.createEnvironmentSupplierForDisplay(display))
+                    .headless(headless)
+                    .environment(createEnvironmentSupplierForDisplay(headless))
                     .build();
-            testTrafficCollector(webDriverFactory);
+            testTrafficCollectorOnExampleDotCom(webDriverFactory);
         }
 
     }
@@ -70,12 +80,22 @@ public class FirefoxTrafficCollectionTest {
 
         @Test
         public void https() throws Exception {
-            String display = xvfb.getController().getDisplay();
+            testhttps(false);
+        }
+
+        @Test
+        public void https_headless() throws Exception {
+            testhttps(true);
+        }
+
+        private void testhttps(boolean headless) throws Exception {
+            Assume.assumeFalse("headless tests disabled", headless && UnitTests.isHeadlessChromeTestsDisabled());
             WebDriverFactory webDriverFactory = FirefoxWebDriverFactory.builder()
                     .binary(UnitTests.createFirefoxBinarySupplier())
-                    .environment(FirefoxWebDriverFactory.createEnvironmentSupplierForDisplay(display))
+                    .environment(createEnvironmentSupplierForDisplay(headless))
+                    .headless(headless)
                     .build();
-            testTrafficCollector(webDriverFactory);
+            testTrafficCollectorOnHttpbin(webDriverFactory);
         }
 
         @Test

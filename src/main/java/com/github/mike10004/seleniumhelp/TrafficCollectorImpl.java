@@ -37,7 +37,7 @@ public class TrafficCollectorImpl implements TrafficCollector {
     @Nullable
     private final CertificateAndKeySource certificateAndKeySource;
     private final ImmutableList<HttpFiltersSource> httpFiltersSources;
-    private final ProxyUris.BmpConfigurator upstreamConfigurator;
+    private final BmpConfigurator upstreamConfigurator;
     private final Supplier<? extends BrowserMobProxy> interceptingProxyInstantiator;
     private final ImmutableList<HarPostProcessor> harPostProcessors;
     private final ExceptionReactor exceptionReactor;
@@ -56,7 +56,7 @@ public class TrafficCollectorImpl implements TrafficCollector {
      */
     protected TrafficCollectorImpl(WebDriverFactory webDriverFactory,
                             @Nullable CertificateAndKeySource certificateAndKeySource,
-                            ProxyUris.BmpConfigurator upstreamConfigurator,
+                            BmpConfigurator upstreamConfigurator,
                                Iterable<? extends HttpFiltersSource> httpFiltersSources,
                                Supplier<? extends BrowserMobProxy> interceptingProxyInstantiator,
                                Iterable<? extends HarPostProcessor> harPostProcessors,
