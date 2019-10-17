@@ -5,15 +5,33 @@ import com.google.common.net.HostAndPort;
 import net.lightbody.bmp.mitm.CertificateAndKeySource;
 
 import javax.annotation.Nullable;
-import java.net.URI;
 import java.util.Collections;
 import java.util.List;
+
+import static java.util.Objects.requireNonNull;
 
 class WebdrivingConfigs {
 
     private WebdrivingConfigs() {}
 
-    private static final WebdrivingConfig EMPTY = new Builder().build();
+    private static final WebdrivingConfig EMPTY = new WebdrivingConfig() {
+
+        @Override
+        public WebdrivingProxyDefinition getProxySpecification() {
+            return NoProxySpecification.getInstance().asWebdrivingProxyDefinition();
+        }
+
+        @Nullable
+        @Override
+        public CertificateAndKeySource getCertificateAndKeySource() {
+            return null;
+        }
+
+        @Override
+        public String toString() {
+            return "WebdrivingConfig{INACTIVE}";
+        }
+    };
 
     /**
      * Returns an immutable empty config instance.
@@ -36,7 +54,7 @@ class WebdrivingConfigs {
      */
     final static class Builder {
 
-        private ProxySpecification proxySpecification;
+        private WebdrivingProxyDefinition proxySpecification;
 
         private CertificateAndKeySource certificateAndKeySource;
 
@@ -50,21 +68,13 @@ class WebdrivingConfigs {
          * @param proxySpecification
          * @return
          */
-        Builder proxy(ProxySpecification proxySpecification) {
+        Builder proxy(WebdrivingProxyDefinition proxySpecification) {
             this.proxySpecification = proxySpecification;
             return this;
         }
 
         /**
-         * @deprecated use {@link UriProxySpecification#of(URI)} and {@link #proxy(ProxySpecification)}
-         */
-        @Deprecated
-        public Builder proxy(URI proxySpecification) {
-            return proxy(UriProxySpecification.of(proxySpecification));
-        }
-
-        /**
-         * @deprecated use {@link ProxySpecification#builder(FullSocketAddress)} and {@link #proxy(ProxySpecification)}
+         * @deprecated use {@link ProxyDefinitionBuilder#through(FullSocketAddress)} and {@link #proxy(ProxySpecification)}
          */
         @Deprecated
         public Builder proxy(HostAndPort proxyAddress) {
@@ -72,13 +82,13 @@ class WebdrivingConfigs {
         }
 
         /**
-         * @deprecated use {@link ProxySpecification#builder(FullSocketAddress)} and {@link #proxy(ProxySpecification)}
+         * @deprecated use {@link ProxyDefinitionBuilder#through(FullSocketAddress)} and {@link #proxy(ProxySpecification)}
          */
         @Deprecated
         Builder proxy(HostAndPort proxyAddress, List<String> proxyBypasses) {
-            ProxySpecification ps = ProxySpecification.builder(FullSocketAddress.fromHostAndPort(proxyAddress))
+            WebdrivingProxyDefinition ps = ProxyDefinitionBuilder.through(FullSocketAddress.fromHostAndPort(proxyAddress))
                     .addProxyBypasses(proxyBypasses)
-                    .build();
+                    .buildWebdrivingProxyDefinition();
             return proxy(ps);
         }
 
@@ -93,14 +103,13 @@ class WebdrivingConfigs {
 
         private static class WebdrivingConfigImpl implements WebdrivingConfig {
 
-            @Nullable
-            private final ProxySpecification proxySpecification;
+            private final WebdrivingProxyDefinition proxySpecification;
 
             @Nullable
             private final CertificateAndKeySource certificateAndKeySource;
 
             public WebdrivingConfigImpl(Builder builder) {
-                proxySpecification = builder.proxySpecification;
+                proxySpecification = requireNonNull(builder.proxySpecification);
                 certificateAndKeySource = builder.certificateAndKeySource;
             }
 
@@ -109,8 +118,7 @@ class WebdrivingConfigs {
              * @return the socket address of the proxy
              */
             @Override
-            @Nullable
-            public ProxySpecification getProxySpecification() {
+            public WebdrivingProxyDefinition getProxySpecification() {
                 return proxySpecification;
             }
 

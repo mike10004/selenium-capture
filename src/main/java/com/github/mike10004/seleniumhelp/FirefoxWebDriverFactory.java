@@ -135,16 +135,16 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
     }
 
     private void configureProxy(FirefoxOptions options, FirefoxProfile profile, WebdrivingConfig config) {
-        @Nullable ProxySpecification proxySpecification = config.getProxySpecification();
+        @Nullable WebdrivingProxyDefinition proxySpecification = config.getProxySpecification();
         new FirefoxOptionsProxyConfigurator().configureProxy(options, profile, proxySpecification);
     }
 
     public static class FirefoxOptionsProxyConfigurator {
 
-        public void configureProxy(FirefoxOptions options, FirefoxProfile profile, @Nullable ProxySpecification proxySpecification) {
+        public void configureProxy(FirefoxOptions options, FirefoxProfile profile, @Nullable WebdrivingProxyDefinition proxySpecification) {
             @Nullable org.openqa.selenium.Proxy seleniumProxy = null;
             if (proxySpecification != null) {
-                seleniumProxy = proxySpecification.createSeleniumProxy();
+                seleniumProxy = proxySpecification.createWebdrivingProxy();
                 /*
                  * As of 2018-09-17, if you don't override this setting, Firefox defaults to
                  * bypassing the proxy for loopback addresses (or anyway, that's the behavior
@@ -160,7 +160,6 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
 
         /**
          * Sets the Firefox preference to bypass only proxies specified in the given list.
-         * Note: we do this dance again in {@link ProxySpecification#createSeleniumProxy()}.
          */
         private void overrideProxyBypasses(List<String> bypasses, FirefoxProfile profile) {
             String value;

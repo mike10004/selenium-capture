@@ -15,8 +15,7 @@ public interface WebdrivingConfig {
      * is to be configured to send network requests.
      * @return  proxy specification
      */
-    @Nullable
-    ProxySpecification getProxySpecification();
+    WebdrivingProxyDefinition getProxySpecification();
 
     /**
      * Gets the certificate and key source to be used when middlemanning HTTPS traffic.
@@ -25,4 +24,20 @@ public interface WebdrivingConfig {
     @Nullable
     CertificateAndKeySource getCertificateAndKeySource();
 
+    /**
+     * Returns a config instance that does not affect the webdriving session.
+     * No traffic will be captured.
+     * @return a
+     */
+    static WebdrivingConfig inactive() {
+        return WebdrivingConfigs.empty();
+    }
+
+    /**
+     * @deprecated use {@link #inactive()} instead
+     */
+    @Deprecated
+    static WebdrivingConfig empty() {
+        return inactive();
+    }
 }

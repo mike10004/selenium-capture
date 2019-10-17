@@ -74,7 +74,6 @@ public interface TrafficCollector {
         return new TrafficCollectorImpl.Builder(webDriverFactory);
     }
 
-    @SuppressWarnings("unused")
     final class Builder {
 
         private final WebDriverFactory webDriverFactory;
@@ -90,11 +89,23 @@ public interface TrafficCollector {
             httpFiltersSources.add(AnonymizingFiltersSource.getInstance());
         }
 
+        /**
+         * Configures the collector to react to exceptions during collection with the specified service instance.
+         * By default, exceptions are re-thrown.
+         * @param exceptionReactor the reactor service
+         * @return this builder instance
+         */
         public Builder onException(ExceptionReactor exceptionReactor) {
             this.exceptionReactor = requireNonNull(exceptionReactor);
             return this;
         }
 
+        /**
+         * Configures the collector to collect HTTPS traffic by accepting TLS socket connections
+         * using the given trust data.
+         * @param certificateAndKeySource the certificate and key source
+         * @return this builder instance
+         */
         public Builder collectHttps(CertificateAndKeySource certificateAndKeySource) {
             this.certificateAndKeySource = requireNonNull(certificateAndKeySource);
             return this;
@@ -113,11 +124,22 @@ public interface TrafficCollector {
             return this;
         }
 
+        /**
+         * Configures the collector not to remove headers that indicate traffic is passing through a proxy.
+         * By default, the intercepting proxy does not add/remove/change any headers, and this negates that
+         * behavior.
+         * @return this builder instance
+         */
         public Builder nonAnonymizing() {
             httpFiltersSources.remove(AnonymizingFiltersSource.getInstance());
             return this;
         }
 
+        /**
+         * Adds a filter source to the list of filter sources.
+         * @param filter a filter source
+         * @return this builder instance
+         */
         public Builder filter(HttpFiltersSource filter) {
             httpFiltersSources.add(filter);
             return this;
@@ -126,13 +148,18 @@ public interface TrafficCollector {
         /**
          * Adds all argument filters sources to this builder's filters list.
          * @param val the filters sources to add
-         * @return this instance
+         * @return this builder instance
          */
         public Builder filters(Collection<? extends HttpFiltersSource> val) {
             httpFiltersSources.addAll(val);
             return this;
         }
 
+        /**
+         * Configures the collector instance not to use an upstream proxy.
+         * This is the default.
+         * @return this builder instance
+         */
         public Builder noUpstreamProxy() {
             return upstreamProxy(BmpConfigurator.noUpstreamProxy());
         }
@@ -142,11 +169,14 @@ public interface TrafficCollector {
             return this;
         }
 
-        private static HostAndPort literalize(InetSocketAddress socketAddress) {
-            if (socketAddress == null) {
-                return null;
-            }
-            return HostAndPort.fromParts(socketAddress.getHostString(), socketAddress.getPort());
+        /**
+         * @deprecated use {@link #upstreamProxy(UpstreamProxyDefinition)}
+         * @see UriProxySpecification#toUpstreamProxyDefinition()
+         */
+        @Deprecated
+        public Builder upstreamProxy(URI proxySpecification) {
+            requireNonNull(proxySpecification, "proxySpecification");
+            return upstreamProxy(UriProxySpecification.of(proxySpecification).toUpstreamProxyDefinition());
         }
 
         /**
@@ -155,16 +185,25 @@ public interface TrafficCollector {
          * @param proxySpecification
          * @return this builder instance
          */
-        public Builder upstreamProxy(URI proxySpecification) {
+        public Builder upstreamProxy(UpstreamProxyDefinition proxySpecification) {
             this.upstreamConfigurator = BmpConfigurator.usingUpstreamProxy(proxySpecification);
             return this;
         }
 
+        /**
+         * Configures the collector to post-process the captured HAR file with the given instance.
+         * @param harPostProcessor
+         * @return this builder instance
+         */
         public Builder harPostProcessor(HarPostProcessor harPostProcessor) {
-            harPostProcessors.add(harPostProcessor);
+            harPostProcessors.add(requireNonNull(harPostProcessor, "harPostProcessor"));
             return this;
         }
 
+        /**
+         * Builds a collector instance.
+         * @return a new collector instance
+         */
         public TrafficCollector build() {
             return new TrafficCollectorImpl(webDriverFactory,
                     certificateAndKeySource, upstreamConfigurator,

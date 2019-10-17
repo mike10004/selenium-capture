@@ -4,7 +4,6 @@ import net.lightbody.bmp.BrowserMobProxy;
 import net.lightbody.bmp.mitm.CertificateAndKeySource;
 
 import javax.annotation.Nullable;
-import java.net.URI;
 
 import static java.util.Objects.requireNonNull;
 
@@ -35,17 +34,18 @@ interface BmpConfigurator {
      * @return a configurator
      */
     static BmpConfigurator noUpstreamProxy() {
-        return new BasicBmpConfigurator(null);
+        return new BasicBmpConfigurator(NoProxySpecification.getInstance().asUpstreamProxyDefinition());
     }
 
     /**
-     * Returns a configurator that configures a Browsermob proxy instance to use an upstream proxy specified by a URI.
-     * @param proxySpecUri URI that specifies the upstream proxy
+     * Returns a configurator that configures a Browsermob proxy instance to use an upstream proxy.
+     * @param upstreamProxyDefinition upstream proxy definition
      * @return a configurator instance
+     * @see UriProxySpecification#toUpstreamProxyDefinition()
      */
-    static BmpConfigurator usingUpstreamProxy(URI proxySpecUri) {
-        requireNonNull(proxySpecUri);
-        return new BasicBmpConfigurator(proxySpecUri);
+    static BmpConfigurator usingUpstreamProxy(UpstreamProxyDefinition upstreamProxyDefinition) {
+        requireNonNull(upstreamProxyDefinition);
+        return new BasicBmpConfigurator(upstreamProxyDefinition);
     }
 
 }

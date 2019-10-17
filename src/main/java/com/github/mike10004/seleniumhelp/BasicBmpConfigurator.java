@@ -7,34 +7,34 @@ import net.lightbody.bmp.mitm.CertificateAndKeySource;
 import org.littleshoot.proxy.ChainedProxyManager;
 
 import javax.annotation.Nullable;
-import java.net.URI;
+
+import static java.util.Objects.requireNonNull;
 
 class BasicBmpConfigurator implements BmpConfigurator {
 
-    @Nullable
-    private final URI upstreamProxyUri;
+    private final UpstreamProxyDefinition upstreamProxyDefinition;
 
-    public BasicBmpConfigurator(@Nullable URI upstreamProxyUri) {
-        this.upstreamProxyUri = upstreamProxyUri;
+    public BasicBmpConfigurator(UpstreamProxyDefinition upstreamProxyDefinition) {
+        this.upstreamProxyDefinition = requireNonNull(upstreamProxyDefinition, "upstreamProxyDefinition");
     }
 
     @Override
     public void configureUpstream(BrowserMobProxy bmp) {
-        if (upstreamProxyUri == null) {
+        if (upstreamProxyDefinition == null) {
             bmp.setChainedProxy(null);
             if (bmp instanceof BrowserMobProxyServer) {
                 ((BrowserMobProxyServer) bmp).setChainedProxyManager(null);
             }
         } else {
-            ProxySpecification proxySpecification = UriProxySpecification.of(upstreamProxyUri);
-            ChainedProxyManager chainedProxyManager = proxySpecification.toUpstreamProxy();
+            ChainedProxyManager chainedProxyManager = upstreamProxyDefinition.createUpstreamProxy();
             ((BrowserMobProxyServer)bmp).setChainedProxyManager(chainedProxyManager);
         }
     }
 
     @Override
     public WebdrivingConfig createWebdrivingConfig(BrowserMobProxy bmp, @Nullable CertificateAndKeySource certificateAndKeySource) {
-        ProxySpecification proxy = ProxySpecification.throughSocketAddress(BrowserMobs.resolveSocketAddress(bmp));
+        WebdrivingProxyDefinition proxy = ProxyDefinitionBuilder.through(BrowserMobs.resolveSocketAddress(bmp))
+                .buildWebdrivingProxyDefinition();
         return WebdrivingConfigs.builder()
                 .proxy(proxy)
                 .certificateAndKeySource(certificateAndKeySource)
@@ -44,7 +44,7 @@ class BasicBmpConfigurator implements BmpConfigurator {
     @Override
     public String toString() {
         MoreObjects.ToStringHelper h = MoreObjects.toStringHelper(this);
-        if (upstreamProxyUri != null) h.add("upstreamProxyUri", upstreamProxyUri);
+        h.add("upstreamProxyDefinition", upstreamProxyDefinition);
         return h.toString();
     }
 }

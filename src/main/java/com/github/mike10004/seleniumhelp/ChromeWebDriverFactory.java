@@ -97,10 +97,10 @@ public class ChromeWebDriverFactory extends EnvironmentWebDriverFactory {
      * @param config the config instance
      */
     protected void configureProxy(ChromeOptions options, WebdrivingConfig config) {
-        @Nullable ProxySpecification proxySpecification = config.getProxySpecification();
+        @Nullable WebdrivingProxyDefinition proxySpecification = config.getProxySpecification();
         @Nullable org.openqa.selenium.Proxy seleniumProxy = null;
         if (proxySpecification != null) {
-            seleniumProxy = maybeModifyBypassList(proxySpecification.createSeleniumProxy());
+            seleniumProxy = maybeModifyBypassList(proxySpecification.createWebdrivingProxy());
         }
         options.setProxy(seleniumProxy);
     }
