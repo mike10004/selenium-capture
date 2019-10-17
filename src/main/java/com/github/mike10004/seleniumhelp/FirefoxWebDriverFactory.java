@@ -48,6 +48,7 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
     private final InstanceConstructor<? extends WebDriver> constructor;
     private final boolean headless;
     private final java.util.logging.Level webdriverLogLevel;
+    private final Supplier<FirefoxOptions> optionsInstantiator;
 
     @SuppressWarnings("unused")
     public FirefoxWebDriverFactory() {
@@ -66,6 +67,7 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
         this.constructor = requireNonNull(builder.instanceConstructor);
         this.headless = builder.headless;
         this.webdriverLogLevel = builder.webdriverLogLevel;
+        this.optionsInstantiator = builder.optionsInstantiator;
     }
 
     protected ImmutableList<DeserializableCookie> getCookies() {
@@ -82,7 +84,8 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
     }
 
     protected FirefoxOptions createFirefoxOptions() {
-        return new FirefoxOptions();
+        FirefoxOptions options = optionsInstantiator.get();
+        return options;
     }
 
     private ServicedSession createWebDriverMaybeWithProxy(WebdrivingConfig config) throws IOException {
@@ -111,19 +114,9 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
         }
         actions.addAll(profileFolderActions);
         FirefoxProfile profile = createFirefoxProfile(actions);
-        profile.setPreference("extensions.getAddons.cache.enabled", false);
-        profile.setPreference("media.gmp-gmpopenh264.enabled", false);
-        profile.setPreference("browser.newtabpage.enabled", false);
-        profile.setPreference("extensions.screenshots.disabled", true);
-        profile.setPreference("extensions.screenshots.upload-disabled", true);
-        /*
-         * Some protected issue in the Firefox bugzilla was resolved by requiring this
-         * additional preference be set. See:
-         * * https://superuser.com/a/1469276/278576
-         * * https://bugzilla.mozilla.org/show_bug.cgi?id=1535581
-         */
-        profile.setPreference("network.proxy.allow_hijacking_localhost", true);
-        setAutomaticConnectionPrefs(profile);
+        FirefoxProfilePreferenceConfigurator profileConfigurator = new FirefoxProfilePreferenceConfigurator();
+        profileConfigurator.disableSomeMediaSupport(profile);
+        profileConfigurator.avoidAutomaticConnections(profile);
         applyAdditionalPreferences(profilePreferences, config, certificateAndKeySource, profile);
         for (FirefoxProfileAction profileAction : profileActions) {
             profileAction.perform(profile);
@@ -190,44 +183,65 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
                 value = String.join(FIREFOX_PROXY_BYPASS_RULE_DELIM, bypasses);
             }
             profile.setPreference("network.proxy.no_proxies_on", value);
+            /*
+             * Some protected issue in the Firefox bugzilla was resolved by requiring this
+             * additional preference be set. See:
+             * * https://superuser.com/a/1469276/278576
+             * * https://bugzilla.mozilla.org/show_bug.cgi?id=1535581
+             *
+             * TODO: decide whether to refrain from setting this if our bypass list actually does include any loopback address
+             */
+            profile.setPreference("network.proxy.allow_hijacking_localhost", true);
+
         }
 
         private static final String FIREFOX_PROXY_BYPASS_RULE_DELIM = ",";
 
     }
 
-    private void setAutomaticConnectionPrefs(FirefoxProfile profile) {
-        profile.setPreference("media.gmp-manager.url", "");
+    public static class FirefoxProfilePreferenceConfigurator {
 
-        // https://support.mozilla.org/en-US/kb/how-stop-firefox-making-automatic-connections?redirectlocale=en-US&redirectslug=Firefox+makes+unrequested+connections
-        profile.setPreference("browser.safebrowsing.provider.mozilla.updateURL", "");
-        profile.setPreference("app.update.auto", false);
-        profile.setPreference("app.update.url", "");
-        profile.setPreference("browser.search.geoip.url", "");
-        profile.setPreference("network.prefetch-next", false);
-        profile.setPreference("network.http.speculative-parallel-limit", 0);
-        profile.setPreference("extensions.update.enabled", false);
-        profile.setPreference("extensions.update.url", "");
-        profile.setPreference("extensions.update.background.url", "");
-        profile.setPreference("extensions.systemAddon.update.enabled", false);
-        profile.setPreference("extensions.systemAddon.update.url", "");
-        profile.setPreference("toolkit.telemetry.updatePing.enabled", false);
-        profile.setPreference("services.sync.prefs.sync.browser.search.update", false);
-        profile.setPreference("identity.fxaccounts.enabled", false);
-        profile.setPreference("extensions.blocklist.enabled", false);
-        profile.setPreference("browser.safebrowsing.downloads.remote.enabled", false);
-        profile.setPreference("network.dns.disablePrefetch", true);
-        profile.setPreference("browser.aboutHomeSnippets.updateUrl", "");
-        profile.setPreference("browser.startup.homepage_override.mstone", "ignore");
-        profile.setPreference("extensions.getAddons.cache.enabled", false);
-        profile.setPreference("browser.selfsupport.url", "");
-        profile.setPreference("browser.casting.enabled", false);
-        profile.setPreference("network.captive-portal-service.enabled", false);
+        public void disableSomeMediaSupport(FirefoxProfile profile) {
+            profile.setPreference("extensions.getAddons.cache.enabled", false);
+            profile.setPreference("media.gmp-gmpopenh264.enabled", false);
+            profile.setPreference("browser.newtabpage.enabled", false);
+            profile.setPreference("extensions.screenshots.disabled", true);
+            profile.setPreference("extensions.screenshots.upload-disabled", true);
+        }
 
-        // https://support.mozilla.org/en-US/questions/1148198
-        profile.setPreference("security.ssl.enable_ocsp_stapling", false);
-        // https://bugzilla.mozilla.org/show_bug.cgi?id=110161
-        profile.setPreference("security.OCSP.enabled", 0);
+        public void avoidAutomaticConnections(FirefoxProfile profile) {
+            profile.setPreference("media.gmp-manager.url", "");
+
+            // https://support.mozilla.org/en-US/kb/how-stop-firefox-making-automatic-connections?redirectlocale=en-US&redirectslug=Firefox+makes+unrequested+connections
+            profile.setPreference("browser.safebrowsing.provider.mozilla.updateURL", "");
+            profile.setPreference("app.update.auto", false);
+            profile.setPreference("app.update.url", "");
+            profile.setPreference("browser.search.geoip.url", "");
+            profile.setPreference("network.prefetch-next", false);
+            profile.setPreference("network.http.speculative-parallel-limit", 0);
+            profile.setPreference("extensions.update.enabled", false);
+            profile.setPreference("extensions.update.url", "");
+            profile.setPreference("extensions.update.background.url", "");
+            profile.setPreference("extensions.systemAddon.update.enabled", false);
+            profile.setPreference("extensions.systemAddon.update.url", "");
+            profile.setPreference("toolkit.telemetry.updatePing.enabled", false);
+            profile.setPreference("services.sync.prefs.sync.browser.search.update", false);
+            profile.setPreference("identity.fxaccounts.enabled", false);
+            profile.setPreference("extensions.blocklist.enabled", false);
+            profile.setPreference("browser.safebrowsing.downloads.remote.enabled", false);
+            profile.setPreference("network.dns.disablePrefetch", true);
+            profile.setPreference("browser.aboutHomeSnippets.updateUrl", "");
+            profile.setPreference("browser.startup.homepage_override.mstone", "ignore");
+            profile.setPreference("extensions.getAddons.cache.enabled", false);
+            profile.setPreference("browser.selfsupport.url", "");
+            profile.setPreference("browser.casting.enabled", false);
+            profile.setPreference("network.captive-portal-service.enabled", false);
+
+            // https://support.mozilla.org/en-US/questions/1148198
+            profile.setPreference("security.ssl.enable_ocsp_stapling", false);
+            // https://bugzilla.mozilla.org/show_bug.cgi?id=110161
+            profile.setPreference("security.OCSP.enabled", 0);
+        }
     }
 
     /**
@@ -410,8 +424,14 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
         private InstanceConstructor<? extends WebDriver> instanceConstructor = FirefoxDriver::new;
         private boolean headless = false;
         private java.util.logging.Level webdriverLogLevel = null;
+        private Supplier<FirefoxOptions> optionsInstantiator = FirefoxOptions::new;
 
         private Builder() {
+        }
+
+        public Builder optionsInstantiator(Supplier<FirefoxOptions> optionsInstantiator) {
+            this.optionsInstantiator = requireNonNull(optionsInstantiator);
+            return this;
         }
 
         public Builder webdriverLogLevel(java.util.logging.Level webdriverLogLevel) {

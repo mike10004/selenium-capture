@@ -139,7 +139,7 @@ public class TrafficCollectorImpl implements TrafficCollector {
         }
     }
 
-    private class MonitorFiltersSource extends HttpFiltersSourceAdapter {
+    private static class MonitorFiltersSource extends HttpFiltersSourceAdapter {
 
         private final TrafficMonitor monitor;
 
@@ -204,8 +204,10 @@ public class TrafficCollectorImpl implements TrafficCollector {
         MoreObjects.ToStringHelper h = MoreObjects.toStringHelper(this);
         h.add("webDriverFactory", webDriverFactory);
         if (certificateAndKeySource != null) h.add("certificateAndKeySource", certificateAndKeySource);
-        if (httpFiltersSources != null) h.add("httpFiltersSources", httpFiltersSources);
-        if (upstreamConfigurator != null) h.add("upstreamConfigurator", upstreamConfigurator);
+        if (!httpFiltersSources.isEmpty()) {
+            h.add("httpFiltersSources", httpFiltersSources);
+        }
+        h.add("upstreamConfigurator", upstreamConfigurator);
         if (interceptingProxyInstantiator != null) {
             h.add("interceptingProxyInstantiator", interceptingProxyInstantiator);
         }
