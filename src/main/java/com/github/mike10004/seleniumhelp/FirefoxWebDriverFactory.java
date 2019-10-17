@@ -14,6 +14,7 @@ import org.apache.commons.io.FileUtils;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.firefox.FirefoxBinary;
 import org.openqa.selenium.firefox.FirefoxDriver;
+import org.openqa.selenium.firefox.FirefoxDriverLogLevel;
 import org.openqa.selenium.firefox.FirefoxOptions;
 import org.openqa.selenium.firefox.FirefoxProfile;
 import org.openqa.selenium.firefox.GeckoDriverService;
@@ -46,6 +47,7 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
     private final Path scratchDir;
     private final InstanceConstructor<? extends WebDriver> constructor;
     private final boolean headless;
+    private final java.util.logging.Level webdriverLogLevel;
 
     @SuppressWarnings("unused")
     public FirefoxWebDriverFactory() {
@@ -63,6 +65,7 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
         this.profileFolderActions = ImmutableList.copyOf(builder.profileFolderActions);
         this.constructor = requireNonNull(builder.instanceConstructor);
         this.headless = builder.headless;
+        this.webdriverLogLevel = builder.webdriverLogLevel;
     }
 
     protected ImmutableList<DeserializableCookie> getCookies() {
@@ -126,12 +129,30 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
             profileAction.perform(profile);
         }
         FirefoxOptions options = createFirefoxOptions();
+        configureLogging(options);
         configureProxy(options, profile, config);
         options.setProfile(profile);
         if (headless) {
             options.addArguments("-headless");
         }
         return options;
+    }
+
+    /**
+     * As of v0.52, we set geckodriver log level WARN by default. The old behavior was to refrain from
+     * setting the log level at all. To revert to that behavior, set this system property to {@code true}.
+     */
+    public static final String SYSPROP_FIREFOX_LOG_LEVEL_LEGACY_BEHAVIOR = "selenium-capture.firefox.logLevel.legacy";
+
+    private void configureLogging(FirefoxOptions options) {
+        if (webdriverLogLevel != null) {
+            options.setLogLevel(FirefoxDriverLogLevel.fromLevel(webdriverLogLevel));
+        } else {
+            boolean legacy = Boolean.parseBoolean(System.getProperty(SYSPROP_FIREFOX_LOG_LEVEL_LEGACY_BEHAVIOR));
+            if (!legacy) {
+                options.setLogLevel(FirefoxDriverLogLevel.WARN);
+            }
+        }
     }
 
     private void configureProxy(FirefoxOptions options, FirefoxProfile profile, WebdrivingConfig config) {
@@ -387,9 +408,15 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
         private List<FirefoxProfileAction> profileActions = new ArrayList<>();
         private List<FirefoxProfileFolderAction> profileFolderActions = new ArrayList<>();
         private InstanceConstructor<? extends WebDriver> instanceConstructor = FirefoxDriver::new;
-        private boolean headless;
+        private boolean headless = false;
+        private java.util.logging.Level webdriverLogLevel = null;
 
         private Builder() {
+        }
+
+        public Builder webdriverLogLevel(java.util.logging.Level webdriverLogLevel) {
+            this.webdriverLogLevel = webdriverLogLevel;
+            return this;
         }
 
         /**
