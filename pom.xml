@@ -4,11 +4,11 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.github.mike10004</groupId>
-    <artifactId>selenium-help</artifactId>
-    <version>0.51</version>
-    <name>selenium-help</name>
+    <artifactId>selenium-capture</artifactId>
+    <version>0.52-SNAPSHOT</version>
+    <name>selenium-capture</name>
     <description>Library that helps you use Selenium WebDriver in Java</description>
-    <url>https://github.com/mike10004/selenium-help</url>
+    <url>https://github.com/mike10004/selenium-capture</url>
     <inceptionYear>2016</inceptionYear>
     <licenses>
         <license>
@@ -26,9 +26,9 @@
         </developer>
     </developers>
     <scm>
-        <connection>scm:git:https://github.com/mike10004/selenium-help.git</connection>
-        <developerConnection>scm:git:git@github.com:mike10004/selenium-help.git</developerConnection>
-        <url>https://github.com/mike10004/selenium-help</url>
+        <connection>scm:git:https://github.com/mike10004/selenium-capture.git</connection>
+        <developerConnection>scm:git:git@github.com:mike10004/selenium-capture.git</developerConnection>
+        <url>https://github.com/mike10004/selenium-capture</url>
     </scm>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
