@@ -1,6 +1,23 @@
 Changelog
 =========
 
+0.52
+----
+
+* change project name from selenium-help to selenium-capture
+* clarify distinction between upstream proxy and webdriving proxy
+* upgrade netty version
+
+0.51
+----
+
+* upgrade dependencies
+
+0.50
+----
+
+* improve proxy specification API
+
 0.49
 ----
 
