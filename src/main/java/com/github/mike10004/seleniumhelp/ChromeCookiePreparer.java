@@ -35,9 +35,13 @@ class ChromeCookiePreparer implements CookiePreparer {
     private final ChromeCookieImplanter implanterClient;
 
     public ChromeCookiePreparer(Path scratchDir, Supplier<? extends Collection<DeserializableCookie>> cookiesSupplier) {
+        this(scratchDir, cookiesSupplier, new ChromeCookieImplanter());
+    }
+
+    public ChromeCookiePreparer(Path scratchDir, Supplier<? extends Collection<DeserializableCookie>> cookiesSupplier, ChromeCookieImplanter implanterClient) {
         this.scratchDir = checkNotNull(scratchDir);
         this.cookiesSupplier = checkNotNull(cookiesSupplier);
-        implanterClient = new ChromeCookieImplanter();
+        this.implanterClient = checkNotNull(implanterClient);
     }
 
     @Override
