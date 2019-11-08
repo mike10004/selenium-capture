@@ -6,13 +6,17 @@ addons:
     - netpbm
     - firefox
     - google-chrome-stable
+notifications:
+  email: false
+cache:
+  directories:
+    - $HOME/.m2
+    - /var/cache/apt/archives
 before_install:
   - dpkg-query -l xvfb chromium-browser sqlite3 firefox google-chrome-stable || true
   - which firefox
   - firefox --version
   - which google-chrome
   - google-chrome --version
-notifications:
-  email: false
 install: true
 script: mvn --settings travis-maven-settings.xml -U --batch-mode --quiet -P travis install
