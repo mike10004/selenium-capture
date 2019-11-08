@@ -115,6 +115,18 @@
             </properties>
         </profile>
         <profile>
+            <id>chrome-78</id>
+            <properties>
+                <chromedriver.version>78.0.3904.70</chromedriver.version>
+            </properties>
+        </profile>
+        <profile>
+            <id>chrome-79</id>
+            <properties>
+                <chromedriver.version>79.0.3945.16</chromedriver.version>
+            </properties>
+        </profile>
+        <profile>
             <id>show-browser-window</id>
             <properties>
                 <tests.showBrowserWindow>true</tests.showBrowserWindow>

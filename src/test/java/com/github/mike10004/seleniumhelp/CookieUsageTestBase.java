@@ -94,6 +94,10 @@ public abstract class CookieUsageTestBase {
                 }
                 cookieHeaderValues.putAll(request.url.toString(), request.getHeaderValues(HttpHeaders.COOKIE).collect(Collectors.toList()));
             }).har;
+        } catch (WebDriverException e) {
+            System.err.println("exerciseCookieCapabilities failed due to " + e.getClass().getName());
+            e.printStackTrace(System.err);
+            throw e;
         }
         browsingFinished(cookieHeaderValues, cookieGetUrl, har, cookiesSetByServer);
     }
