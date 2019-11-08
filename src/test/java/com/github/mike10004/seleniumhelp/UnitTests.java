@@ -12,7 +12,9 @@ import io.github.bonigarcia.wdm.DriverManagerType;
 import io.github.mike10004.nitsick.SettingSet;
 import org.apache.commons.text.StringEscapeUtils;
 import org.jsoup.Jsoup;
+import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.Platform;
+import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.firefox.FirefoxBinary;
 import org.openqa.selenium.os.ExecutableFinder;
@@ -26,6 +28,7 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
@@ -347,5 +350,39 @@ public class UnitTests {
                 .headless(!isShowBrowserWindowEnabled())
                 .putPreferences(UnitTests.createFirefoxPreferences())
                 .build();
+    }
+
+    @Nullable
+    public static String getPageSourceOrNull(WebDriver driver) {
+        return tryGet(driver::getPageSource, null, ignore ->{});
+    }
+
+    @Nullable
+    public static String getDomOrNull(WebDriver driver) {
+        return tryGet(() -> {
+            return (String) ((JavascriptExecutor)driver).executeScript("return document.getElementsByTagName('html')[0].innerHTML");
+        }, null, ignore -> {});
+    }
+
+    @SuppressWarnings("SameParameterValue")
+    private static <T> T tryGet(Supplier<T> getter, T defaultValue, Consumer<? super RuntimeException> errorListener) {
+        try {
+            return getter.get();
+        } catch (RuntimeException e) {
+            errorListener.accept(e);
+        }
+        return defaultValue;
+    }
+
+    public static void dumpState(WebDriver driver, PrintStream err) {
+        err.println("============== +PAGE URL  ============");
+        err.println(tryGet(driver::getCurrentUrl, null, ignore -> {}));
+        err.println("============== -PAGE URL ============");
+        err.println("============== +PAGE SOURCE ============");
+        err.println(getPageSourceOrNull(driver));
+        err.println("============== -PAGE SOURCE ============");
+        err.println("============== +PAGE DOM ============");
+        err.println(getDomOrNull(driver));
+        err.println("============== -PAGE DOM ============");
     }
 }
