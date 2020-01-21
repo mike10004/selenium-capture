@@ -6,9 +6,11 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import io.github.bonigarcia.wdm.DriverManagerType;
 import io.github.bonigarcia.wdm.WebDriverManager;
+import org.openqa.selenium.chrome.ChromeOptions;
 
 import java.net.URI;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -35,10 +37,21 @@ public interface WebDriverTestParameter {
     }
 
     class ChromeTestParameter implements WebDriverTestParameter {
+
+        private final Consumer<ChromeOptions> chromeOptionsModifier;
+
+        public ChromeTestParameter() {
+            this(o -> {});
+        }
+
+        public ChromeTestParameter(Consumer<ChromeOptions> chromeOptionsModifier) {
+            this.chromeOptionsModifier = chromeOptionsModifier;
+        }
+
         @Override
         public WebDriverFactory createWebDriverFactory(XvfbRule xvfb) {
             return ChromeWebDriverFactory.builder()
-                    .chromeOptions(UnitTests.createChromeOptions())
+                    .chromeOptions(UnitTests.createChromeOptions(chromeOptionsModifier))
                     .environment(xvfb.getController().newEnvironment())
                     .build();
         }

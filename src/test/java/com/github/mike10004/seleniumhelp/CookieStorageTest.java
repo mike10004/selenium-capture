@@ -30,7 +30,7 @@ public class CookieStorageTest {
     public void testChrome() throws Exception {
         UnitTests.setupRecommendedChromeDriver();
         ChromeWebDriverFactory factory = ChromeWebDriverFactory.builder()
-                .chromeOptions(UnitTests.createChromeOptions())
+                .chromeOptions(UnitTests.createChromeOptions(o -> o.setAcceptInsecureCerts(true)))
                 .environment(xvfb.getController()::newEnvironment)
                 .build();
         testWithDriverFactory(factory);

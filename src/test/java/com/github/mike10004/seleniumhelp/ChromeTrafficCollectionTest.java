@@ -84,7 +84,9 @@ public class ChromeTrafficCollectionTest {
         private void testhttps(boolean headless) throws Exception {
             Assume.assumeFalse("headless tests disabled", UnitTests.isHeadlessChromeTestsDisabled());
             WebDriverFactory webDriverFactory = ChromeWebDriverFactory.builder()
-                    .chromeOptions(UnitTests.createChromeOptions())
+                    .chromeOptions(UnitTests.createChromeOptions(options -> {
+                        options.setAcceptInsecureCerts(true);
+                    }))
                     .headless()
                     .environment(createEnvironmentSupplierForDisplay(headless))
                     .build();

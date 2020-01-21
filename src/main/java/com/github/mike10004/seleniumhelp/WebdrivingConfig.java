@@ -73,9 +73,9 @@ public interface WebdrivingConfig {
          * This is normally used internally to specify the intercepting proxy that will
          * capture traffic.
          * @param proxySpecification
-         * @return
+         * @return this builder instance
          */
-        Builder proxy(WebdrivingProxyDefinition proxySpecification) {
+        public Builder proxy(WebdrivingProxyDefinition proxySpecification) {
             this.proxySpecification = proxySpecification;
             return this;
         }
@@ -92,7 +92,7 @@ public interface WebdrivingConfig {
          * @deprecated use {@link ProxyDefinitionBuilder#through(FullSocketAddress)} and {@link #proxy(ProxySpecification)}
          */
         @Deprecated
-        Builder proxy(HostAndPort proxyAddress, List<String> proxyBypasses) {
+        public Builder proxy(HostAndPort proxyAddress, List<String> proxyBypasses) {
             WebdrivingProxyDefinition ps = ProxyDefinitionBuilder.through(FullSocketAddress.fromHostAndPort(proxyAddress))
                     .addProxyBypasses(proxyBypasses)
                     .buildWebdrivingProxyDefinition();

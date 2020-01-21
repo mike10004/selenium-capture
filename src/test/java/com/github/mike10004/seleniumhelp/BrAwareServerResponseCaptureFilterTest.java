@@ -33,7 +33,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 /**
- * Test for the brotli-aware filter. Uses Chrome because JBrowserDriver does not support brotli decoding.
+ * Test for the brotli-aware filter. Tests with Firefox and Chrome.
  */
 @RunWith(Parameterized.class)
 public class BrAwareServerResponseCaptureFilterTest {
@@ -52,7 +52,7 @@ public class BrAwareServerResponseCaptureFilterTest {
 
     @Parameterized.Parameters
     public static List<WebDriverTestParameter> params() {
-        return WebDriverTestParameter.all();
+        return Arrays.asList(new WebDriverTestParameter.FirefoxTestParameter(), new WebDriverTestParameter.ChromeTestParameter(o -> o.setAcceptInsecureCerts(true)));
     }
 
     @Before
@@ -99,7 +99,7 @@ public class BrAwareServerResponseCaptureFilterTest {
         }
     }
 
-    private static final String SYSPROP_REMOTE_BROLIT_RESOURCE_URL = "selenium-help.tests.remoteBrotliResourceUrl";
+    private static final String SYSPROP_REMOTE_BROLIT_RESOURCE_URL = "selenium-capture.tests.remoteBrotliResourceUrl";
     private static final String DEFAULT_REMOTE_BROTLI_RESOURCE_URL = "https://httpbin.org/brotli";
 
     @Test
