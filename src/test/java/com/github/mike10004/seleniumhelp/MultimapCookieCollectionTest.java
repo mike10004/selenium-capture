@@ -81,7 +81,7 @@ public class MultimapCookieCollectionTest {
         Instant creationDate = start.toInstant().plus(duration, ChronoUnit.MILLIS);
         DeserializableCookie d = DeserializableCookie.builder(name, value)
                 .domain(domain)
-                .creationDate(Date.from(creationDate))
+                .creationDate(creationDate)
                 .path(path).build();
         return d;
     }

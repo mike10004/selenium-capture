@@ -2,7 +2,6 @@ package com.github.mike10004.seleniumhelp;
 
 import com.google.common.net.HttpHeaders;
 import org.apache.commons.lang3.builder.EqualsBuilder;
-import org.apache.http.cookie.ClientCookie;
 import org.apache.http.cookie.CookieOrigin;
 import org.apache.http.cookie.CookieSpec;
 import org.apache.http.cookie.MalformedCookieException;
@@ -12,11 +11,11 @@ import org.apache.http.protocol.BasicHttpContext;
 import org.junit.Test;
 
 import java.net.URI;
+import java.util.Date;
 import java.util.List;
 
 import static com.google.common.base.Preconditions.checkState;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 /**
  * Tests for cookie converters. We can't test that there is perfect lossless
@@ -62,7 +61,7 @@ public class SeleniumCookieConverterTest {
     private static boolean isEqualEnough(DeserializableCookie a, org.openqa.selenium.Cookie b) {
         EqualsBuilder eq = new EqualsBuilder()
                 .append(b.getDomain(), a.getDomain())
-                .append(b.getExpiry(), a.getExpiryDate())
+                .append(b.getExpiry(), a.getExpiryAsDate())
                 .append(b.getName(), a.getName())
                 .append(b.getPath(), a.getPath())
                 .append(b.getValue(), a.getValue())
@@ -75,7 +74,10 @@ public class SeleniumCookieConverterTest {
         DeserializableCookie.Builder c = DeserializableCookie.builder(reference.getName(), reference.getValue());
         c.setComment(reference.getComment());
         c.setDomain(reference.getDomain());
-        c.setExpiryDate(reference.getExpiryDate());
+        Date refExpiryDate = reference.getExpiryDate();
+        if (refExpiryDate != null) {
+            c.expiry(refExpiryDate.toInstant());
+        }
         c.setPath(reference.getPath());
         c.setSecure(reference.isSecure());
         return c.build();

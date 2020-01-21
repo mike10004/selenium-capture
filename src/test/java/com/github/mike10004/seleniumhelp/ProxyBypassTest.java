@@ -31,7 +31,6 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebDriverException;
 import org.openqa.selenium.WebElement;
 
-import java.io.IOException;
 import java.net.URI;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -121,8 +120,8 @@ public class ProxyBypassTest {
                         .map(Object::toString)
                         .filter(bypassFilter)
                         .collect(Collectors.toList());
-                WebdrivingConfig config = WebdrivingConfigs.builder()
-                        .proxy(HostAndPort.fromParts(proxyHost, proxyPort), bypasses)
+                WebdrivingConfig config = WebdrivingConfig.builder()
+                        .proxy(ProxyDefinitionBuilder.through(FullSocketAddress.define(proxyHost, proxyPort)).addProxyBypasses(bypasses).buildWebdrivingProxyDefinition())
                         .build();
                 URI[] urls = {
                         URI.create(String.format("http://%s/", targetSocketAddress1)),

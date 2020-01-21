@@ -139,7 +139,7 @@ public class Bys {
             return new Predicate<String>() {
                 @Override
                 public boolean test(@Nullable String input) {
-                    return input != null && caseInsensitiveText.equalsIgnoreCase(input);
+                    return caseInsensitiveText.equalsIgnoreCase(input);
                 }
 
                 @Override
@@ -159,7 +159,7 @@ public class Bys {
             return new Predicate<String>() {
                 @Override
                 public boolean test(@Nullable String input) {
-                    return input != null && StringUtils.getLevenshteinDistance(reference, input) <= max;
+                    return input != null && org.apache.commons.text.similarity.LevenshteinDistance.getDefaultInstance().apply(reference, input) <= max;
                 }
             };
         }
@@ -186,7 +186,7 @@ public class Bys {
             return valueIsUriWithPath(Predicate.isEqual(requiredPath));
         }
 
-       public static Predicate<String> valueIsUriWithPath(final Predicate<String> pathRequirement) {
+        public static Predicate<String> valueIsUriWithPath(final Predicate<String> pathRequirement) {
             checkNotNull(pathRequirement, "pathRequirement");
             return new Predicate<String>() {
                 @Override

@@ -45,7 +45,7 @@ public class ImmutableHttpRequest extends ImmutableHttpMessage {
     public ImmutableMultimap<String, String> parseQueryParams(Charset charset) {
         synchronized (paramsLock) {
             if (queryParams == null) {
-                List<NameValuePair> nameValuePairs = URLEncodedUtils.parse(url, charset.name());
+                List<NameValuePair> nameValuePairs = URLEncodedUtils.parse(url, charset);
                 ImmutableMultimap.Builder<String, String> b = ImmutableMultimap.builder();
                 for (NameValuePair nameValuePair : nameValuePairs) {
                     b.put(Strings.nullToEmpty(nameValuePair.getName()), Strings.nullToEmpty(nameValuePair.getValue()));

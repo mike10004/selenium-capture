@@ -25,7 +25,7 @@ public class RFC6265SetCookieHeaderParserTest {
         assertEquals("domain", "www.google.com", c.getDomain());
         assertEquals("domain", ".google.com", c.getDomainAttribute());
         assertEquals("path", "/", c.getPath());
-        assertNotNull("expiry null", c.getExpiryDate());
+        assertNotNull("expiry null", c.getExpiryInstant());
     }
 
 }

@@ -8,10 +8,6 @@ import com.google.common.net.HostAndPort;
 import com.google.common.net.MediaType;
 import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.handler.codec.http.HttpObject;
-import io.netty.handler.codec.http.HttpRequest;
-import io.netty.handler.codec.http.HttpResponse;
 import net.lightbody.bmp.core.har.HarContent;
 import net.lightbody.bmp.core.har.HarEntry;
 import net.lightbody.bmp.core.har.HarResponse;
@@ -22,11 +18,7 @@ import org.apache.http.client.utils.URIBuilder;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
-import org.junit.Rule;
 import org.littleshoot.proxy.ChainedProxyType;
-import org.littleshoot.proxy.HttpFilters;
-import org.littleshoot.proxy.HttpFiltersAdapter;
-import org.littleshoot.proxy.HttpFiltersSourceAdapter;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
@@ -247,7 +239,7 @@ public class CollectionTestBase {
         TrafficCollectorImpl.Builder tcBuilder = TrafficCollector.builder(webDriverFactory);
         URI upstreamProxy = new TestProxySupplier().get();
         if (upstreamProxy != null) {
-            tcBuilder.upstreamProxy(upstreamProxy);
+            tcBuilder.upstreamProxy(UriProxySpecification.of(upstreamProxy).toUpstreamProxyDefinition());
         }
         if ("https".equals(protocol)) {
             CertificateAndKeySource certificateAndKeySource = TestCertificateAndKeySource.create();

@@ -27,7 +27,7 @@ public interface CookieCollection {
     }
 
     static Ordering<DeserializableCookie> orderingByCreationDate() {
-        return Ordering.natural().onResultOf(DeserializableCookie::getCreationDate).nullsFirst();
+        return Ordering.natural().onResultOf(DeserializableCookie::getCreationInstant).nullsFirst();
     }
 
     default ImmutableList<DeserializableCookie> makeCookieList(Comparator<? super DeserializableCookie> ordering) {

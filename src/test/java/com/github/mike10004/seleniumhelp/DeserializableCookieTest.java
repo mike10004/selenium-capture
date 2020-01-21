@@ -43,13 +43,13 @@ public class DeserializableCookieTest {
                 "  }";
         SimpleDateFormat sdf = new SimpleDateFormat("MMM dd, yyyy hh:mm:ss a");
         sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
-        Date expectedExpiryDate = sdf.parse(expiryStr);
+        Instant expectedExpiryDate = sdf.parse(expiryStr).toInstant();
         Gson gson = new Gson();
         DeserializableCookie cookie = gson.fromJson(json, DeserializableCookie.class);
-        assertEquals("expiry upon deserialization", expectedExpiryDate, cookie.getExpiryDate());
+        assertEquals("expiry upon deserialization", expectedExpiryDate, cookie.getExpiryInstant());
         json = gson.toJson(cookie);
         cookie = gson.fromJson(json, DeserializableCookie.class);
-        assertEquals("expiry after inversion", expectedExpiryDate, cookie.getExpiryDate());
+        assertEquals("expiry after inversion", expectedExpiryDate, cookie.getExpiryInstant());
     }
 
     @Test

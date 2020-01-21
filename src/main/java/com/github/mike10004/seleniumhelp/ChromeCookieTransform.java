@@ -5,6 +5,11 @@ import com.google.common.base.CharMatcher;
 import com.google.common.base.Strings;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
+import java.math.BigDecimal;
+import java.time.Instant;
+import java.util.Date;
+
 /**
  * Service class that transforms regular cookies into Chrome cookies.
  * Takes instances of {@link DeserializableCookie} as input and
@@ -19,12 +24,20 @@ class ChromeCookieTransform {
                 .value(input.getValue())
                 .domain(input.getBestDomainProperty())
                 .path(input.getPath())
-                .expirationDate(input.getExpiryDate())
+                .expirationDate(convertInstantToSecondsSinceEpoch(input.getExpiryInstant()))
                 .secure(input.isSecure())
                 .httpOnly(input.isHttpOnly())
                 .sameSite(ChromeCookie.SameSiteStatus.no_restriction)
                 .build();
         return output;
+    }
+
+    @Nullable
+    private static BigDecimal convertInstantToSecondsSinceEpoch(@Nullable Instant instant) {
+        if (instant != null) {
+            return BigDecimal.valueOf(instant.toEpochMilli()).scaleByPowerOfTen(-3);
+        }
+        return null;
     }
 
     private static CharMatcher dotMatcher = CharMatcher.is('.');

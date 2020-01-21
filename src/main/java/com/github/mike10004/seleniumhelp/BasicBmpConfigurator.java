@@ -35,7 +35,7 @@ class BasicBmpConfigurator implements BmpConfigurator {
     public WebdrivingConfig createWebdrivingConfig(BrowserMobProxy bmp, @Nullable CertificateAndKeySource certificateAndKeySource) {
         WebdrivingProxyDefinition proxy = ProxyDefinitionBuilder.through(BrowserMobs.resolveSocketAddress(bmp))
                 .buildWebdrivingProxyDefinition();
-        return WebdrivingConfigs.builder()
+        return WebdrivingConfig.builder()
                 .proxy(proxy)
                 .certificateAndKeySource(certificateAndKeySource)
                 .build();

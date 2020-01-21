@@ -6,6 +6,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
+import java.time.Instant;
 import java.util.Date;
 
 import static org.junit.Assert.*;
@@ -35,14 +36,14 @@ public class ChromeCookiePreparerTest {
 
     @Test
     public void ChromeCookieTransform_transform() {
-        Date expiryDate = new Date();
+        Instant expiryDate = Instant.now();
         DeserializableCookie d = DeserializableCookie.builder("foo", "bar").domain("example.com").expiry(expiryDate).build();
         ChromeCookieTransform transform = new ChromeCookieTransform();
         ChromeCookie c = transform.transform(d);
         assertEquals("name", d.getName(), c.name);
         assertEquals("value", d.getValue(), c.value);
         assertEquals("domain", d.getBestDomainProperty(), c.domain);
-        double expiryDateInSeconds = expiryDate.getTime() / 1000d;
+        double expiryDateInSeconds = expiryDate.toEpochMilli() / 1000d;
         assertEquals("expirationDate", expiryDateInSeconds, c.expirationDate.doubleValue(), 0.0001);
     }
 }

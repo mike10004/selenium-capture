@@ -30,9 +30,9 @@ public class ExplodedCookieConverterTest {
         assertEquals("name", ExampleCookieSource.name, cookie.getName());
         assertEquals("domain", ExampleCookieSource.originHost, cookie.getDomain());
         assertEquals("attribs", ExampleCookieSource.attribs, cookie.copyAttributes()); // not sure how to test this
-        assertEquals("expiry", truncateToSeconds(ExampleCookieSource.expiryDateMillisSinceEpoch), truncateToSeconds(cookie.getExpiryDate().getTime()));
-        assertEquals("created", truncateToSeconds(ExampleCookieSource.createdDateMillisSinceEpoch), truncateToSeconds(cookie.getCreationDate().getTime()));
-        assertEquals("accessed", truncateToSeconds(ExampleCookieSource.accessDateMillisSinceEpoch), truncateToSeconds(cookie.getLastAccessed().getTime()));
+        assertEquals("expiry", truncateToSeconds(ExampleCookieSource.expiryDateMillisSinceEpoch), truncateToSeconds(cookie.getExpiryInstant().toEpochMilli()));
+        assertEquals("created", truncateToSeconds(ExampleCookieSource.createdDateMillisSinceEpoch), truncateToSeconds(cookie.getCreationInstant().toEpochMilli()));
+        assertEquals("accessed", truncateToSeconds(ExampleCookieSource.accessDateMillisSinceEpoch), truncateToSeconds(cookie.getLastAccessedInstant().toEpochMilli()));
         assertEquals("path", ExampleCookieSource.path, cookie.getPath());
         assertEquals("comment", null, cookie.getComment());
         assertEquals("value", ExampleCookieSource.value, cookie.getValue());
@@ -45,6 +45,7 @@ public class ExplodedCookieConverterTest {
         ExplodedCookieConverter conv = new ExplodedCookieConverter();
         DeserializableCookie c = ExampleCookieSource.asDeserializableCookie();
         Map<String, Object> exploded = conv.reverse().convert(c);
+        assertNotNull(exploded);
         assertEquals("should not have any Date values", ImmutableSet.of(), exploded.entrySet().stream().filter(entry -> entry.getValue() instanceof Date).map(Map.Entry::getKey).collect(Collectors.toSet()));
         ImmutableMap<String, Object> expected = ExampleCookieSource.asExplodedCookie();
         assertThat("exploded", exploded, MapMatcher.expectingWithTruncatedMillis(expected));

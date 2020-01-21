@@ -56,10 +56,11 @@ public class ExplodedCookieConverter extends Converter<Map<String, Object>, Dese
 
         @Nullable
         protected JsonElement serializeWithAdapter(Object adapterPoly, String key, Object value) {
-            if (TypeAdapter.class.isInstance(adapterPoly)) {
+            if (adapterPoly instanceof TypeAdapter) {
+                //noinspection unchecked
                 return ((TypeAdapter)adapterPoly).toJsonTree(value);
             }
-            if (TypeAdapterFactory.class.isInstance(adapterPoly)) {
+            if (adapterPoly instanceof TypeAdapterFactory) {
                 TypeAdapter<?> adapter = ((TypeAdapterFactory)adapterPoly).create(gson, com.google.gson.reflect.TypeToken.get(value.getClass()));
                 if (adapter != null) {
                     return serializeWithAdapter(adapter, key, value);

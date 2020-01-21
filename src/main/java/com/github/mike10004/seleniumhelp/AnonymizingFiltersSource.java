@@ -1,6 +1,7 @@
 package com.github.mike10004.seleniumhelp;
 
 import com.google.common.collect.ImmutableSet;
+import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaders;
 import org.littleshoot.proxy.HttpFilters;
 import org.littleshoot.proxy.HttpFiltersSource;
@@ -19,7 +20,7 @@ public class AnonymizingFiltersSource extends HttpFiltersSourceAdapter {
     }
 
     private static final ImmutableSet<String> headersToRemove = ImmutableSet.of(
-            HttpHeaders.Names.VIA,
+            HttpHeaderNames.VIA.toString(),
             com.google.common.net.HttpHeaders.X_FORWARDED_FOR,
             com.google.common.net.HttpHeaders.X_FORWARDED_HOST,
             com.google.common.net.HttpHeaders.X_FORWARDED_PORT,

@@ -62,7 +62,7 @@ public class CookieStorageTest {
             assertNotNull("path", c.getPath());
             assertNotNull("domain", c.getDomain());
             assertNotNull("domain attribute", c.getDomainAttribute());
-            assertNotNull("expiry", c.getExpiryDate());
+            assertNotNull("expiry", c.getExpiryInstant());
         });
     }
 

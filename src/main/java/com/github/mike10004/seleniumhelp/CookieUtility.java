@@ -20,6 +20,7 @@ import javax.annotation.Nullable;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.text.SimpleDateFormat;
+import java.time.Instant;
 import java.util.Date;
 import java.util.TimeZone;
 import java.util.function.Function;
@@ -75,6 +76,7 @@ public class CookieUtility {
             return inner.compareTo(other);
         }
 
+        @SuppressWarnings("EqualsWhichDoesntCheckParameterClass") // because the delegate evaluates this
         @Override
         public boolean equals(Object obj) {
             return inner.equals(obj);
@@ -187,6 +189,7 @@ public class CookieUtility {
             return delegate.compareTo(other);
         }
 
+        @SuppressWarnings("EqualsWhichDoesntCheckParameterClass") // because we delegate
         @Override
         public boolean equals(Object obj) {
             return delegate.equals(obj);
@@ -284,6 +287,7 @@ public class CookieUtility {
      * @return a new URL identical to the specified URL, except using the specified host
      * @throws MalformedURLException if there is a problem creating the new URL
      */
+    @SuppressWarnings("SameParameterValue")
     private static URL getUrlWithNewHostAndPort(final URL u, final String newHost, final int newPort)
             throws MalformedURLException {
         return createNewUrl(u.getProtocol(), u.getUserInfo(), newHost, newPort, u.getPath(), u.getRef(), u.getQuery());
@@ -351,6 +355,10 @@ public class CookieUtility {
         dateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
     }
 
+    protected static String formatDateForHeader(Instant instant) {
+        return formatDateForHeader(Date.from(instant));
+    }
+
     protected static String formatDateForHeader(Date date) {
         checkNotNull(date, "date");
         return dateFormat.format(date);
@@ -372,8 +380,8 @@ public class CookieUtility {
         b.append(checkOnlyContains(c.getName(), legalNameChars));
         b.append('=');
         b.append(checkOnlyContains(c.getValue(), legalOtherChars));
-        if (c.getExpiryDate() != null) {
-            b.append("; Expires=").append(formatDateForHeader(c.getExpiryDate()));
+        if (c.getExpiryInstant() != null) {
+            b.append("; Expires=").append(formatDateForHeader(c.getExpiryInstant()));
         }
         @Nullable String domain = getDomain(c);
         if (domain != null) {

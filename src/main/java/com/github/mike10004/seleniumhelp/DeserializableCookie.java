@@ -139,11 +139,20 @@ public class DeserializableCookie implements ClientCookie {
     }
 
     /**
-     * @deprecated use {@link #getExpiryInstant()} instead
+     * @deprecated prefer {@link #getExpiryInstant()}; if a date object is required, use {@link #getExpiryAsDate()} but remember to handle a null return value
      */
     @Deprecated
     @Override
     public Date getExpiryDate() {
+        return cookieExpiryDate == null ? null : Date.from(cookieExpiryDate);
+    }
+
+    /**
+     * Gets the expiry instant as a date object.
+     * @return the expiry instant as a date, or null if expiry instant is not defined
+     */
+    @Nullable
+    public Date getExpiryAsDate() {
         return cookieExpiryDate == null ? null : Date.from(cookieExpiryDate);
     }
 
