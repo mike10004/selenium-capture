@@ -1,12 +1,15 @@
 package com.github.mike10004.seleniumhelp;
 
 import com.google.common.io.ByteSource;
+import com.google.common.io.ByteStreams;
 import com.google.common.io.Resources;
 import net.lightbody.bmp.mitm.CertificateAndKeySource;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -31,10 +34,15 @@ public class TestCertificateAndKeySource extends KeyStoreStreamCertificateSource
         return new TestCertificateAndKeySource();
     }
 
+    public static final String CERTIFICATE_DB_FILENAME = "cert8.db";
+
     @Override
-    public ByteSource getFirefoxCertificateDatabase() throws IOException {
+    public void establishCertificateTrust(File profileFolder) throws IOException {
         ByteSource gzipped = Resources.asByteSource(getClass().getResource(RESOURCE_DIR + "/cert8.db.gz"));
-        return new GunzippingByteSource(gzipped);
+        try (InputStream in = new GunzippingByteSource(gzipped).openStream();
+            OutputStream out = new FileOutputStream(CERTIFICATE_DB_FILENAME)) {
+            ByteStreams.copy(in, out);
+        }
     }
 
     private static class GunzippingByteSource extends ByteSource {

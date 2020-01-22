@@ -109,19 +109,29 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
             actions.add(new CookieInstallingProfileAction(cookies_, FirefoxCookieDb.getImporter(), scratchDir));
         }
         if (certificateAndKeySource instanceof FirefoxCompatibleCertificateSource) {
-            ByteSource certificateDbByteSource = ((FirefoxCompatibleCertificateSource)certificateAndKeySource).getFirefoxCertificateDatabase();
-            actions.add(new CertificateSupplementingProfileAction(certificateDbByteSource));
+            FirefoxCompatibleCertificateSource ffSource = (FirefoxCompatibleCertificateSource)certificateAndKeySource;
+            actions.add(new FirefoxProfileFolderAction() {
+                @Override
+                public void perform(File profileDir) {
+                    try {
+                        ffSource.establishCertificateTrust(profileDir);
+                    } catch (IOException e) {
+                        LoggerFactory.getLogger(getClass()).warn("failed to establish certificate trust in profile directory " + profileDir, e);
+                    }
+                }
+            });
         }
         actions.addAll(profileFolderActions);
         FirefoxProfile profile = createFirefoxProfile(actions);
         FirefoxProfilePreferenceConfigurator profileConfigurator = new FirefoxProfilePreferenceConfigurator();
         profileConfigurator.disableSomeMediaSupport(profile);
         profileConfigurator.avoidAutomaticConnections(profile);
-        applyAdditionalPreferences(profilePreferences, config, certificateAndKeySource, profile);
+        applyAdditionalPreferences(profilePreferences, config, profile);
         for (FirefoxProfileAction profileAction : profileActions) {
             profileAction.perform(profile);
         }
         FirefoxOptions options = createFirefoxOptions();
+        options.setAcceptInsecureCerts(false);
         configureLogging(options);
         configureProxy(options, profile, config);
         options.setProfile(profile);
@@ -245,16 +255,14 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
     }
 
     /**
-     * Applies additional preferences, drawn from a map, to a profile. Subclasses may overr
+     * Applies additional preferences, drawn from a map, to a profile.
      * @param profilePreferences map of profile preference settings
      * @param config session config
-     * @param certificateAndKeySource the certificate and key source
      * @param profile the profile
      */
     @SuppressWarnings("unused")
     protected void applyAdditionalPreferences(Map<String, Object> profilePreferences,
-              WebdrivingConfig config,
-              @Nullable CertificateAndKeySource certificateAndKeySource, FirefoxProfile profile) {
+              WebdrivingConfig config, FirefoxProfile profile) {
         for (String key : profilePreferences.keySet()) {
             Object value = profilePreferences.get(key);
             if (value instanceof String) {
@@ -298,28 +306,6 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
 
     public static Builder builder() {
         return new Builder();
-    }
-
-    private static class CertificateSupplementingProfileAction implements FirefoxProfileFolderAction {
-
-        public static final String CERTIFICATE_DB_FILENAME = "cert8.db";
-
-        private final ByteSource certificateDbSource;
-
-        private CertificateSupplementingProfileAction(ByteSource certificateDbSource) {
-            super();
-            this.certificateDbSource = requireNonNull(certificateDbSource);
-        }
-
-        @Override
-        public void perform(File profileDir) {
-            File certificateDbFile = new File(profileDir, CERTIFICATE_DB_FILENAME);
-            try {
-                certificateDbSource.copyTo(Files.asByteSink(certificateDbFile));
-            } catch (IOException e) {
-                throw new ProfilePreparationException("failed to copy certificate database to profile dir " + profileDir, e);
-            }
-        }
     }
 
     static class CookieInstallingProfileAction implements FirefoxProfileFolderAction {
@@ -390,11 +376,11 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
 
     }
 
-    private static class SupplementingFirefoxProfile extends org.openqa.selenium.firefox.FirefoxProfile {
+    private static final class SupplementingFirefoxProfile extends org.openqa.selenium.firefox.FirefoxProfile {
 
         private final ImmutableList<? extends FirefoxProfileFolderAction> profileFolderActions;
 
-        protected SupplementingFirefoxProfile(Iterable<? extends FirefoxProfileFolderAction> profileFolderActions) {
+        public SupplementingFirefoxProfile(Iterable<? extends FirefoxProfileFolderAction> profileFolderActions) {
             this.profileFolderActions = ImmutableList.copyOf(profileFolderActions);
         }
 
