@@ -51,7 +51,8 @@ public interface WebDriverTestParameter {
         @Override
         public WebDriverFactory createWebDriverFactory(XvfbRule xvfb) {
             return ChromeWebDriverFactory.builder()
-                    .chromeOptions(UnitTests.createChromeOptions(chromeOptionsModifier))
+                    .chromeOptions(UnitTests.createChromeOptions())
+                    .chromeOptions(chromeOptionsModifier)
                     .environment(xvfb.getController().newEnvironment())
                     .build();
         }

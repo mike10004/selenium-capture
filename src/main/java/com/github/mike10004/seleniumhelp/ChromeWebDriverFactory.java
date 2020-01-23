@@ -7,6 +7,7 @@ import org.openqa.selenium.WebDriverException;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeDriverService;
 import org.openqa.selenium.chrome.ChromeOptions;
+import org.openqa.selenium.firefox.FirefoxOptions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,12 +18,13 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
-public class ChromeWebDriverFactory extends EnvironmentWebDriverFactory {
+public class ChromeWebDriverFactory extends CapableWebDriverFactory<ChromeOptions> {
 
     private static final Logger log = LoggerFactory.getLogger(ChromeWebDriverFactory.class);
 
@@ -58,6 +60,7 @@ public class ChromeWebDriverFactory extends EnvironmentWebDriverFactory {
         ChromeDriverService.Builder serviceBuilder = createDriverServiceBuilder();
         serviceBuilder.withEnvironment(environmentSupplier.get());
         driverServiceBuilderConfigurators.forEach(configurator -> configurator.configure(serviceBuilder));
+        modifyOptions(chromeOptions);
         ChromeDriverService service = serviceBuilder.build();
         final ChromeDriver driver;
         try {
@@ -176,12 +179,11 @@ public class ChromeWebDriverFactory extends EnvironmentWebDriverFactory {
     }
 
     @SuppressWarnings("unused")
-    public static final class Builder extends EnvironmentWebDriverFactory.Builder<Builder> {
+    public static final class Builder extends CapableWebDriverFactoryBuilder<Builder, ChromeOptions> {
 
         private CookiePreparer cookiePreparer = cookielessPreparer;
         private ChromeOptions chromeOptions = new ChromeOptions();
         private List<DriverServiceBuilderConfigurator> driverServiceBuilderConfigurators = new ArrayList<>();
-        private boolean headless;
 
         private Builder() {
         }
@@ -191,18 +193,31 @@ public class ChromeWebDriverFactory extends EnvironmentWebDriverFactory {
             return this;
         }
 
+        @Deprecated
         public Builder headless() {
             return headless(true);
         }
 
+        /**
+         * @deprecated use {@code configure(o -> o.setHeadless(true))} instead
+         */
+        @Deprecated
         public Builder headless(boolean headless) {
-            this.headless = headless;
-            return this;
+            return configure(o -> o.setHeadless(headless));
         }
 
+        /**
+         * @deprecated use {@link #configure(Consumer)} instead to modify the ChromeOptions object after it has been created
+         */
+        @Deprecated
         public Builder chromeOptions(ChromeOptions val) {
             chromeOptions = checkNotNull(val);
             return this;
+        }
+
+        @Deprecated // for transition only
+        public Builder chromeOptions(Consumer<? super ChromeOptions> modifier) {
+            return configure(modifier);
         }
 
         public Builder cookiePreparer(CookiePreparer val) {
@@ -211,14 +226,9 @@ public class ChromeWebDriverFactory extends EnvironmentWebDriverFactory {
         }
 
         public ChromeWebDriverFactory build() {
-            if (headless) {
-                chromeOptions.addArguments(HEADLESS_ARGS);
-            }
             return new ChromeWebDriverFactory(this);
         }
 
-        @VisibleForTesting
-        static final ImmutableList<String> HEADLESS_ARGS = ImmutableList.of("--headless", "--disable-gpu");
     }
 
 }

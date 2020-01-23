@@ -30,10 +30,11 @@ public class BysTest {
 
     @BeforeClass
     public static void setUpClass() throws Exception {
-        ChromeOptions options = UnitTests.createChromeOptions();
+        ChromeOptions options = new ChromeOptions();
         ChromeDriverService driverService = new ChromeDriverService.Builder()
                 .withEnvironment(xvfb.getController().newEnvironment())
                 .build();
+        UnitTests.createChromeOptions().accept(options);
         driver = new ChromeDriver(driverService, options);
     }
 

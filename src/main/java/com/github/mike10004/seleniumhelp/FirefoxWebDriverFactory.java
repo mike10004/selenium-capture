@@ -6,7 +6,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
-import com.google.common.io.ByteSource;
 import com.google.common.io.Files;
 import com.google.common.io.Resources;
 import net.lightbody.bmp.mitm.CertificateAndKeySource;
@@ -31,13 +30,14 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static java.util.Objects.requireNonNull;
 
-public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
+public class FirefoxWebDriverFactory extends CapableWebDriverFactory<FirefoxOptions> {
 
     private final Supplier<FirefoxBinary> binarySupplier;
     private final Map<String, Object> profilePreferences;
@@ -46,8 +46,8 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
     private final ImmutableList<DeserializableCookie> cookies;
     private final Path scratchDir;
     private final InstanceConstructor<? extends WebDriver> constructor;
-    private final boolean headless;
     private final java.util.logging.Level webdriverLogLevel;
+    @Deprecated
     private final Supplier<FirefoxOptions> optionsInstantiator;
 
     @SuppressWarnings("unused")
@@ -65,7 +65,6 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
         this.profileActions = ImmutableList.copyOf(builder.profileActions);
         this.profileFolderActions = ImmutableList.copyOf(builder.profileFolderActions);
         this.constructor = requireNonNull(builder.instanceConstructor);
-        this.headless = builder.headless;
         this.webdriverLogLevel = builder.webdriverLogLevel;
         this.optionsInstantiator = builder.optionsInstantiator;
     }
@@ -81,11 +80,6 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
 
     private SupplementingFirefoxProfile createFirefoxProfile(List<FirefoxProfileFolderAction> actions) {
         return new SupplementingFirefoxProfile(actions);
-    }
-
-    protected FirefoxOptions createFirefoxOptions() {
-        FirefoxOptions options = optionsInstantiator.get();
-        return options;
     }
 
     private ServicedSession createWebDriverMaybeWithProxy(WebdrivingConfig config) throws IOException {
@@ -130,14 +124,12 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
         for (FirefoxProfileAction profileAction : profileActions) {
             profileAction.perform(profile);
         }
-        FirefoxOptions options = createFirefoxOptions();
+        FirefoxOptions options = optionsInstantiator.get();
         options.setAcceptInsecureCerts(false);
         configureLogging(options);
         configureProxy(options, profile, config);
         options.setProfile(profile);
-        if (headless) {
-            options.addArguments("-headless");
-        }
+        modifyOptions(options);
         return options;
     }
 
@@ -399,7 +391,7 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
     }
 
     @SuppressWarnings("unused")
-    public static class Builder extends EnvironmentWebDriverFactory.Builder<Builder> {
+    public static class Builder extends CapableWebDriverFactoryBuilder<Builder, FirefoxOptions> {
 
         private Supplier<FirefoxBinary> binarySupplier = FirefoxBinary::new;
         private Map<String, Object> profilePreferences = new LinkedHashMap<>();
@@ -408,13 +400,17 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
         private List<FirefoxProfileAction> profileActions = new ArrayList<>();
         private List<FirefoxProfileFolderAction> profileFolderActions = new ArrayList<>();
         private InstanceConstructor<? extends WebDriver> instanceConstructor = FirefoxDriver::new;
-        private boolean headless = false;
         private java.util.logging.Level webdriverLogLevel = null;
+        @Deprecated
         private Supplier<FirefoxOptions> optionsInstantiator = FirefoxOptions::new;
 
         private Builder() {
         }
 
+        /**
+         * @deprecated use {@link #configure(Consumer)} to modify options object
+         */
+        @Deprecated
         public Builder optionsInstantiator(Supplier<FirefoxOptions> optionsInstantiator) {
             this.optionsInstantiator = requireNonNull(optionsInstantiator);
             return this;
@@ -426,19 +422,15 @@ public class FirefoxWebDriverFactory extends EnvironmentWebDriverFactory {
         }
 
         /**
-         * Specifies that the webdriver options should be parameterized as headless.
-         * See: https://developer.mozilla.org/en-US/docs/Mozilla/Firefox/Headless_mode
-         * @param headless true iff headless mode is to be active
-         * @return this builder instance
+         * @deprecated use {@code configure(o -> o.setHeadless(true))}
          */
+        @Deprecated
         public Builder headless(boolean headless) {
-            this.headless = headless;
-            return this;
+            return configure(o -> o.setHeadless(headless));
         }
 
         /**
-         * Sets headless to true.
-         * @return this builder instance
+         * @deprecated use {@code configure(o -> o.setHeadless(true))}
          */
         public Builder headless() {
             return headless(true);

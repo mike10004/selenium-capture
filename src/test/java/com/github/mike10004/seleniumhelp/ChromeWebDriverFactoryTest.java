@@ -27,8 +27,7 @@ public class ChromeWebDriverFactoryTest {
     @Test
     public void mixtureOfHeadlessAndOptions_1() throws Exception {
         ChromeOptions expected = new ChromeOptions();
-        expected.addArguments(prepend("--foo", ChromeWebDriverFactory.Builder.HEADLESS_ARGS));
-//        expected.addArguments(append(ChromeWebDriverFactory.Builder.HEADLESS_ARGS, "--foo"));
+        expected.addArguments(prepend("--foo", Arrays.asList("--headless", "--disable-gpu")));
         ChromeOptions options = new ChromeOptions();
         options.addArguments("--foo");
         ChromeOptions actual = ChromeWebDriverFactory.builder()
@@ -51,7 +50,7 @@ public class ChromeWebDriverFactoryTest {
     @Test
     public void mixtureOfHeadlessAndOptions_2() throws Exception {
         ChromeOptions expected = new ChromeOptions();
-        expected.addArguments(prepend("--foo", ChromeWebDriverFactory.Builder.HEADLESS_ARGS));
+        expected.addArguments(prepend("--foo", Arrays.asList("--headless", "--disable-gpu")));
         ChromeOptions options = new ChromeOptions();
         options.addArguments("--foo");
         ChromeOptions actual = ChromeWebDriverFactory.builder()

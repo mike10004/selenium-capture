@@ -55,10 +55,9 @@ public class UnproxiedWebDriverTest {
     @Test
     public void testChrome() throws Exception {
         UnitTests.setupRecommendedChromeDriver();
-        ChromeOptions options = UnitTests.createChromeOptions();
-        options.addArguments("--headless");
         ChromeWebDriverFactory factory = ChromeWebDriverFactory.builder()
-                .chromeOptions(options)
+                .chromeOptions(UnitTests.createChromeOptions())
+                .configure(o -> o.setHeadless(true))
                 .build();
         testUnproxied(() -> factory.startWebdriving(EMPTY_WEBDRIVER_CONFIG));
     }

@@ -285,22 +285,15 @@ public class UnitTests {
      * @see #SETTING_CHROME_EXECUTABLE_PATH
      * @see #ENV_CHROME_BIN
      */
-    public static ChromeOptions createChromeOptions() {
-        return createChromeOptions(NOOP_CONSUMER);
-    }
-
-    private static final Consumer<Object> NOOP_CONSUMER = x -> {};
-
-    public static ChromeOptions createChromeOptions(Consumer<? super ChromeOptions> configurator) {
-        ChromeOptions options = new ChromeOptions();
-        String executablePath = getChromeExecutablePath();
-        if (executablePath != null) {
-            options.setBinary(executablePath);
-        }
-        options.addArguments(getChromeOptionsExtraArgs());
-        options.addArguments("--disable-background-networking");
-        configurator.accept(options);
-        return options;
+    public static Consumer<ChromeOptions> createChromeOptions() {
+        return options -> {
+            String executablePath = getChromeExecutablePath();
+            if (executablePath != null) {
+                options.setBinary(executablePath);
+            }
+            options.addArguments(getChromeOptionsExtraArgs());
+            options.addArguments("--disable-background-networking");
+        };
     }
 
     public static ExecutableConfig makeOpensslConfig() {

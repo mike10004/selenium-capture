@@ -1,13 +1,18 @@
 package com.github.mike10004.seleniumhelp;
 
 import com.google.common.collect.ImmutableMap;
+import org.openqa.selenium.MutableCapabilities;
 
 import javax.annotation.Nullable;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 public abstract class EnvironmentWebDriverFactory implements WebDriverFactory {
 
@@ -49,9 +54,10 @@ public abstract class EnvironmentWebDriverFactory implements WebDriverFactory {
             return (B) this;
         }
 
-        public B environment(Map<String, String> environment) {
+        public final B environment(Map<String, String> environment) {
             this.environmentSupplier = () -> environment;
             return (B) this;
         }
     }
+
 }
