@@ -19,7 +19,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
-public class TestCertificateAndKeySource extends KeyStoreStreamCertificateSource implements FirefoxCompatibleCertificateSource {
+public class TestCertificateAndKeySource extends KeyStoreStreamCertificateSource {
 
     private static final String RESOURCE_DIR = "/selenium-help";
 
@@ -35,15 +35,6 @@ public class TestCertificateAndKeySource extends KeyStoreStreamCertificateSource
     }
 
     public static final String CERTIFICATE_DB_FILENAME = "cert8.db";
-
-    @Override
-    public void establishCertificateTrust(File profileFolder) throws IOException {
-        ByteSource gzipped = Resources.asByteSource(getClass().getResource(RESOURCE_DIR + "/cert8.db.gz"));
-        try (InputStream in = new GunzippingByteSource(gzipped).openStream();
-            OutputStream out = new FileOutputStream(CERTIFICATE_DB_FILENAME)) {
-            ByteStreams.copy(in, out);
-        }
-    }
 
     private static class GunzippingByteSource extends ByteSource {
 

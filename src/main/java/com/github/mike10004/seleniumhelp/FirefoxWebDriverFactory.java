@@ -96,24 +96,10 @@ public class FirefoxWebDriverFactory extends CapableWebDriverFactory<FirefoxOpti
 
     @VisibleForTesting
     FirefoxOptions populateOptions(WebdrivingConfig config) throws IOException {
-        @Nullable CertificateAndKeySource certificateAndKeySource = config.getCertificateAndKeySource();
         List<FirefoxProfileFolderAction> actions = new ArrayList<>(2);
         List<DeserializableCookie> cookies_ = getCookies();
         if (!cookies.isEmpty()) {
             actions.add(new CookieInstallingProfileAction(cookies_, FirefoxCookieDb.getImporter(), scratchDir));
-        }
-        if (certificateAndKeySource instanceof FirefoxCompatibleCertificateSource) {
-            FirefoxCompatibleCertificateSource ffSource = (FirefoxCompatibleCertificateSource)certificateAndKeySource;
-            actions.add(new FirefoxProfileFolderAction() {
-                @Override
-                public void perform(File profileDir) {
-                    try {
-                        ffSource.establishCertificateTrust(profileDir);
-                    } catch (IOException e) {
-                        LoggerFactory.getLogger(getClass()).warn("failed to establish certificate trust in profile directory " + profileDir, e);
-                    }
-                }
-            });
         }
         actions.addAll(profileFolderActions);
         FirefoxProfile profile = createFirefoxProfile(actions);
