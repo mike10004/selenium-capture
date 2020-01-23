@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.github.mike10004</groupId>
     <artifactId>selenium-capture</artifactId>
-    <version>0.53-SNAPSHOT</version>
+    <version>0.53</version>
     <name>selenium-capture</name>
     <description>Library that helps you use Selenium WebDriver in Java</description>
     <url>https://github.com/mike10004/selenium-capture</url>

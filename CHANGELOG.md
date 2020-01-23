@@ -1,6 +1,14 @@
 Changelog
 =========
 
+0.53
+----
+
+* accept webdriver capabilities object modifiers in factory builders
+* by default, do not accept insecure certs, even from the intercepting proxy;
+  use capabilities object modifier like `options -> options.setAcceptInsecureCerts(true)`
+  to allow the browser to accept the certificate from the intercepting proxy
+
 0.52
 ----
 
