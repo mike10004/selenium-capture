@@ -344,10 +344,15 @@ public class UnitTests {
     }
 
     public static WebDriverFactory headlessWebDriverFactory() {
+        return headlessWebDriverFactory(false);
+    }
+
+    public static WebDriverFactory headlessWebDriverFactory(boolean acceptInsecureCerts) {
         WebDriverTestParameter.DriverManagerSetupCache.doSetup(DriverManagerType.FIREFOX);
         return FirefoxWebDriverFactory.builder()
                 .binary(UnitTests.createFirefoxBinarySupplier())
                 .headless(!isShowBrowserWindowEnabled())
+                .acceptInsecureCerts(acceptInsecureCerts)
                 .putPreferences(UnitTests.createFirefoxPreferences())
                 .build();
     }

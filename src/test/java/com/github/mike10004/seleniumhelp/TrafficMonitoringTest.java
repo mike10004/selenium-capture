@@ -44,7 +44,7 @@ public class TrafficMonitoringTest {
                 return true;
             }
         };
-        TrafficCollector collector = TrafficCollector.builder(createWebDriverFactory())
+        TrafficCollector collector = TrafficCollector.builder(createWebDriverFactory(false))
                 .filter(rejectingFiltersSource)
                 .build();
         RecordingMonitor monitor = new RecordingMonitor();
@@ -63,21 +63,21 @@ public class TrafficMonitoringTest {
         assertEquals("expect 500 error", 500, monitor.interactions.get(0).response.status);
     }
 
-    private static WebDriverFactory createWebDriverFactory() {
-        return UnitTests.headlessWebDriverFactory();
+    private static WebDriverFactory createWebDriverFactory(boolean acceptInsecureCerts) {
+        return UnitTests.headlessWebDriverFactory(acceptInsecureCerts);
     }
 
     @Test
     public void monitoring_http() throws Exception {
         String url = "http://www.example.com/";
-        testMonitoring(URI.create(url), TrafficCollector.builder(createWebDriverFactory()).build());
+        testMonitoring(URI.create(url), TrafficCollector.builder(createWebDriverFactory(false)).build());
     }
 
     @Test
     public void monitoring_https() throws Exception {
         File crtFile = File.createTempFile("mitm-certificate", ".pem", temporaryFolder.getRoot());
         TestCertificateAndKeySource.getCertificatePemByteSource().copyTo(Files.asByteSink(crtFile));
-        WebDriverFactory wdf = createWebDriverFactory();
+        WebDriverFactory wdf = createWebDriverFactory(true);
         testMonitoring(URI.create("https://www.example.com/"), TrafficCollector.builder(wdf)
                 .collectHttps(TestCertificateAndKeySource.create())
                 .build());

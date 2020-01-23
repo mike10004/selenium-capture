@@ -41,6 +41,7 @@ public class ChromeCookieUsageTest extends CookieUsageTestBase {
         return ChromeWebDriverFactory.builder()
                 .chromeOptions(UnitTests.createChromeOptions())
                 .environment(xvfbController::newEnvironment)
+                .acceptInsecureCerts()
                 .build();
     }
 
@@ -53,6 +54,7 @@ public class ChromeCookieUsageTest extends CookieUsageTestBase {
                 .chromeOptions(UnitTests.createChromeOptions())
                 .environment(xvfbController::newEnvironment)
                 .cookiePreparer(cookiePreparer)
+                .acceptInsecureCerts()
                 .build();
     }
 

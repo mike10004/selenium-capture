@@ -13,6 +13,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.experimental.runners.Enclosed;
 import org.junit.rules.Timeout;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -35,112 +36,153 @@ import static org.junit.Assert.assertTrue;
 /**
  * Test for the brotli-aware filter. Tests with Firefox and Chrome.
  */
-@RunWith(Parameterized.class)
-public class BrAwareServerResponseCaptureFilterTest {
+@RunWith(Enclosed.class)
+public abstract class BrAwareServerResponseCaptureFilterTest {
 
-    @Rule
-    public final Timeout timeout = TimeoutRules.from(UnitTests.Settings).getLongRule();
+    public static abstract class ThisTestBase {
 
-    @Rule
-    public final XvfbRule xvfb = UnitTests.xvfbRuleBuilder().build();
+        @Rule
+        public final Timeout timeout = TimeoutRules.from(UnitTests.Settings).getLongRule();
 
-    private final WebDriverTestParameter testParameter;
+        @Rule
+        public final XvfbRule xvfb = UnitTests.xvfbRuleBuilder().build();
 
-    public BrAwareServerResponseCaptureFilterTest(WebDriverTestParameter testParameter) {
-        this.testParameter = testParameter;
-    }
+        protected final WebDriverTestParameter testParameter;
 
-    @Parameterized.Parameters
-    public static List<WebDriverTestParameter> params() {
-        return Arrays.asList(new WebDriverTestParameter.FirefoxTestParameter(), new WebDriverTestParameter.ChromeTestParameter(o -> o.setAcceptInsecureCerts(true)));
-    }
-
-    @Before
-    public void setUp() {
-        testParameter.doDriverManagerSetup();
-    }
-
-    @Test
-    public void testMonitorCapturesBrotliResponses_local() throws Exception {
-        byte[] brotliBytes = UnitTests.loadBrotliCompressedSample();
-        byte[] decompressedBytes = UnitTests.loadBrotliUncompressedSample();
-        String decompressedText = new String(decompressedBytes, UTF_8);
-        WebDriverFactory webDriverFactory = testParameter.createWebDriverFactory(xvfb);
-        TrafficCollector collector = TrafficCollector.builder(webDriverFactory)
-                .build();
-        RecordingMonitor monitor = new RecordingMonitor();
-        NanoHTTPD.Response compressedResponse = NanoResponse.status(200)
-                .header(HttpHeaders.CONTENT_ENCODING, "br")
-                .content(MediaType.PLAIN_TEXT_UTF_8, brotliBytes)
-                .build();
-        System.out.format("prepared response with compressed bytes: %s%n", new String(new Hex().encode(brotliBytes)));
-        NanoServer server = NanoServer.builder().get(session -> compressedResponse).build();
-        String pageText;
-        String url;
-        try (NanoControl ctrl = server.startServer()) {
-            url = ctrl.baseUri().toString();
-            TrafficGenerator<String> generator = driver -> {
-                try {
-                    driver.get(url);
-                    WebElement body = driver.findElement(By.tagName("body"));
-                    String text = body.getText();
-                    return text;
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    return null;
-                }
-            };
-            pageText = collector.monitor(generator, monitor);
+        public ThisTestBase(WebDriverTestParameter testParameter) {
+            this.testParameter = testParameter;
         }
-        byte[] harResponseBytes = checkInteractions(url, monitor);
-        assertArrayEquals("response byte", decompressedBytes, harResponseBytes);
-        if (testParameter.isBrotliSupported(url)) {
-            assertEquals("pageText", decompressedText, pageText);
+
+        @Before
+        public void setUp() {
+            testParameter.doDriverManagerSetup();
+        }
+
+        protected static byte[] checkInteractions(String url, RecordingMonitor monitor) throws IOException {
+            assertFalse("expect nonempty interactions list", monitor.interactions.isEmpty());
+            ImmutableHttpResponse response = monitor.interactions.stream()
+                    .filter(pair -> url.equals(pair.request.url.toString()))
+                    .map(HttpInteraction::getResponse).findAny().orElse(null);
+            assertNotNull("response not found among " + monitor.interactions + "\n(searched for request URL " + url + ")", response);
+            System.out.format("response: %s GET %s%n", response.status, url);
+            response.headers.forEach((name, value) -> System.out.format("%s: %s%n", name, value));
+            assertEquals("response status", 200, response.status);
+            List<String> contentEncodingHeaderValues = response.getHeaders("content-encoding")
+                    .map(Map.Entry::getValue)
+                    .collect(Collectors.toList());
+            assertTrue("expect value of 'content-encoding' is 'br'", contentEncodingHeaderValues.stream().allMatch("br"::equals));
+            byte[] harResponseBytes = response.getContentAsBytes().read();
+            String harResponseBytesHex = new String(new Hex().encode(harResponseBytes));
+            System.out.format("response bytes captured by monitor filter:%nbase-16 %s%nbase-10 %s%n",
+                    StringUtils.abbreviateMiddle(harResponseBytesHex, "...", 256),
+                    StringUtils.abbreviateMiddle(Arrays.toString(harResponseBytes), "...", 256));
+            return harResponseBytes;
+        }
+    }
+
+    public static class FirefoxLocalTest extends LocalTestBase {
+
+        public FirefoxLocalTest() {
+            super(new WebDriverTestParameter.FirefoxTestParameter(false));
+        }
+    }
+
+    public static class FirefoxRemoteTest extends RemoteTestBase {
+
+        public FirefoxRemoteTest() {
+            super(new WebDriverTestParameter.FirefoxTestParameter(true));
+        }
+    }
+
+    public static class ChromeLocalTest extends LocalTestBase {
+
+        public ChromeLocalTest() {
+            super(new WebDriverTestParameter.ChromeTestParameter(false));
+        }
+    }
+
+    public static class ChromeRemoteTest extends RemoteTestBase {
+
+        public ChromeRemoteTest() {
+            super(new WebDriverTestParameter.ChromeTestParameter(true));
+        }
+    }
+
+    public static abstract class LocalTestBase extends ThisTestBase {
+
+        public LocalTestBase(WebDriverTestParameter testParameter) {
+            super(testParameter);
+        }
+
+
+        @Test
+        public void testMonitorCapturesBrotliResponses_local() throws Exception {
+            byte[] brotliBytes = UnitTests.loadBrotliCompressedSample();
+            byte[] decompressedBytes = UnitTests.loadBrotliUncompressedSample();
+            String decompressedText = new String(decompressedBytes, UTF_8);
+            WebDriverFactory webDriverFactory = testParameter.createWebDriverFactory(xvfb);
+            TrafficCollector collector = TrafficCollector.builder(webDriverFactory)
+                    .build();
+            RecordingMonitor monitor = new RecordingMonitor();
+            NanoHTTPD.Response compressedResponse = NanoResponse.status(200)
+                    .header(HttpHeaders.CONTENT_ENCODING, "br")
+                    .content(MediaType.PLAIN_TEXT_UTF_8, brotliBytes)
+                    .build();
+            System.out.format("prepared response with compressed bytes: %s%n", new String(new Hex().encode(brotliBytes)));
+            NanoServer server = NanoServer.builder().get(session -> compressedResponse).build();
+            String pageText;
+            String url;
+            try (NanoControl ctrl = server.startServer()) {
+                url = ctrl.baseUri().toString();
+                TrafficGenerator<String> generator = driver -> {
+                    try {
+                        driver.get(url);
+                        WebElement body = driver.findElement(By.tagName("body"));
+                        String text = body.getText();
+                        return text;
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        return null;
+                    }
+                };
+                pageText = collector.monitor(generator, monitor);
+            }
+            byte[] harResponseBytes = checkInteractions(url, monitor);
+            assertArrayEquals("response byte", decompressedBytes, harResponseBytes);
+            if (testParameter.isBrotliSupported(url)) {
+                assertEquals("pageText", decompressedText, pageText);
+            }
         }
     }
 
     private static final String SYSPROP_REMOTE_BROLIT_RESOURCE_URL = "selenium-capture.tests.remoteBrotliResourceUrl";
     private static final String DEFAULT_REMOTE_BROTLI_RESOURCE_URL = "https://httpbin.org/brotli";
 
-    @Test
-    public void testMonitorCapturesBrotliResponses_remote() throws Exception {
-        WebDriverFactory webDriverFactory = testParameter.createWebDriverFactory(xvfb);
-        TrafficCollector collector = TrafficCollector.builder(webDriverFactory).build();
-        RecordingMonitor monitor = new RecordingMonitor();
-        String url = UnitTests.Settings.get(SYSPROP_REMOTE_BROLIT_RESOURCE_URL);
-        if (url == null) {
-            url = DEFAULT_REMOTE_BROTLI_RESOURCE_URL;
-        }
-        final String finalUrl = url;
-        TrafficGenerator<String> generator = driver -> {
-            driver.get(finalUrl);
-            WebElement body = driver.findElement(By.tagName("body"));
-            String text = body.getText();
-            return text;
-        };
-        collector.monitor(generator, monitor);
-        checkInteractions(finalUrl, monitor);
-    }
+    public static abstract class RemoteTestBase extends ThisTestBase {
 
-    private static byte[] checkInteractions(String url, RecordingMonitor monitor) throws IOException {
-        assertFalse("expect nonempty interactions list", monitor.interactions.isEmpty());
-        ImmutableHttpResponse response = monitor.interactions.stream()
-                .filter(pair -> url.equals(pair.request.url.toString()))
-                .map(HttpInteraction::getResponse).findAny().orElse(null);
-        assertNotNull("response not found among " + monitor.interactions + "\n(searched for request URL " + url + ")", response);
-        System.out.format("response: %s GET %s%n", response.status, url);
-        response.headers.forEach((name, value) -> System.out.format("%s: %s%n", name, value));
-        assertEquals("response status", 200, response.status);
-        List<String> contentEncodingHeaderValues = response.getHeaders("content-encoding")
-                .map(Map.Entry::getValue)
-                .collect(Collectors.toList());
-        assertTrue("expect value of 'content-encoding' is 'br'", contentEncodingHeaderValues.stream().allMatch("br"::equals));
-        byte[] harResponseBytes = response.getContentAsBytes().read();
-        String harResponseBytesHex = new String(new Hex().encode(harResponseBytes));
-        System.out.format("response bytes captured by monitor filter:%nbase-16 %s%nbase-10 %s%n",
-                StringUtils.abbreviateMiddle(harResponseBytesHex, "...", 256),
-                StringUtils.abbreviateMiddle(Arrays.toString(harResponseBytes), "...", 256));
-        return harResponseBytes;
+        public RemoteTestBase(WebDriverTestParameter testParameter) {
+            super(testParameter);
+        }
+
+        @Test
+        public void testMonitorCapturesBrotliResponses_remote() throws Exception {
+            WebDriverFactory webDriverFactory = testParameter.createWebDriverFactory(xvfb);
+            TrafficCollector collector = TrafficCollector.builder(webDriverFactory).build();
+            RecordingMonitor monitor = new RecordingMonitor();
+            String url = UnitTests.Settings.get(SYSPROP_REMOTE_BROLIT_RESOURCE_URL);
+            if (url == null) {
+                url = DEFAULT_REMOTE_BROTLI_RESOURCE_URL;
+            }
+            final String finalUrl = url;
+            TrafficGenerator<String> generator = driver -> {
+                driver.get(finalUrl);
+                WebElement body = driver.findElement(By.tagName("body"));
+                String text = body.getText();
+                return text;
+            };
+            collector.monitor(generator, monitor);
+            checkInteractions(finalUrl, monitor);
+        }
     }
 
 }

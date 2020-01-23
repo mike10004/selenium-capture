@@ -1,6 +1,7 @@
 package com.github.mike10004.seleniumhelp;
 
 import org.openqa.selenium.MutableCapabilities;
+import org.openqa.selenium.remote.CapabilityType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,4 +22,13 @@ public abstract class CapableWebDriverFactoryBuilder<B extends EnvironmentWebDri
         configurators.add(requireNonNull(configurator));
         return (B) this;
     }
+
+    public final B acceptInsecureCerts() {
+        return acceptInsecureCerts(true);
+    }
+
+    public final B acceptInsecureCerts(boolean acceptInsecureCerts) {
+        return configure(o -> o.setCapability(CapabilityType.ACCEPT_INSECURE_CERTS, acceptInsecureCerts));
+    }
+
 }

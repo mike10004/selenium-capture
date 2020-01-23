@@ -22,6 +22,7 @@ public class CookieStorageTest {
         UnitTests.setupRecommendedGeckoDriver();
         testWithDriverFactory(FirefoxWebDriverFactory.builder()
                 .binary(UnitTests.createFirefoxBinarySupplier())
+                .acceptInsecureCerts()
                 .environment(xvfb.getController().newEnvironment())
                 .build());
     }
@@ -31,7 +32,7 @@ public class CookieStorageTest {
         UnitTests.setupRecommendedChromeDriver();
         ChromeWebDriverFactory factory = ChromeWebDriverFactory.builder()
                 .chromeOptions(UnitTests.createChromeOptions())
-                .configure(o -> o.setAcceptInsecureCerts(true))
+                .acceptInsecureCerts()
                 .environment(xvfb.getController()::newEnvironment)
                 .build();
         testWithDriverFactory(factory);

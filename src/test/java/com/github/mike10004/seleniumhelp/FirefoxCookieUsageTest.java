@@ -38,6 +38,7 @@ public class FirefoxCookieUsageTest extends CookieUsageTestBase {
                 .binary(UnitTests.createFirefoxBinarySupplier())
                 .environment(xvfbController::newEnvironment)
                 .profileFolderAction(tracker)
+                .configure(o -> o.setAcceptInsecureCerts(true))
                 .build();
     }
 
@@ -49,10 +50,11 @@ public class FirefoxCookieUsageTest extends CookieUsageTestBase {
                 .scratchDir(temporaryFolder.getRoot().toPath())
                 .cookies(cookiesSetByServer)
                 .profileFolderAction(tracker)
+                .configure(o -> o.setAcceptInsecureCerts(true))
                 .build();
     }
 
-    private class ProfileFolderTracker implements FirefoxProfileFolderAction {
+    private static class ProfileFolderTracker implements FirefoxProfileFolderAction {
 
         private final AtomicInteger invocations = new AtomicInteger(0);
 

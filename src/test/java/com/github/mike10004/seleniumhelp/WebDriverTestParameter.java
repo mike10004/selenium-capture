@@ -6,11 +6,9 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import io.github.bonigarcia.wdm.DriverManagerType;
 import io.github.bonigarcia.wdm.WebDriverManager;
-import org.openqa.selenium.chrome.ChromeOptions;
 
 import java.net.URI;
 import java.util.List;
-import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -27,32 +25,32 @@ public interface WebDriverTestParameter {
     DriverManagerType getDriverManagerType();
 
     static List<WebDriverTestParameter> all() {
-        return createList(x -> true);
+        return createList(x -> true, false);
     }
 
-    static List<WebDriverTestParameter> createList(Predicate<? super DriverManagerType> typePredicate) {
-        return Stream.of(new FirefoxTestParameter(), new ChromeTestParameter())
+    static List<WebDriverTestParameter> allAcceptingInsecureCerts() {
+        return createList(x -> true, true);
+    }
+
+    static List<WebDriverTestParameter> createList(Predicate<? super DriverManagerType> typePredicate, boolean acceptInsecureCerts) {
+        return Stream.of(new FirefoxTestParameter(acceptInsecureCerts), new ChromeTestParameter(acceptInsecureCerts))
                 .filter(p -> typePredicate.test(p.getDriverManagerType()))
                 .collect(Collectors.toList());
     }
 
     class ChromeTestParameter implements WebDriverTestParameter {
 
-        private final Consumer<ChromeOptions> chromeOptionsModifier;
+        private final boolean acceptInsecureCerts;
 
-        public ChromeTestParameter() {
-            this(o -> {});
-        }
-
-        public ChromeTestParameter(Consumer<ChromeOptions> chromeOptionsModifier) {
-            this.chromeOptionsModifier = chromeOptionsModifier;
+        public ChromeTestParameter(boolean acceptInsecureCerts) {
+            this.acceptInsecureCerts = acceptInsecureCerts;
         }
 
         @Override
         public WebDriverFactory createWebDriverFactory(XvfbRule xvfb) {
             return ChromeWebDriverFactory.builder()
                     .chromeOptions(UnitTests.createChromeOptions())
-                    .chromeOptions(chromeOptionsModifier)
+                    .chromeOptions(o -> o.setAcceptInsecureCerts(acceptInsecureCerts))
                     .environment(xvfb.getController().newEnvironment())
                     .build();
         }
@@ -69,11 +67,19 @@ public interface WebDriverTestParameter {
     }
 
     class FirefoxTestParameter implements WebDriverTestParameter {
+
+        private final boolean acceptInsecureCerts;
+
+        public FirefoxTestParameter(boolean acceptInsecureCerts) {
+            this.acceptInsecureCerts = acceptInsecureCerts;
+        }
+
         @Override
         public WebDriverFactory createWebDriverFactory(XvfbRule xvfb) {
             return FirefoxWebDriverFactory.builder()
                     .binary(UnitTests.createFirefoxBinarySupplier())
                     .putPreferences(UnitTests.createFirefoxPreferences())
+                    .acceptInsecureCerts(acceptInsecureCerts)
                     .environment(xvfb.getController().newEnvironment())
                     .build();
         }

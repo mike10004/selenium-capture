@@ -93,6 +93,7 @@ public class FirefoxTrafficCollectionTest {
             WebDriverFactory webDriverFactory = FirefoxWebDriverFactory.builder()
                     .binary(UnitTests.createFirefoxBinarySupplier())
                     .environment(createEnvironmentSupplierForDisplay(headless))
+                    .acceptInsecureCerts()
                     .headless(headless)
                     .build();
             testTrafficCollectorOnHttpbin(webDriverFactory);
@@ -105,6 +106,7 @@ public class FirefoxTrafficCollectionTest {
             WebDriverFactory webDriverFactory = FirefoxWebDriverFactory.builder()
                     .binary(UnitTests.createFirefoxBinarySupplier())
                     .environment(FirefoxWebDriverFactory.createEnvironmentSupplierForDisplay(display))
+                    .acceptInsecureCerts()
                     .constructor((service, options) -> {
                         ExtensibleFirefoxDriver driver = new ExtensibleFirefoxDriver(service, options);
                         driver.installAddon(AddonInstallRequest.fromFile(zipFile, AddonPersistence.TEMPORARY));
