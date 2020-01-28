@@ -19,4 +19,4 @@ before_install:
   - which google-chrome
   - google-chrome --version
 install: true
-script: mvn --settings travis-maven-settings.xml -U --batch-mode --quiet -P travis install
+script: mvn --batch-mode $MORE_MAVEN_OPTS -P travis install
