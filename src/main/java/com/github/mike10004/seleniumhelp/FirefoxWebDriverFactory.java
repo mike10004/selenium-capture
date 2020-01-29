@@ -8,7 +8,6 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.io.Files;
 import com.google.common.io.Resources;
-import net.lightbody.bmp.mitm.CertificateAndKeySource;
 import org.apache.commons.io.FileUtils;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.firefox.FirefoxBinary;
@@ -30,7 +29,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
@@ -47,8 +45,6 @@ public class FirefoxWebDriverFactory extends CapableWebDriverFactory<FirefoxOpti
     private final Path scratchDir;
     private final InstanceConstructor<? extends WebDriver> constructor;
     private final java.util.logging.Level webdriverLogLevel;
-    @Deprecated
-    private final Supplier<FirefoxOptions> optionsInstantiator;
 
     @SuppressWarnings("unused")
     public FirefoxWebDriverFactory() {
@@ -66,7 +62,6 @@ public class FirefoxWebDriverFactory extends CapableWebDriverFactory<FirefoxOpti
         this.profileFolderActions = ImmutableList.copyOf(builder.profileFolderActions);
         this.constructor = requireNonNull(builder.instanceConstructor);
         this.webdriverLogLevel = builder.webdriverLogLevel;
-        this.optionsInstantiator = builder.optionsInstantiator;
     }
 
     protected ImmutableList<DeserializableCookie> getCookies() {
@@ -110,7 +105,7 @@ public class FirefoxWebDriverFactory extends CapableWebDriverFactory<FirefoxOpti
         for (FirefoxProfileAction profileAction : profileActions) {
             profileAction.perform(profile);
         }
-        FirefoxOptions options = optionsInstantiator.get();
+        FirefoxOptions options = new FirefoxOptions();
         options.setAcceptInsecureCerts(false);
         configureLogging(options);
         configureProxy(options, profile, config);
@@ -387,19 +382,8 @@ public class FirefoxWebDriverFactory extends CapableWebDriverFactory<FirefoxOpti
         private List<FirefoxProfileFolderAction> profileFolderActions = new ArrayList<>();
         private InstanceConstructor<? extends WebDriver> instanceConstructor = FirefoxDriver::new;
         private java.util.logging.Level webdriverLogLevel = null;
-        @Deprecated
-        private Supplier<FirefoxOptions> optionsInstantiator = FirefoxOptions::new;
 
         private Builder() {
-        }
-
-        /**
-         * @deprecated use {@link #configure(Consumer)} to modify options object
-         */
-        @Deprecated
-        public Builder optionsInstantiator(Supplier<FirefoxOptions> optionsInstantiator) {
-            this.optionsInstantiator = requireNonNull(optionsInstantiator);
-            return this;
         }
 
         public Builder webdriverLogLevel(java.util.logging.Level webdriverLogLevel) {

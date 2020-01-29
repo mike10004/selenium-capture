@@ -27,6 +27,7 @@ import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.Writer;
 import java.nio.charset.Charset;
+import java.util.function.Consumer;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
@@ -90,9 +91,8 @@ public class LightbodyHarCreationUtility {
         }
     }
 
-    private static ChromeOptions toChromeOptions(File scratchDir, UtilityConfig config) throws IOException {
+    private static Consumer<ChromeOptions> toChromeOptionsModifier(File scratchDir, UtilityConfig config) throws IOException {
         checkArgument(config.browserBrand == BrowserBrand.chrome, "only applies to BrowserBrand.chrome, not %s", config.browserBrand);
-        ChromeOptions options = new ChromeOptions();
         File userDataDir;
         if (config.userDataDir != null) {
             userDataDir = new File(config.userDataDir);
@@ -104,8 +104,9 @@ public class LightbodyHarCreationUtility {
         } else {
             userDataDir = java.nio.file.Files.createTempDirectory(scratchDir.toPath(), "chrome-user-data").toFile();
         }
-        options.addArguments("--user-data-dir=" + userDataDir.getAbsolutePath());
-        return options;
+        return options -> {
+            options.addArguments("--user-data-dir=" + userDataDir.getAbsolutePath());
+        };
     }
 
     protected WebDriverFactory createWebDriverFactory(File scratchDir) throws IOException {
@@ -113,7 +114,7 @@ public class LightbodyHarCreationUtility {
             case chrome:
                 WebDriverManager.chromedriver().setup();
                 return ChromeWebDriverFactory.builder()
-                        .chromeOptions(toChromeOptions(scratchDir, config))
+                        .configure(toChromeOptionsModifier(scratchDir, config))
                         .build();
             case firefox:
                 WebDriverManager.firefoxdriver().setup();

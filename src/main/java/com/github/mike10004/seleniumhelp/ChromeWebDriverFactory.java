@@ -1,6 +1,5 @@
 package com.github.mike10004.seleniumhelp;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import org.openqa.selenium.WebDriverException;
@@ -27,7 +26,6 @@ public class ChromeWebDriverFactory extends CapableWebDriverFactory<ChromeOption
 
     private static final Logger log = LoggerFactory.getLogger(ChromeWebDriverFactory.class);
 
-    private final ChromeOptions chromeOptions;
     private final CookiePreparer cookiePreparer;
     private final ImmutableList<DriverServiceBuilderConfigurator> driverServiceBuilderConfigurators;
 
@@ -38,7 +36,6 @@ public class ChromeWebDriverFactory extends CapableWebDriverFactory<ChromeOption
 
     protected ChromeWebDriverFactory(Builder builder) {
         super(builder);
-        chromeOptions = builder.chromeOptions;
         driverServiceBuilderConfigurators = ImmutableList.copyOf(builder.driverServiceBuilderConfigurators);
         cookiePreparer = builder.cookiePreparer;
     }
@@ -54,6 +51,7 @@ public class ChromeWebDriverFactory extends CapableWebDriverFactory<ChromeOption
     }
 
     private ServicedSession createWebDriverMaybeWithProxy(WebdrivingConfig config) throws IOException {
+        ChromeOptions chromeOptions = new ChromeOptions();
         configureProxy(chromeOptions, config);
         cookiePreparer.supplementOptions(chromeOptions);
         ChromeDriverService.Builder serviceBuilder = createDriverServiceBuilder();
@@ -128,11 +126,6 @@ public class ChromeWebDriverFactory extends CapableWebDriverFactory<ChromeOption
         return proxy;
     }
 
-    @VisibleForTesting
-    ChromeOptions getChromeOptions() {
-        return chromeOptions;
-    }
-
     /**
      * Interface for service classes that prepare cookies in a Chrome webdriver.
      */
@@ -181,7 +174,6 @@ public class ChromeWebDriverFactory extends CapableWebDriverFactory<ChromeOption
     public static final class Builder extends CapableWebDriverFactoryBuilder<Builder, ChromeOptions> {
 
         private CookiePreparer cookiePreparer = cookielessPreparer;
-        private ChromeOptions chromeOptions = new ChromeOptions();
         private List<DriverServiceBuilderConfigurator> driverServiceBuilderConfigurators = new ArrayList<>();
 
         private Builder() {
@@ -203,15 +195,6 @@ public class ChromeWebDriverFactory extends CapableWebDriverFactory<ChromeOption
         @Deprecated
         public Builder headless(boolean headless) {
             return configure(o -> o.setHeadless(headless));
-        }
-
-        /**
-         * @deprecated use {@link #configure(Consumer)} instead to modify the ChromeOptions object after it has been created
-         */
-        @Deprecated
-        public Builder chromeOptions(ChromeOptions val) {
-            chromeOptions = checkNotNull(val);
-            return this;
         }
 
         @Deprecated // for transition only

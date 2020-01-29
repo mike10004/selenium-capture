@@ -13,9 +13,10 @@ public class ReadmeExample {
 
     public static void main(String[] args) throws IOException {
         WebDriverManager.chromedriver().setup();
-        ChromeOptions options = new ChromeOptions();
         ChromeWebDriverFactory factory = ChromeWebDriverFactory.builder()
-                .chromeOptions(options)
+                .configure(chromeOptions -> {
+                    // ...
+                })
                 .build();
         Path scratchDir = java.nio.file.Files.createTempDirectory("selenium-help-example");
         try {
