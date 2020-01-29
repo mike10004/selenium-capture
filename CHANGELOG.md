@@ -1,6 +1,12 @@
 Changelog
 =========
 
+0.54
+----
+
+* remove builder methods that support direct instantiation of webdriver 
+  capabilities objects; use `configure(Consumer)` instead
+
 0.53
 ----
 
