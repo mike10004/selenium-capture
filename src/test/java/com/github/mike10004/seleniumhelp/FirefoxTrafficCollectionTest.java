@@ -1,8 +1,5 @@
 package com.github.mike10004.seleniumhelp;
 
-import io.github.mike10004.extensibleffdriver.AddonInstallRequest;
-import io.github.mike10004.extensibleffdriver.AddonPersistence;
-import io.github.mike10004.extensibleffdriver.ExtensibleFirefoxDriver;
 import org.apache.commons.io.FileUtils;
 import org.junit.Assume;
 import org.junit.BeforeClass;
@@ -11,6 +8,7 @@ import org.junit.experimental.runners.Enclosed;
 import org.junit.runner.RunWith;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
+import org.openqa.selenium.firefox.FirefoxProfile;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
@@ -56,7 +54,7 @@ public class FirefoxTrafficCollectionTest {
             Assume.assumeFalse("headless tests disabled", headless && UnitTests.isHeadlessChromeTestsDisabled());
             WebDriverFactory webDriverFactory = FirefoxWebDriverFactory.builder()
                     .binary(UnitTests.createFirefoxBinarySupplier())
-                    .headless(headless)
+                    .configure(o -> o.setHeadless(headless))
                     .environment(createEnvironmentSupplierForDisplay(headless))
                     .build();
             testTrafficCollectorOnExampleDotCom(webDriverFactory);
@@ -94,7 +92,7 @@ public class FirefoxTrafficCollectionTest {
                     .binary(UnitTests.createFirefoxBinarySupplier())
                     .environment(createEnvironmentSupplierForDisplay(headless))
                     .acceptInsecureCerts()
-                    .headless(headless)
+                    .configure(o -> o.setHeadless(headless))
                     .build();
             testTrafficCollectorOnHttpbin(webDriverFactory);
         }
@@ -107,10 +105,13 @@ public class FirefoxTrafficCollectionTest {
                     .binary(UnitTests.createFirefoxBinarySupplier())
                     .environment(FirefoxWebDriverFactory.createEnvironmentSupplierForDisplay(display))
                     .acceptInsecureCerts()
-                    .constructor((service, options) -> {
-                        ExtensibleFirefoxDriver driver = new ExtensibleFirefoxDriver(service, options);
-                        driver.installAddon(AddonInstallRequest.fromFile(zipFile, AddonPersistence.TEMPORARY));
-                        return driver;
+                    .configure(options -> {
+                        FirefoxProfile profile = options.getProfile();
+                        if (profile == null) {
+                            profile =new FirefoxProfile();
+                            options.setProfile(profile);
+                        }
+                        profile.addExtension(zipFile);
                     }).build();
             // Using a local HTTP server seems to cause some trouble here, so we visit example.com instead
             HarPlus<String> injectedContentCollection = testTrafficCollector(webDriverFactory, driver -> {
@@ -139,6 +140,6 @@ public class FirefoxTrafficCollectionTest {
             return zipFile;
         }
 
-
     }
+
 }

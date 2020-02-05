@@ -16,6 +16,11 @@
       "js": ["content-injection.js"],
       "run_at": "document_start"
     }
-  ]
+  ],
+  "applications": {
+    "gecko": {
+      "id": "firefox-example-extension@selenium-capture.mike10004.github.io"
+    }
+  }
 
 }

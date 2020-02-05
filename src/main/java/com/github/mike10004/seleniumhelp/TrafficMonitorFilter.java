@@ -15,7 +15,17 @@
  */
 package com.github.mike10004.seleniumhelp;
 
-import com.browserup.harreader.model.HarQueryParam;
+import com.browserup.bup.exception.UnsupportedCharsetException;
+import com.browserup.bup.filters.ClientRequestCaptureFilter;
+import com.browserup.bup.filters.HttpsAwareFiltersAdapter;
+import com.browserup.bup.filters.ResolvedHostnameCacheFilter;
+import com.browserup.bup.filters.ServerResponseCaptureFilter;
+import com.browserup.bup.filters.util.HarCaptureUtil;
+import com.browserup.bup.util.BrowserUpHttpUtil;
+import com.browserup.harreader.model.HarPostData;
+import com.browserup.harreader.model.HarPostDataParam;
+import com.browserup.harreader.model.HarRequest;
+import com.browserup.harreader.model.HarResponse;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.MapMaker;
 import com.google.common.io.BaseEncoding;
@@ -28,18 +38,6 @@ import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.LastHttpContent;
 import io.netty.handler.codec.http.QueryStringDecoder;
-import com.browserup.harreader.model.HarHeader;
-import com.browserup.harreader.model.HarPostData;
-import com.browserup.harreader.model.HarPostDataParam;
-import com.browserup.harreader.model.HarRequest;
-import com.browserup.harreader.model.HarResponse;
-import com.browserup.bup.exception.UnsupportedCharsetException;
-import com.browserup.bup.filters.ClientRequestCaptureFilter;
-import com.browserup.bup.filters.HttpsAwareFiltersAdapter;
-import com.browserup.bup.filters.ResolvedHostnameCacheFilter;
-import com.browserup.bup.filters.ServerResponseCaptureFilter;
-import com.browserup.bup.filters.util.HarCaptureUtil;
-import com.browserup.bup.util.BrowserUpHttpUtil;
 import org.littleshoot.proxy.impl.ProxyUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -137,7 +135,7 @@ public class TrafficMonitorFilter extends HttpsAwareFiltersAdapter {
             throw new IllegalArgumentException("Attempted traffic listener capture for HTTP CONNECT request");
         }
         requestCaptureFilter = new ClientRequestCaptureFilter(originalRequest);
-        responseCaptureFilter = new BrAwareServerResponseCaptureFilter(originalRequest, true);
+        responseCaptureFilter = new ServerResponseCaptureFilter(originalRequest, true);
         this.trafficMonitor = checkNotNull(trafficMonitor);
     }
 

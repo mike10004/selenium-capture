@@ -24,7 +24,7 @@ public class BrAwareBrowserMobProxyServerTest {
     public void decodeDuringHarCapture() throws Exception {
         WebDriverFactory webDriverFactory = ChromeWebDriverFactory.builder()
                 .environment(() -> xvfbRule.getController().newEnvironment())
-                .chromeOptions(UnitTests.createChromeOptions())
+                .configure(UnitTests.createChromeOptions())
                 .configure(o -> o.setAcceptInsecureCerts(true))
                 .build();
         TrafficCollector collector = TrafficCollector.builder(webDriverFactory)

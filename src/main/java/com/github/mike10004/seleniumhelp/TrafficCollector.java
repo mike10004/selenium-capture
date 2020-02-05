@@ -1,14 +1,13 @@
 package com.github.mike10004.seleniumhelp;
 
-import com.google.common.net.HostAndPort;
 import com.browserup.bup.BrowserUpProxy;
+import com.browserup.bup.BrowserUpProxyServer;
 import com.browserup.bup.mitm.CertificateAndKeySource;
 import org.littleshoot.proxy.HttpFiltersSource;
 import org.openqa.selenium.WebDriverException;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
-import java.net.InetSocketAddress;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -80,7 +79,7 @@ public interface TrafficCollector {
         private CertificateAndKeySource certificateAndKeySource = null;
         private final List<HttpFiltersSource> httpFiltersSources = new ArrayList<>();
         private BmpConfigurator upstreamConfigurator = BmpConfigurator.noUpstreamProxy();
-        private Supplier<? extends BrowserUpProxy> interceptingProxyInstantiator = BrAwareBrowserMobProxyServer::new;
+        private Supplier<? extends BrowserUpProxy> interceptingProxyInstantiator = BrowserUpProxyServer::new;
         private final List<HarPostProcessor> harPostProcessors = new ArrayList<>();
         private ExceptionReactor exceptionReactor = ExceptionReactor.PROPAGATE;
 
@@ -113,9 +112,7 @@ public interface TrafficCollector {
 
         /**
          * Sets the supplier of the proxy server instance that is used to intercept and collect traffic.
-         * By default, we supply a custom implementation that supports brotli decoding,
-         * {@link BrAwareBrowserUpProxyServer}. To revert this behavior to a more hands-off implementation,
-         * set this to a supplier of a {@link net.lightbody.bmp.BrowserUpProxyServer} instance.
+         * The default is a supplier of the proxy that uses the default constructor.
          * @param interceptingProxyInstantiator the instantiator
          * @return this builder instance
          */

@@ -48,7 +48,7 @@ public class WebDriverFactoryDelegateTest {
         Path scratchDir = temporaryFolder.getRoot().toPath();
         testUseLocalhostCookie((env, cookies) -> {
             return ChromeWebDriverFactory.builder()
-                    .chromeOptions(UnitTests.createChromeOptions())
+                    .configure(UnitTests.createChromeOptions())
                     .cookiePreparer(ChromeWebDriverFactory.makeCookieImplanter(scratchDir, () -> cookies))
                     .environment(env)
                     .build();

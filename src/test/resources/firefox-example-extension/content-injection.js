@@ -4,7 +4,7 @@
   const INJECTED_ID = 'firefox-webext-content-injection';
 
   function injectContent() {
-      document.body.style.border = "5px solid red";
+      document.body.style.border = "5px solid green";
       const div = document.createElement("div");
       div.id = INJECTED_ID;
       div.style.position = "fixed";

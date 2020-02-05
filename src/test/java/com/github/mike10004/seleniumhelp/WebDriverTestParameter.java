@@ -49,8 +49,8 @@ public interface WebDriverTestParameter {
         @Override
         public WebDriverFactory createWebDriverFactory(XvfbRule xvfb) {
             return ChromeWebDriverFactory.builder()
-                    .chromeOptions(UnitTests.createChromeOptions())
-                    .chromeOptions(o -> o.setAcceptInsecureCerts(acceptInsecureCerts))
+                    .configure(UnitTests.createChromeOptions())
+                    .configure(o -> o.setAcceptInsecureCerts(acceptInsecureCerts))
                     .environment(xvfb.getController().newEnvironment())
                     .build();
         }

@@ -37,8 +37,8 @@ public class ChromeTrafficCollectionTest {
         private void testhttp(boolean headless) throws Exception {
             Assume.assumeFalse("headless tests disabled", headless && UnitTests.isHeadlessChromeTestsDisabled());
             WebDriverFactory webDriverFactory = ChromeWebDriverFactory.builder()
-                    .headless(headless)
-                    .chromeOptions(UnitTests.createChromeOptions())
+                    .configure(UnitTests.createChromeOptions())
+                    .configure(o -> o.setHeadless(headless))
                     .environment(createEnvironmentSupplierForDisplay(headless))
                     .build();
             testTrafficCollectorOnExampleDotCom(webDriverFactory);
@@ -48,8 +48,8 @@ public class ChromeTrafficCollectionTest {
         public void http_headless_brotli() throws Exception {
             Assume.assumeFalse("headless tests disabled", UnitTests.isHeadlessChromeTestsDisabled());
             WebDriverFactory webDriverFactory = ChromeWebDriverFactory.builder()
-                    .chromeOptions(UnitTests.createChromeOptions())
-                    .headless()
+                    .configure(UnitTests.createChromeOptions())
+                    .configure(o -> o.setHeadless(true))
                     .build();
             HarResponse response = testTrafficCollector(webDriverFactory, new URL("http://httpbin.org/brotli"));
             HarContent content = response.getContent();
@@ -84,11 +84,11 @@ public class ChromeTrafficCollectionTest {
         private void testhttps(boolean headless) throws Exception {
             Assume.assumeFalse("headless tests disabled", UnitTests.isHeadlessChromeTestsDisabled());
             WebDriverFactory webDriverFactory = ChromeWebDriverFactory.builder()
-                    .chromeOptions(UnitTests.createChromeOptions())
+                    .configure(UnitTests.createChromeOptions())
                     .configure(options -> {
                         options.setAcceptInsecureCerts(true);
                     })
-                    .headless()
+                    .configure(o -> o.setHeadless(true))
                     .environment(createEnvironmentSupplierForDisplay(headless))
                     .build();
             testTrafficCollectorOnHttpbin(webDriverFactory);

@@ -26,11 +26,11 @@ public class FirefoxWebDriverFactory_LogLevelTest {
     public void testSetLogLevelReducesOutput() throws Exception {
         FirefoxWebDriverFactory wdf_verboseLogLevelSet = FirefoxWebDriverFactory.builder()
                 .webdriverLogLevel(Level.FINER)
-                .headless()
+                .configure(o -> o.setHeadless(true))
                 .build();
         String verboseStderr = captureStderr(wdf_verboseLogLevelSet);
         FirefoxWebDriverFactory wdf_terseLogLevelSet = FirefoxWebDriverFactory.builder()
-                .headless()
+                .configure(o -> o.setHeadless(true))
                 .webdriverLogLevel(Level.WARNING)
                 .build();
         String terseStderr = captureStderr(wdf_terseLogLevelSet);

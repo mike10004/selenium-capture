@@ -234,7 +234,7 @@
                             <selenium-help.tests.proxy.http>${proxy.http}</selenium-help.tests.proxy.http>
                             <selenium-help.tests.headlessChromeTestsDisabled>${headlessChromeTestsDisabled}</selenium-help.tests.headlessChromeTestsDisabled>
                             <selenium-help.tests.firefox.executable.path>${firefox.executable.path}</selenium-help.tests.firefox.executable.path>
-                            <selenium-help.tests.showBrowserWindow>${showBrowserWindow}</selenium-help.tests.showBrowserWindow>
+                            <selenium-help.tests.showBrowserWindow>${tests.showBrowserWindow}</selenium-help.tests.showBrowserWindow>
                         </systemPropertyVariables>
                     </configuration>
                 </plugin>
@@ -500,11 +500,6 @@
             <artifactId>nitsick-junit</artifactId>
             <version>0.2</version>
             <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.github.mike10004</groupId>
-            <artifactId>extensible-firefox-webdriver</artifactId>
-            <version>${selenium.version}x${antiprint.version}</version>
         </dependency>
     </dependencies>
 </project>

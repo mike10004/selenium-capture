@@ -43,7 +43,6 @@ public class FirefoxWebDriverFactory extends CapableWebDriverFactory<FirefoxOpti
     private final ImmutableList<FirefoxProfileFolderAction> profileFolderActions;
     private final ImmutableList<DeserializableCookie> cookies;
     private final Path scratchDir;
-    private final InstanceConstructor<? extends WebDriver> constructor;
     private final java.util.logging.Level webdriverLogLevel;
 
     @SuppressWarnings("unused")
@@ -60,7 +59,6 @@ public class FirefoxWebDriverFactory extends CapableWebDriverFactory<FirefoxOpti
         this.cookies = ImmutableList.copyOf(builder.cookies);
         this.profileActions = ImmutableList.copyOf(builder.profileActions);
         this.profileFolderActions = ImmutableList.copyOf(builder.profileFolderActions);
-        this.constructor = requireNonNull(builder.instanceConstructor);
         this.webdriverLogLevel = builder.webdriverLogLevel;
     }
 
@@ -85,8 +83,12 @@ public class FirefoxWebDriverFactory extends CapableWebDriverFactory<FirefoxOpti
                 .withEnvironment(environment)
                 .usingFirefoxBinary(binary)
                 .build();
-        WebDriver driver = constructor.construct(service, options);
+        WebDriver driver = new FirefoxDriver(service, options);
         return new ServicedSession(driver, service);
+    }
+
+    public interface GeckoServiceConstructor {
+        GeckoDriverService build(Map<String, String> env, FirefoxBinary binary) throws IOException;
     }
 
     @VisibleForTesting
@@ -367,10 +369,6 @@ public class FirefoxWebDriverFactory extends CapableWebDriverFactory<FirefoxOpti
         }
     }
 
-    public interface InstanceConstructor<T> {
-        T construct(GeckoDriverService geckoDriverService, FirefoxOptions options) throws IOException;
-    }
-
     @SuppressWarnings("unused")
     public static class Builder extends CapableWebDriverFactoryBuilder<Builder, FirefoxOptions> {
 
@@ -380,7 +378,6 @@ public class FirefoxWebDriverFactory extends CapableWebDriverFactory<FirefoxOpti
         private Path scratchDir = FileUtils.getTempDirectory().toPath();
         private List<FirefoxProfileAction> profileActions = new ArrayList<>();
         private List<FirefoxProfileFolderAction> profileFolderActions = new ArrayList<>();
-        private InstanceConstructor<? extends WebDriver> instanceConstructor = FirefoxDriver::new;
         private java.util.logging.Level webdriverLogLevel = null;
 
         private Builder() {
@@ -404,11 +401,6 @@ public class FirefoxWebDriverFactory extends CapableWebDriverFactory<FirefoxOpti
          */
         public Builder headless() {
             return headless(true);
-        }
-
-        public Builder constructor(InstanceConstructor<? extends WebDriver> constructor) {
-            this.instanceConstructor = requireNonNull(constructor);
-            return this;
         }
 
         public Builder binary(FirefoxBinary binary) {

@@ -351,7 +351,7 @@ public class UnitTests {
         WebDriverTestParameter.DriverManagerSetupCache.doSetup(DriverManagerType.FIREFOX);
         return FirefoxWebDriverFactory.builder()
                 .binary(UnitTests.createFirefoxBinarySupplier())
-                .headless(!isShowBrowserWindowEnabled())
+                .configure(o -> o.setHeadless(!isShowBrowserWindowEnabled()))
                 .acceptInsecureCerts(acceptInsecureCerts)
                 .putPreferences(UnitTests.createFirefoxPreferences())
                 .build();
