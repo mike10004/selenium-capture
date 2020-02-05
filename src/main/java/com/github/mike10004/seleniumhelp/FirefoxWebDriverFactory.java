@@ -44,6 +44,7 @@ public class FirefoxWebDriverFactory extends CapableWebDriverFactory<FirefoxOpti
     private final ImmutableList<DeserializableCookie> cookies;
     private final Path scratchDir;
     private final java.util.logging.Level webdriverLogLevel;
+    private final GeckoServiceConstructor geckoServiceConstructor;
 
     @SuppressWarnings("unused")
     public FirefoxWebDriverFactory() {
@@ -60,6 +61,7 @@ public class FirefoxWebDriverFactory extends CapableWebDriverFactory<FirefoxOpti
         this.profileActions = ImmutableList.copyOf(builder.profileActions);
         this.profileFolderActions = ImmutableList.copyOf(builder.profileFolderActions);
         this.webdriverLogLevel = builder.webdriverLogLevel;
+        this.geckoServiceConstructor = builder.geckoServiceConstructor;
     }
 
     protected ImmutableList<DeserializableCookie> getCookies() {
@@ -79,16 +81,22 @@ public class FirefoxWebDriverFactory extends CapableWebDriverFactory<FirefoxOpti
         FirefoxOptions options = populateOptions(config);
         FirefoxBinary binary = binarySupplier.get();
         Map<String, String> environment = environmentSupplier.get();
-        GeckoDriverService service = new GeckoDriverService.Builder()
-                .withEnvironment(environment)
-                .usingFirefoxBinary(binary)
-                .build();
+        GeckoDriverService service = geckoServiceConstructor.build(environment, binary);
         WebDriver driver = new FirefoxDriver(service, options);
         return new ServicedSession(driver, service);
     }
 
     public interface GeckoServiceConstructor {
         GeckoDriverService build(Map<String, String> env, FirefoxBinary binary) throws IOException;
+
+        static GeckoServiceConstructor standard() {
+            return (env, binary) -> {
+                return new GeckoDriverService.Builder()
+                        .withEnvironment(env)
+                        .usingFirefoxBinary(binary)
+                        .build();
+            };
+        }
     }
 
     @VisibleForTesting
@@ -378,6 +386,7 @@ public class FirefoxWebDriverFactory extends CapableWebDriverFactory<FirefoxOpti
         private Path scratchDir = FileUtils.getTempDirectory().toPath();
         private List<FirefoxProfileAction> profileActions = new ArrayList<>();
         private List<FirefoxProfileFolderAction> profileFolderActions = new ArrayList<>();
+        private GeckoServiceConstructor geckoServiceConstructor = GeckoServiceConstructor.standard();
         private java.util.logging.Level webdriverLogLevel = null;
 
         private Builder() {
@@ -493,6 +502,11 @@ public class FirefoxWebDriverFactory extends CapableWebDriverFactory<FirefoxOpti
 
         public Builder scratchDir(Path scratchDir) {
             this.scratchDir = requireNonNull(scratchDir);
+            return this;
+        }
+
+        public Builder geckoServiceConstructor(GeckoServiceConstructor ctor) {
+            this.geckoServiceConstructor = requireNonNull(ctor);
             return this;
         }
 
