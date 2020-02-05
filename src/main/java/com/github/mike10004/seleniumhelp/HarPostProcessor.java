@@ -1,6 +1,6 @@
 package com.github.mike10004.seleniumhelp;
 
-import net.lightbody.bmp.core.har.Har;
+import com.browserup.harreader.model.Har;
 
 /**
  * Interface for classes that apply modifications to HARs after traffic collection.

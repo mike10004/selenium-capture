@@ -3,7 +3,7 @@ package com.github.mike10004.seleniumhelp;
 import com.google.common.io.ByteSource;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Resources;
-import net.lightbody.bmp.mitm.CertificateAndKeySource;
+import com.browserup.bup.mitm.CertificateAndKeySource;
 
 import java.io.File;
 import java.io.FileOutputStream;

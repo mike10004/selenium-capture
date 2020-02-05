@@ -1,7 +1,7 @@
 package com.github.mike10004.seleniumhelp;
 
 import com.github.mike10004.xvfbtesting.XvfbRule;
-import net.lightbody.bmp.core.har.Har;
+import com.browserup.harreader.model.Har;
 import org.apache.http.cookie.MalformedCookieException;
 import org.junit.Rule;
 import org.junit.Test;

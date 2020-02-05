@@ -1,8 +1,8 @@
 package com.github.mike10004.seleniumhelp;
 
 import com.google.common.net.HostAndPort;
-import net.lightbody.bmp.BrowserMobProxy;
-import net.lightbody.bmp.mitm.CertificateAndKeySource;
+import com.browserup.bup.BrowserUpProxy;
+import com.browserup.bup.mitm.CertificateAndKeySource;
 import org.littleshoot.proxy.HttpFiltersSource;
 import org.openqa.selenium.WebDriverException;
 
@@ -80,7 +80,7 @@ public interface TrafficCollector {
         private CertificateAndKeySource certificateAndKeySource = null;
         private final List<HttpFiltersSource> httpFiltersSources = new ArrayList<>();
         private BmpConfigurator upstreamConfigurator = BmpConfigurator.noUpstreamProxy();
-        private Supplier<? extends BrowserMobProxy> interceptingProxyInstantiator = BrAwareBrowserMobProxyServer::new;
+        private Supplier<? extends BrowserUpProxy> interceptingProxyInstantiator = BrAwareBrowserMobProxyServer::new;
         private final List<HarPostProcessor> harPostProcessors = new ArrayList<>();
         private ExceptionReactor exceptionReactor = ExceptionReactor.PROPAGATE;
 
@@ -114,12 +114,12 @@ public interface TrafficCollector {
         /**
          * Sets the supplier of the proxy server instance that is used to intercept and collect traffic.
          * By default, we supply a custom implementation that supports brotli decoding,
-         * {@link BrAwareBrowserMobProxyServer}. To revert this behavior to a more hands-off implementation,
-         * set this to a supplier of a {@link net.lightbody.bmp.BrowserMobProxyServer} instance.
+         * {@link BrAwareBrowserUpProxyServer}. To revert this behavior to a more hands-off implementation,
+         * set this to a supplier of a {@link net.lightbody.bmp.BrowserUpProxyServer} instance.
          * @param interceptingProxyInstantiator the instantiator
          * @return this builder instance
          */
-        public Builder interceptingProxyInstantiator(Supplier<? extends BrowserMobProxy> interceptingProxyInstantiator) {
+        public Builder interceptingProxyInstantiator(Supplier<? extends BrowserUpProxy> interceptingProxyInstantiator) {
             this.interceptingProxyInstantiator = requireNonNull(interceptingProxyInstantiator);
             return this;
         }

@@ -1,6 +1,6 @@
 package com.github.mike10004.seleniumhelp;
 
-import net.lightbody.bmp.mitm.CertificateAndKeySource;
+import com.browserup.bup.mitm.CertificateAndKeySource;
 
 import javax.annotation.Nullable;
 

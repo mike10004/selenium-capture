@@ -10,7 +10,7 @@ import com.google.gson.JsonParser;
 import io.github.bonigarcia.wdm.ChromeDriverManager;
 import io.github.bonigarcia.wdm.FirefoxDriverManager;
 import io.github.bonigarcia.wdm.WebDriverManager;
-import net.lightbody.bmp.core.har.Har;
+import com.browserup.harreader.model.Har;
 import org.apache.commons.io.FileUtils;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
@@ -27,6 +27,7 @@ import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.Writer;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.function.Consumer;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -135,8 +136,9 @@ public class LightbodyHarCreationUtility {
                 .build();
         Har har = collector.collect(new InteractiveTrafficGenerator()).har;
         File harFile = File.createTempFile("lightbody", ".har", scratchDir);
-        har.writeTo(harFile);
-        prettify(harFile, Charset.defaultCharset(), UTF_8);
+        Charset charset = StandardCharsets.UTF_8;
+        BrowserUpHars.writeHarTo(har, harFile, charset);
+        prettify(harFile, charset, UTF_8);
         return harFile;
     }
 

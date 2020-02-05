@@ -3,12 +3,12 @@ package com.github.mike10004.seleniumhelp;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.MoreObjects;
 import com.google.common.net.HttpHeaders;
-import net.lightbody.bmp.core.har.Har;
-import net.lightbody.bmp.core.har.HarEntry;
-import net.lightbody.bmp.core.har.HarNameValuePair;
-import net.lightbody.bmp.core.har.HarPostData;
-import net.lightbody.bmp.core.har.HarRequest;
-import net.lightbody.bmp.core.har.HarResponse;
+import com.browserup.harreader.model.Har;
+import com.browserup.harreader.model.HarEntry;
+import com.browserup.harreader.model.HarHeader;
+import com.browserup.harreader.model.HarPostData;
+import com.browserup.harreader.model.HarRequest;
+import com.browserup.harreader.model.HarResponse;
 import org.apache.http.cookie.MalformedCookieException;
 
 import javax.annotation.Nullable;
@@ -126,7 +126,7 @@ public class HarAnalysis {
         }
         Stream<String> headerValues = entry.getResponse().getHeaders().stream()
                 .filter(header -> HttpHeaders.SET_COOKIE.equalsIgnoreCase(header.getName()))
-                .map(HarNameValuePair::getValue);
+                .map(HarHeader::getValue);
         final List<DeserializableCookie> cookies = new ArrayList<>();
         headerValues.forEach(headerValue -> {
             try {

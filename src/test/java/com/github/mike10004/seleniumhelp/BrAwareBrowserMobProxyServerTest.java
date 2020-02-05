@@ -1,8 +1,8 @@
 package com.github.mike10004.seleniumhelp;
 
 import com.github.mike10004.xvfbtesting.XvfbRule;
-import net.lightbody.bmp.core.har.HarEntry;
-import net.lightbody.bmp.core.har.HarResponse;
+import com.browserup.harreader.model.HarEntry;
+import com.browserup.harreader.model.HarResponse;
 import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
@@ -28,7 +28,7 @@ public class BrAwareBrowserMobProxyServerTest {
                 .configure(o -> o.setAcceptInsecureCerts(true))
                 .build();
         TrafficCollector collector = TrafficCollector.builder(webDriverFactory)
-                // the collector uses the BrAwareBrowserMobProxyServer by default, so there is no need to specify it here
+                // the collector uses the BrAwareBrowserUpProxyServer by default, so there is no need to specify it here
                 .build();
         // TODO set up a local webserver that servers a brotli page instead of hitting this external one
         String brotliUrl = "https://httpbin.org/brotli";

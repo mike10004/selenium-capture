@@ -3,11 +3,11 @@ package com.github.mike10004.seleniumhelp;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.io.ByteSource;
-import net.lightbody.bmp.mitm.CertificateAndKey;
-import net.lightbody.bmp.mitm.CertificateAndKeySource;
-import net.lightbody.bmp.mitm.KeyStoreCertificateSource;
-import net.lightbody.bmp.mitm.exception.CertificateSourceException;
-import net.lightbody.bmp.mitm.tools.SecurityProviderTool;
+import com.browserup.bup.mitm.CertificateAndKey;
+import com.browserup.bup.mitm.CertificateAndKeySource;
+import com.browserup.bup.mitm.KeyStoreCertificateSource;
+import com.browserup.bup.mitm.exception.CertificateSourceException;
+import com.browserup.bup.mitm.tools.SecurityProviderTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,7 +22,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * from the specified file. Otherwise, attempts to load the KeyStore from a classpath resource.
  */
 public class KeyStoreStreamCertificateSource implements CertificateAndKeySource {
-    private static final Logger log = LoggerFactory.getLogger(net.lightbody.bmp.mitm.KeyStoreFileCertificateSource.class);
+    private static final Logger log = LoggerFactory.getLogger(KeyStoreStreamCertificateSource.class);
 
     private final ByteSource keyStoreByteSource;
 

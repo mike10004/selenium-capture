@@ -1,9 +1,9 @@
 package com.github.mike10004.seleniumhelp;
 
 import com.google.common.base.MoreObjects;
-import net.lightbody.bmp.BrowserMobProxy;
-import net.lightbody.bmp.BrowserMobProxyServer;
-import net.lightbody.bmp.mitm.CertificateAndKeySource;
+import com.browserup.bup.BrowserUpProxy;
+import com.browserup.bup.BrowserUpProxyServer;
+import com.browserup.bup.mitm.CertificateAndKeySource;
 import org.littleshoot.proxy.ChainedProxyManager;
 
 import javax.annotation.Nullable;
@@ -19,20 +19,20 @@ class BasicBmpConfigurator implements BmpConfigurator {
     }
 
     @Override
-    public void configureUpstream(BrowserMobProxy bmp) {
+    public void configureUpstream(BrowserUpProxy bmp) {
         if (upstreamProxyDefinition == null) {
             bmp.setChainedProxy(null);
-            if (bmp instanceof BrowserMobProxyServer) {
-                ((BrowserMobProxyServer) bmp).setChainedProxyManager(null);
+            if (bmp instanceof BrowserUpProxyServer) {
+                ((BrowserUpProxyServer) bmp).setChainedProxyManager(null);
             }
         } else {
             ChainedProxyManager chainedProxyManager = upstreamProxyDefinition.createUpstreamProxy();
-            ((BrowserMobProxyServer)bmp).setChainedProxyManager(chainedProxyManager);
+            ((BrowserUpProxyServer)bmp).setChainedProxyManager(chainedProxyManager);
         }
     }
 
     @Override
-    public WebdrivingConfig createWebdrivingConfig(BrowserMobProxy bmp, @Nullable CertificateAndKeySource certificateAndKeySource) {
+    public WebdrivingConfig createWebdrivingConfig(BrowserUpProxy bmp, @Nullable CertificateAndKeySource certificateAndKeySource) {
         WebdrivingProxyDefinition proxy = ProxyDefinitionBuilder.through(BrowserMobs.resolveSocketAddress(bmp))
                 .buildWebdrivingProxyDefinition();
         return WebdrivingConfig.builder()

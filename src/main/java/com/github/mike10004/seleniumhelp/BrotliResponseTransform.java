@@ -1,16 +1,16 @@
 package com.github.mike10004.seleniumhelp;
 
+import com.browserup.harreader.model.HarHeader;
 import com.google.common.base.CharMatcher;
 import com.google.common.io.ByteStreams;
 import com.google.common.net.HttpHeaders;
 import com.google.common.net.MediaType;
 import com.helger.css.ECSSVersion;
 import com.helger.css.reader.CSSReader;
-import net.lightbody.bmp.core.har.Har;
-import net.lightbody.bmp.core.har.HarContent;
-import net.lightbody.bmp.core.har.HarEntry;
-import net.lightbody.bmp.core.har.HarNameValuePair;
-import net.lightbody.bmp.core.har.HarResponse;
+import com.browserup.harreader.model.Har;
+import com.browserup.harreader.model.HarContent;
+import com.browserup.harreader.model.HarEntry;
+import com.browserup.harreader.model.HarResponse;
 import org.brotli.dec.BrotliInputStream;
 
 import javax.annotation.Nullable;
@@ -167,8 +167,8 @@ public class BrotliResponseTransform {
 
     @SuppressWarnings("SameParameterValue")
     @Nullable
-    private static String getHeaderValue(Iterable<HarNameValuePair> headers, String headerName) {
-        for (HarNameValuePair header : headers) {
+    private static String getHeaderValue(Iterable<HarHeader> headers, String headerName) {
+        for (HarHeader header : headers) {
             if (headerName.equalsIgnoreCase(header.getName())) {
                 return header.getValue();
             }

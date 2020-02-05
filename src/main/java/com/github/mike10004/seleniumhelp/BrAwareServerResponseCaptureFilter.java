@@ -1,8 +1,9 @@
 package com.github.mike10004.seleniumhelp;
 
+import com.browserup.bup.filters.ServerResponseCaptureFilter;
+import com.browserup.bup.util.BrowserUpHttpUtil;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.ByteStreams;
-import com.jcraft.jzlib.GZIPInputStream;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.HttpContent;
@@ -12,8 +13,6 @@ import io.netty.handler.codec.http.HttpObject;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.LastHttpContent;
-import net.lightbody.bmp.filters.ServerResponseCaptureFilter;
-import net.lightbody.bmp.util.BrowserMobHttpUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.brotli.dec.BrotliInputStream;
 import org.slf4j.Logger;
@@ -27,6 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.zip.GZIPInputStream;
 
 /**
  * Brotli-aware server response capture filter. Copied from {@link net.lightbody.bmp.filters.ServerResponseCaptureFilter}
@@ -294,7 +294,7 @@ public class BrAwareServerResponseCaptureFilter  extends ServerResponseCaptureFi
     @Override
     protected void storeResponseContent(HttpContent httpContent) {
         ByteBuf bufferedContent = httpContent.content();
-        byte[] content = BrowserMobHttpUtil.extractReadableBytes(bufferedContent);
+        byte[] content = BrowserUpHttpUtil.extractReadableBytes(bufferedContent);
 
         try {
             rawResponseContents.write(content);

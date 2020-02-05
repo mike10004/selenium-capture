@@ -1,15 +1,15 @@
 package com.github.mike10004.seleniumhelp;
 
+import com.browserup.harreader.model.Har;
 import com.google.common.annotations.Beta;
 import com.google.common.base.MoreObjects;
 import com.google.common.collect.ImmutableList;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.HttpRequest;
-import net.lightbody.bmp.BrowserMobProxy;
-import net.lightbody.bmp.core.har.Har;
-import net.lightbody.bmp.mitm.CertificateAndKeySource;
-import net.lightbody.bmp.mitm.manager.ImpersonatingMitmManager;
-import net.lightbody.bmp.proxy.CaptureType;
+import com.browserup.bup.BrowserUpProxy;
+import com.browserup.bup.mitm.CertificateAndKeySource;
+import com.browserup.bup.mitm.manager.ImpersonatingMitmManager;
+import com.browserup.bup.proxy.CaptureType;
 import org.littleshoot.proxy.HttpFilters;
 import org.littleshoot.proxy.HttpFiltersSource;
 import org.littleshoot.proxy.HttpFiltersSourceAdapter;
@@ -38,7 +38,7 @@ public class TrafficCollectorImpl implements TrafficCollector {
     private final CertificateAndKeySource certificateAndKeySource;
     private final ImmutableList<HttpFiltersSource> httpFiltersSources;
     private final BmpConfigurator upstreamConfigurator;
-    private final Supplier<? extends BrowserMobProxy> interceptingProxyInstantiator;
+    private final Supplier<? extends BrowserUpProxy> interceptingProxyInstantiator;
     private final ImmutableList<HarPostProcessor> harPostProcessors;
     private final ExceptionReactor exceptionReactor;
 
@@ -58,7 +58,7 @@ public class TrafficCollectorImpl implements TrafficCollector {
                             @Nullable CertificateAndKeySource certificateAndKeySource,
                             BmpConfigurator upstreamConfigurator,
                                Iterable<? extends HttpFiltersSource> httpFiltersSources,
-                               Supplier<? extends BrowserMobProxy> interceptingProxyInstantiator,
+                               Supplier<? extends BrowserUpProxy> interceptingProxyInstantiator,
                                Iterable<? extends HarPostProcessor> harPostProcessors,
                                ExceptionReactor exceptionReactor) {
         this.webDriverFactory = requireNonNull(webDriverFactory);
@@ -82,7 +82,7 @@ public class TrafficCollectorImpl implements TrafficCollector {
     @Override
     public <R> HarPlus<R> collect(TrafficGenerator<R> generator, @Nullable TrafficMonitor monitor) throws IOException, WebDriverException {
         requireNonNull(generator, "generator");
-        BrowserMobProxy bmp = instantiateProxy();
+        BrowserUpProxy bmp = instantiateProxy();
         configureProxy(bmp, certificateAndKeySource, monitor);
         bmp.enableHarCaptureTypes(getCaptureTypes());
         bmp.newHar();
@@ -115,7 +115,7 @@ public class TrafficCollectorImpl implements TrafficCollector {
 
     private <R> R maybeMonitor(TrafficGenerator<R> generator, @Nullable TrafficMonitor monitor) throws IOException, WebDriverException {
         requireNonNull(generator, "generator");
-        BrowserMobProxy bmp = instantiateProxy();
+        BrowserUpProxy bmp = instantiateProxy();
         configureProxy(bmp, certificateAndKeySource, monitor);
         bmp.start();
         try {
@@ -128,7 +128,7 @@ public class TrafficCollectorImpl implements TrafficCollector {
         }
     }
 
-    private <R> R invokeGenerate(BrowserMobProxy bmp, TrafficGenerator<R> generator, @Nullable TrafficMonitor monitor) throws IOException, WebDriverException {
+    private <R> R invokeGenerate(BrowserUpProxy bmp, TrafficGenerator<R> generator, @Nullable TrafficMonitor monitor) throws IOException, WebDriverException {
         WebdrivingConfig config = upstreamConfigurator.createWebdrivingConfig(bmp, certificateAndKeySource);
         try (WebdrivingSession session = webDriverFactory.startWebdriving(config)) {
             WebDriver webdriver = session.getWebDriver();
@@ -176,18 +176,18 @@ public class TrafficCollectorImpl implements TrafficCollector {
         }
     }
 
-    protected MitmManager createMitmManager(@SuppressWarnings("unused") BrowserMobProxy proxy, CertificateAndKeySource certificateAndKeySource) {
+    protected MitmManager createMitmManager(@SuppressWarnings("unused") BrowserUpProxy proxy, CertificateAndKeySource certificateAndKeySource) {
         MitmManager mitmManager = ImpersonatingMitmManager.builder()
                 .rootCertificateSource(certificateAndKeySource)
                 .build();
         return mitmManager;
     }
 
-    protected BrowserMobProxy instantiateProxy() {
+    protected BrowserUpProxy instantiateProxy() {
         return interceptingProxyInstantiator.get();
     }
 
-    protected void configureProxy(BrowserMobProxy bmp, CertificateAndKeySource certificateAndKeySource, @Nullable TrafficMonitor trafficMonitor) {
+    protected void configureProxy(BrowserUpProxy bmp, CertificateAndKeySource certificateAndKeySource, @Nullable TrafficMonitor trafficMonitor) {
         if (certificateAndKeySource != null) {
             MitmManager mitmManager = createMitmManager(bmp, certificateAndKeySource);
             bmp.setMitmManager(mitmManager);

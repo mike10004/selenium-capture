@@ -10,7 +10,7 @@ import io.netty.handler.codec.http.HttpObject;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
-import net.lightbody.bmp.filters.HttpsAwareFiltersAdapter;
+import com.browserup.bup.filters.HttpsAwareFiltersAdapter;
 import org.littleshoot.proxy.HttpFilters;
 import org.littleshoot.proxy.HttpFiltersSourceAdapter;
 

@@ -7,6 +7,7 @@ import org.openqa.selenium.chrome.ChromeOptions;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 
 public class ReadmeExample {
@@ -32,7 +33,7 @@ public class ReadmeExample {
             });
             System.out.println("collected page with title " + harPlus.result);
             File harFile = File.createTempFile("selenium-help-example", ".har");
-            harPlus.har.writeTo(harFile);
+            BrowserUpHars.writeHarTo(harPlus.har, harFile, StandardCharsets.UTF_8);
             System.out.format("wrote har to %s%n", harFile);
         } finally {
             FileUtils.forceDelete(scratchDir.toFile());

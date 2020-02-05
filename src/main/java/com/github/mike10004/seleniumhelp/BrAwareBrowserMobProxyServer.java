@@ -2,16 +2,15 @@ package com.github.mike10004.seleniumhelp;
 
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.HttpRequest;
-import net.lightbody.bmp.BrowserMobProxyServer;
-import net.lightbody.bmp.core.har.Har;
-import net.lightbody.bmp.filters.HttpConnectHarCaptureFilter;
+import com.browserup.bup.BrowserUpProxyServer;
+import com.browserup.bup.filters.HttpConnectHarCaptureFilter;
 import org.littleshoot.proxy.HttpFilters;
 import org.littleshoot.proxy.HttpFiltersSourceAdapter;
 import org.littleshoot.proxy.impl.ProxyUtils;
-
+import com.browserup.harreader.model.Har;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class BrAwareBrowserMobProxyServer extends BrowserMobProxyServer  {
+public class BrAwareBrowserMobProxyServer extends BrowserUpProxyServer  {
 
     /**
      * Set to true once the HAR capture filter has been added to the filter chain.

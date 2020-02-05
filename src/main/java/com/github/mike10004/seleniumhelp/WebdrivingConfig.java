@@ -2,7 +2,7 @@ package com.github.mike10004.seleniumhelp;
 
 import com.google.common.base.MoreObjects;
 import com.google.common.net.HostAndPort;
-import net.lightbody.bmp.mitm.CertificateAndKeySource;
+import com.browserup.bup.mitm.CertificateAndKeySource;
 
 import javax.annotation.Nullable;
 import java.util.Collections;

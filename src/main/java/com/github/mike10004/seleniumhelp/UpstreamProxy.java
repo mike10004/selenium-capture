@@ -5,6 +5,7 @@ import org.littleshoot.proxy.ChainedProxy;
 import org.littleshoot.proxy.ChainedProxyAdapter;
 import org.littleshoot.proxy.ChainedProxyManager;
 import org.littleshoot.proxy.ChainedProxyType;
+import org.littleshoot.proxy.impl.ClientDetails;
 
 import java.net.InetSocketAddress;
 import java.util.Queue;
@@ -30,8 +31,7 @@ class UpstreamProxy implements ChainedProxyManager {
     }
 
     @Override
-    public void lookupChainedProxies(final HttpRequest httpRequest,
-                                     final Queue<ChainedProxy> chainedProxies) {
+    public void lookupChainedProxies(HttpRequest httpRequest, Queue<ChainedProxy> chainedProxies, ClientDetails clientDetails) {
         chainedProxies.add(new ChainedProxyAdapter() {
             @Override
             public ChainedProxyType getChainedProxyType() {
@@ -54,6 +54,6 @@ class UpstreamProxy implements ChainedProxyManager {
 
     @Override
     public String toString() {
-        return proxyType.toString().toLowerCase() + "://" + host + ":" + port;
+        return proxyType.name().toLowerCase() + "://" + host + ":" + port;
     }
 }

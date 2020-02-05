@@ -1,8 +1,8 @@
 package com.github.mike10004.seleniumhelp;
 
-import net.lightbody.bmp.mitm.exception.ImportException;
-import net.lightbody.bmp.mitm.exception.KeyStoreAccessException;
-import net.lightbody.bmp.mitm.tools.DefaultSecurityProviderTool;
+import com.browserup.bup.mitm.exception.ImportException;
+import com.browserup.bup.mitm.exception.KeyStoreAccessException;
+import com.browserup.bup.mitm.tools.DefaultSecurityProviderTool;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;

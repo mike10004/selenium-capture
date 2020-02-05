@@ -16,9 +16,9 @@ import io.netty.handler.codec.http.HttpObject;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
-import net.lightbody.bmp.BrowserMobProxy;
-import net.lightbody.bmp.BrowserMobProxyServer;
-import net.lightbody.bmp.filters.HttpsAwareFiltersAdapter;
+import com.browserup.bup.BrowserUpProxy;
+import com.browserup.bup.BrowserUpProxyServer;
+import com.browserup.bup.filters.HttpsAwareFiltersAdapter;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -105,7 +105,7 @@ public class ProxyBypassTest {
         NanoServer server2 = NanoServer.builder()
                 .get(whatever -> NanoResponse.status(200).plainTextUtf8(MESSAGE_NOT_INTERCEPTED))
                 .build();
-        BrowserMobProxy proxy = new BrowserMobProxyServer();
+        BrowserUpProxy proxy = new BrowserUpProxyServer();
         proxy.addLastHttpFilterFactory(new InterceptingFiltersSource());
         ExecutorService executorService = (Executors.newSingleThreadExecutor());
         proxy.start();

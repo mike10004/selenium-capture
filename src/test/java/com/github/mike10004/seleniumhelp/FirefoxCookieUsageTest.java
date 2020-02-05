@@ -4,7 +4,7 @@ import com.github.mike10004.seleniumhelp.FirefoxWebDriverFactory.FirefoxProfileF
 import com.github.mike10004.xvfbmanager.XvfbController;
 import com.google.common.collect.Multimap;
 import com.google.gson.GsonBuilder;
-import net.lightbody.bmp.core.har.Har;
+import com.browserup.harreader.model.Har;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;

@@ -5,7 +5,7 @@ import com.google.common.io.CharSource;
 import com.google.common.io.Resources;
 import com.google.common.net.HttpHeaders;
 import com.google.common.net.MediaType;
-import net.lightbody.bmp.core.har.*;
+import com.browserup.harreader.model.*;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -34,7 +34,9 @@ public class BrotliResponseTransformTest {
         HarResponse brotliCssResponse = buildResponse("text/css", HEADER_VALUE_BROTLI_ENCODED, brotliCss);
         List<HarEntry> entries = Stream.of(plainJsResponse, brotliCssResponse, plainCssResponse, brotliJsResponse)
                 .map(rsp -> buildEntry(new HarRequest(), rsp)).collect(Collectors.toList());
-        entries.forEach(log::addEntry);
+        entries.forEach(entry -> {
+            log.getEntries().add(entry);
+        });
         List<HarEntry> cleaned = new BrotliResponseTransform().clean(har);
         for (HarEntry entry : cleaned) {
             System.out.format("%s (%s) %s%n", entry.getResponse().getContent().getMimeType(), entry.getResponse().getContent().getEncoding(), entry.getRequest().getUrl());
@@ -80,19 +82,19 @@ public class BrotliResponseTransformTest {
         return buildResponse(contentTypeHeader, contentEncodingHeader, Base64.getEncoder().encodeToString(harContentBytes), "base64");
     }
 
-    private HarNameValuePair buildHeader(String name, String value) {
-        HarNameValuePair header = new HarNameValuePair(name, value);
+    private HarHeader buildHeader(String name, String value) {
+        HarHeader header = BrowserMobs.newHarHeader(name, value);
         return header;
 
     }
 
     private HarResponse buildResponse(String contentTypeHeader, String contentEncodingHeader, String harContentText, String harContentEncoding) {
-        HarResponse response = new HarResponse(200, "OK", null);
+        HarResponse response = BrowserMobs.newHarResponse(200, "OK", null);
         HarContent content = response.getContent();
         content.setMimeType(contentTypeHeader);
         content.setEncoding(harContentEncoding);
         content.setText(harContentText);
-        List<HarNameValuePair> headers = ImmutableList.of(buildHeader(HttpHeaders.CONTENT_TYPE, contentTypeHeader), buildHeader(HttpHeaders.CONTENT_ENCODING, contentEncodingHeader));
+        List<HarHeader> headers = ImmutableList.of(buildHeader(HttpHeaders.CONTENT_TYPE, contentTypeHeader), buildHeader(HttpHeaders.CONTENT_ENCODING, contentEncodingHeader));
         response.getHeaders().addAll(headers);
         return response;
     }
@@ -104,7 +106,7 @@ public class BrotliResponseTransformTest {
         HarEntry entry = new HarEntry();
         entry.setResponse(response);
         HarLog log = new HarLog();
-        log.addEntry(entry);
+        log.getEntries().add(entry);
         har.setLog(log);
         new BrotliResponseTransform().clean(har);
         assertEquals("num entries after clean", 1, har.getLog().getEntries().size());

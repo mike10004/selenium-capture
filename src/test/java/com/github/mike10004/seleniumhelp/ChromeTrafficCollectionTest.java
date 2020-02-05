@@ -1,7 +1,7 @@
 package com.github.mike10004.seleniumhelp;
 
-import net.lightbody.bmp.core.har.HarContent;
-import net.lightbody.bmp.core.har.HarResponse;
+import com.browserup.harreader.model.HarContent;
+import com.browserup.harreader.model.HarResponse;
 import org.junit.Assume;
 import org.junit.BeforeClass;
 import org.junit.Test;

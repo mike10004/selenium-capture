@@ -16,23 +16,23 @@ import io.netty.handler.codec.http.QueryStringDecoder;
 import io.netty.handler.codec.http.cookie.ClientCookieDecoder;
 import io.netty.handler.codec.http.cookie.Cookie;
 import io.netty.handler.codec.http.cookie.ServerCookieDecoder;
-import net.lightbody.bmp.core.har.Har;
-import net.lightbody.bmp.core.har.HarCookie;
-import net.lightbody.bmp.core.har.HarEntry;
-import net.lightbody.bmp.core.har.HarNameValuePair;
-import net.lightbody.bmp.core.har.HarPostData;
-import net.lightbody.bmp.core.har.HarPostDataParam;
-import net.lightbody.bmp.core.har.HarRequest;
-import net.lightbody.bmp.core.har.HarResponse;
-import net.lightbody.bmp.exception.UnsupportedCharsetException;
-import net.lightbody.bmp.filters.ClientRequestCaptureFilter;
-import net.lightbody.bmp.filters.HttpConnectHarCaptureFilter;
-import net.lightbody.bmp.filters.HttpsAwareFiltersAdapter;
-import net.lightbody.bmp.filters.ResolvedHostnameCacheFilter;
-import net.lightbody.bmp.filters.support.HttpConnectTiming;
-import net.lightbody.bmp.filters.util.HarCaptureUtil;
-import net.lightbody.bmp.proxy.CaptureType;
-import net.lightbody.bmp.util.BrowserMobHttpUtil;
+import com.browserup.harreader.model.Har;
+
+import com.browserup.harreader.model.HarCookie;
+import com.browserup.harreader.model.HarEntry;
+import com.browserup.harreader.model.HarPostData;
+import com.browserup.harreader.model.HarPostDataParam;
+import com.browserup.harreader.model.HarRequest;
+import com.browserup.harreader.model.HarResponse;
+import com.browserup.bup.exception.UnsupportedCharsetException;
+import com.browserup.bup.filters.ClientRequestCaptureFilter;
+import com.browserup.bup.filters.HttpConnectHarCaptureFilter;
+import com.browserup.bup.filters.HttpsAwareFiltersAdapter;
+import com.browserup.bup.filters.ResolvedHostnameCacheFilter;
+import com.browserup.bup.filters.support.HttpConnectTiming;
+import com.browserup.bup.filters.util.HarCaptureUtil;
+import com.browserup.bup.proxy.CaptureType;
+import com.browserup.bup.util.BrowserUpHttpUtil;
 import org.littleshoot.proxy.impl.ProxyUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,10 +48,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class BrAwareHarCaptureFilter extends HttpsAwareFiltersAdapter {
-    private static final Logger log = LoggerFactory.getLogger(net.lightbody.bmp.filters.HarCaptureFilter.class);
+
+    private static final Logger log = LoggerFactory.getLogger(BrAwareHarCaptureFilter.class);
 
     /**
      * The currently active HAR at the time the current request is received.
@@ -105,12 +106,12 @@ public class BrAwareHarCaptureFilter extends HttpsAwareFiltersAdapter {
     /**
      * Request body size is determined by the actual size of the data the client sends. The filter does not use the Content-Length header to determine request size.
      */
-    private final AtomicInteger requestBodySize = new AtomicInteger(0);
+    private final AtomicLong requestBodySize = new AtomicLong(0);
 
     /**
      * Response body size is determined by the actual size of the data the server sends.
      */
-    private final AtomicInteger responseBodySize = new AtomicInteger(0);
+    private final AtomicLong responseBodySize = new AtomicLong(0);
 
     /**
      * The "real" original request, as captured by the {@link #clientToProxyRequest(io.netty.handler.codec.http.HttpObject)} method.
@@ -176,7 +177,8 @@ public class BrAwareHarCaptureFilter extends HttpsAwareFiltersAdapter {
 
         this.har = har;
 
-        this.harEntry = new HarEntry(currentPageRef);
+        this.harEntry = new HarEntry();
+        this.harEntry.setPageref(currentPageRef);
     }
 
     @Override
@@ -191,7 +193,7 @@ public class BrAwareHarCaptureFilter extends HttpsAwareFiltersAdapter {
             // link the object up now, before we make the request, so that if we get cut off (ie: favicon.ico request and browser shuts down)
             // we still have the attempt associated, even if we never got a response
             harEntry.setStartedDateTime(new Date());
-            har.getLog().addEntry(harEntry);
+            har.getLog().getEntries().add(harEntry);
 
             HttpRequest httpRequest = (HttpRequest) httpObject;
             this.capturedOriginalRequest = httpRequest;
@@ -203,7 +205,7 @@ public class BrAwareHarCaptureFilter extends HttpsAwareFiltersAdapter {
             // create a "no response received" HarResponse, in case the connection is interrupted, terminated, or the response is not received
             // for any other reason. having a "default" HarResponse prevents us from generating an invalid HAR.
             HarResponse defaultHarResponse = HarCaptureUtil.createHarResponseForFailure();
-            defaultHarResponse.setError(HarCaptureUtil.getNoResponseReceivedErrorMessage());
+            BrowserMobs.setHarResponseError(defaultHarResponse, HarCaptureUtil.getNoResponseReceivedErrorMessage());
             harEntry.setResponse(defaultHarResponse);
 
             captureQueryParameters(httpRequest);
@@ -285,7 +287,7 @@ public class BrAwareHarCaptureFilter extends HttpsAwareFiltersAdapter {
         HarResponse response = HarCaptureUtil.createHarResponseForFailure();
         harEntry.setResponse(response);
 
-        response.setError(HarCaptureUtil.getResponseTimedOutErrorMessage());
+        BrowserMobs.setHarResponseError(response, HarCaptureUtil.getResponseTimedOutErrorMessage());
 
 
         // include this timeout time in the HarTimings object
@@ -317,8 +319,11 @@ public class BrAwareHarCaptureFilter extends HttpsAwareFiltersAdapter {
         // the URI on the httpRequest may only identify the path of the resource, so find the full URL.
         // the full URL consists of the scheme + host + port (if non-standard) + path + query params + fragment.
         String url = getFullUrl(httpRequest);
-
-        return new HarRequest(httpRequest.method().toString(), url, httpRequest.protocolVersion().text());
+        HarRequest harRequest = new HarRequest();
+        harRequest.setMethod(BrowserMobs.toHarHttpMethod(httpRequest.method()));
+        harRequest.setUrl(url);
+        harRequest.setHttpVersion(httpRequest.protocolVersion().text());
+        return harRequest;
     }
 
     //TODO: add unit tests for these utility-like capture() methods
@@ -331,7 +336,7 @@ public class BrAwareHarCaptureFilter extends HttpsAwareFiltersAdapter {
         try {
             for (Map.Entry<String, List<String>> entry : queryStringDecoder.parameters().entrySet()) {
                 for (String value : entry.getValue()) {
-                    harEntry.getRequest().getQueryString().add(new HarNameValuePair(entry.getKey(), value));
+                    harEntry.getRequest().getQueryString().add(BrowserMobs.newHarQueryParam(entry.getKey(), value));
                 }
             }
         } catch (IllegalArgumentException e) {
@@ -348,7 +353,7 @@ public class BrAwareHarCaptureFilter extends HttpsAwareFiltersAdapter {
         long requestHeadersSize = requestLine.length() + 6;
 
         HttpHeaders headers = httpRequest.headers();
-        requestHeadersSize += BrowserMobHttpUtil.getHeaderSize(headers);
+        requestHeadersSize += BrowserUpHttpUtil.getHeaderSize(headers);
 
         harEntry.getRequest().setHeadersSize(requestHeadersSize);
     }
@@ -385,7 +390,7 @@ public class BrAwareHarCaptureFilter extends HttpsAwareFiltersAdapter {
 
     protected void captureHeaders(HttpHeaders headers) {
         for (Map.Entry<String, String> header : headers.entries()) {
-            harEntry.getRequest().getHeaders().add(new HarNameValuePair(header.getKey(), header.getValue()));
+            harEntry.getRequest().getHeaders().add(BrowserMobs.newHarHeader(header.getKey(), header.getValue()));
         }
     }
 
@@ -396,8 +401,8 @@ public class BrAwareHarCaptureFilter extends HttpsAwareFiltersAdapter {
 
         String contentType = httpRequest.headers().get(HttpHeaderNames.CONTENT_TYPE);
         if (contentType == null) {
-            log.warn("No content type specified in request to {}. Content will be treated as {}", httpRequest.uri(), BrowserMobHttpUtil.UNKNOWN_CONTENT_TYPE);
-            contentType = BrowserMobHttpUtil.UNKNOWN_CONTENT_TYPE;
+            log.warn("No content type specified in request to {}. Content will be treated as {}", httpRequest.uri(), BrowserUpHttpUtil.UNKNOWN_CONTENT_TYPE);
+            contentType = BrowserUpHttpUtil.UNKNOWN_CONTENT_TYPE;
         }
 
         HarPostData postData = new HarPostData();
@@ -409,7 +414,7 @@ public class BrAwareHarCaptureFilter extends HttpsAwareFiltersAdapter {
 
         Charset charset;
         try {
-            charset = BrowserMobHttpUtil.readCharsetInContentTypeHeader(contentType);
+            charset = BrowserUpHttpUtil.readCharsetInContentTypeHeader(contentType);
         } catch (UnsupportedCharsetException e) {
             log.warn("Found unsupported character set in Content-Type header '{}' in HTTP request to {}. Content will not be captured in HAR.", contentType, httpRequest.uri(), e);
             return;
@@ -417,12 +422,12 @@ public class BrAwareHarCaptureFilter extends HttpsAwareFiltersAdapter {
 
         if (charset == null) {
             // no charset specified, so use the default -- but log a message since this might not encode the data correctly
-            charset = BrowserMobHttpUtil.DEFAULT_HTTP_CHARSET;
+            charset = BrowserUpHttpUtil.DEFAULT_HTTP_CHARSET;
             log.debug("No charset specified; using charset {} to decode contents to {}", charset, httpRequest.uri());
         }
 
         if (urlEncoded) {
-            String textContents = BrowserMobHttpUtil.getContentAsString(fullMessage, charset);
+            String textContents = BrowserUpHttpUtil.getContentAsString(fullMessage, charset);
 
             QueryStringDecoder queryStringDecoder = new QueryStringDecoder(textContents, charset, false);
 
@@ -430,7 +435,7 @@ public class BrAwareHarCaptureFilter extends HttpsAwareFiltersAdapter {
 
             for (Map.Entry<String, List<String>> entry : queryStringDecoder.parameters().entrySet()) {
                 for (String value : entry.getValue()) {
-                    paramBuilder.add(new HarPostDataParam(entry.getKey(), value));
+                    paramBuilder.add(BrowserMobs.newHarPostDataParam(entry.getKey(), value));
                 }
             }
 
@@ -439,7 +444,7 @@ public class BrAwareHarCaptureFilter extends HttpsAwareFiltersAdapter {
             //TODO: implement capture of files and multipart form data
 
             // not URL encoded, so let's grab the body of the POST and capture that
-            String postBody = BrowserMobHttpUtil.getContentAsString(fullMessage, charset);
+            String postBody = BrowserUpHttpUtil.getContentAsString(fullMessage, charset);
             harEntry.getRequest().getPostData().setText(postBody);
         }
     }
@@ -450,8 +455,8 @@ public class BrAwareHarCaptureFilter extends HttpsAwareFiltersAdapter {
 
         String contentType = httpResponse.headers().get(HttpHeaderNames.CONTENT_TYPE);
         if (contentType == null) {
-            log.warn("No content type specified in response from {}. Content will be treated as {}", originalRequest.uri(), BrowserMobHttpUtil.UNKNOWN_CONTENT_TYPE);
-            contentType = BrowserMobHttpUtil.UNKNOWN_CONTENT_TYPE;
+            log.warn("No content type specified in response from {}. Content will be treated as {}", originalRequest.uri(), BrowserUpHttpUtil.UNKNOWN_CONTENT_TYPE);
+            contentType = BrowserUpHttpUtil.UNKNOWN_CONTENT_TYPE;
         }
 
         if (responseCaptureFilter.isResponseCompressed() && !responseCaptureFilter.isDecompressionSuccessful()) {
@@ -462,7 +467,7 @@ public class BrAwareHarCaptureFilter extends HttpsAwareFiltersAdapter {
 
         Charset charset;
         try {
-            charset = BrowserMobHttpUtil.readCharsetInContentTypeHeader(contentType);
+            charset = BrowserUpHttpUtil.readCharsetInContentTypeHeader(contentType);
         } catch (UnsupportedCharsetException e) {
             log.warn("Found unsupported character set in Content-Type header '{}' in HTTP response from {}. Content will not be captured in HAR.", contentType, originalRequest.uri(), e);
             return;
@@ -470,23 +475,23 @@ public class BrAwareHarCaptureFilter extends HttpsAwareFiltersAdapter {
 
         if (charset == null) {
             // no charset specified, so use the default -- but log a message since this might not encode the data correctly
-            charset = BrowserMobHttpUtil.DEFAULT_HTTP_CHARSET;
+            charset = BrowserUpHttpUtil.DEFAULT_HTTP_CHARSET;
             log.debug("No charset specified; using charset {} to decode contents from {}", charset, originalRequest.uri());
         }
 
-        if (!forceBinary && BrowserMobHttpUtil.hasTextualContent(contentType)) {
-            String text = BrowserMobHttpUtil.getContentAsString(fullMessage, charset);
+        if (!forceBinary && BrowserUpHttpUtil.hasTextualContent(contentType)) {
+            String text = BrowserUpHttpUtil.getContentAsString(fullMessage, charset);
             harEntry.getResponse().getContent().setText(text);
         } else if (dataToCapture.contains(CaptureType.RESPONSE_BINARY_CONTENT)) {
             harEntry.getResponse().getContent().setText(BaseEncoding.base64().encode(fullMessage));
             harEntry.getResponse().getContent().setEncoding("base64");
         }
 
-        harEntry.getResponse().getContent().setSize(fullMessage.length);
+        harEntry.getResponse().getContent().setSize(Long.valueOf(fullMessage.length));
     }
 
     protected void captureResponse(HttpResponse httpResponse) {
-        HarResponse response = new HarResponse(httpResponse.status().code(), httpResponse.status().reasonPhrase(), httpResponse.protocolVersion().text());
+        HarResponse response = BrowserMobs.newHarResponse(httpResponse.status().code(), httpResponse.status().reasonPhrase(), httpResponse.protocolVersion().text());
         harEntry.setResponse(response);
 
         captureResponseHeaderSize(httpResponse);
@@ -501,7 +506,7 @@ public class BrAwareHarCaptureFilter extends HttpsAwareFiltersAdapter {
             captureResponseHeaders(httpResponse);
         }
 
-        if (BrowserMobHttpUtil.isRedirect(httpResponse)) {
+        if (BrowserUpHttpUtil.isRedirect(httpResponse)) {
             captureRedirectUrl(httpResponse);
         }
     }
@@ -557,14 +562,14 @@ public class BrAwareHarCaptureFilter extends HttpsAwareFiltersAdapter {
         // +2 => CRLF after status line, +4 => header/data separation
         long responseHeadersSize = statusLine.length() + 6;
         HttpHeaders headers = httpResponse.headers();
-        responseHeadersSize += BrowserMobHttpUtil.getHeaderSize(headers);
+        responseHeadersSize += BrowserUpHttpUtil.getHeaderSize(headers);
         harEntry.getResponse().setHeadersSize(responseHeadersSize);
     }
 
     protected void captureResponseHeaders(HttpResponse httpResponse) {
         HttpHeaders headers = httpResponse.headers();
         for (Map.Entry<String, String> header : headers.entries()) {
-            harEntry.getResponse().getHeaders().add(new HarNameValuePair(header.getKey(), header.getValue()));
+            harEntry.getResponse().getHeaders().add(BrowserMobs.newHarHeader(header.getKey(), header.getValue()));
         }
     }
 
@@ -652,7 +657,7 @@ public class BrAwareHarCaptureFilter extends HttpsAwareFiltersAdapter {
         HarResponse response = HarCaptureUtil.createHarResponseForFailure();
         harEntry.setResponse(response);
 
-        response.setError(HarCaptureUtil.getResolutionFailedErrorMessage(hostAndPort));
+        BrowserMobs.setHarResponseError(response, HarCaptureUtil.getResolutionFailedErrorMessage(hostAndPort));
 
         // record the amount of time we attempted to resolve the hostname in the HarTimings object
         if (dnsResolutionStartedNanos > 0L) {
@@ -694,7 +699,7 @@ public class BrAwareHarCaptureFilter extends HttpsAwareFiltersAdapter {
         HarResponse response = HarCaptureUtil.createHarResponseForFailure();
         harEntry.setResponse(response);
 
-        response.setError(HarCaptureUtil.getConnectionFailedErrorMessage());
+        BrowserMobs.setHarResponseError(response, HarCaptureUtil.getConnectionFailedErrorMessage());
 
         // record the amount of time we attempted to connect in the HarTimings object
         if (connectionStartedNanos > 0L) {

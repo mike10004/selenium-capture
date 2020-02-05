@@ -15,6 +15,7 @@
  */
 package com.github.mike10004.seleniumhelp;
 
+import com.browserup.harreader.model.HarQueryParam;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.MapMaker;
 import com.google.common.io.BaseEncoding;
@@ -27,18 +28,18 @@ import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.LastHttpContent;
 import io.netty.handler.codec.http.QueryStringDecoder;
-import net.lightbody.bmp.core.har.HarNameValuePair;
-import net.lightbody.bmp.core.har.HarPostData;
-import net.lightbody.bmp.core.har.HarPostDataParam;
-import net.lightbody.bmp.core.har.HarRequest;
-import net.lightbody.bmp.core.har.HarResponse;
-import net.lightbody.bmp.exception.UnsupportedCharsetException;
-import net.lightbody.bmp.filters.ClientRequestCaptureFilter;
-import net.lightbody.bmp.filters.HttpsAwareFiltersAdapter;
-import net.lightbody.bmp.filters.ResolvedHostnameCacheFilter;
-import net.lightbody.bmp.filters.ServerResponseCaptureFilter;
-import net.lightbody.bmp.filters.util.HarCaptureUtil;
-import net.lightbody.bmp.util.BrowserMobHttpUtil;
+import com.browserup.harreader.model.HarHeader;
+import com.browserup.harreader.model.HarPostData;
+import com.browserup.harreader.model.HarPostDataParam;
+import com.browserup.harreader.model.HarRequest;
+import com.browserup.harreader.model.HarResponse;
+import com.browserup.bup.exception.UnsupportedCharsetException;
+import com.browserup.bup.filters.ClientRequestCaptureFilter;
+import com.browserup.bup.filters.HttpsAwareFiltersAdapter;
+import com.browserup.bup.filters.ResolvedHostnameCacheFilter;
+import com.browserup.bup.filters.ServerResponseCaptureFilter;
+import com.browserup.bup.filters.util.HarCaptureUtil;
+import com.browserup.bup.util.BrowserUpHttpUtil;
 import org.littleshoot.proxy.impl.ProxyUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -154,7 +155,7 @@ public class TrafficMonitorFilter extends HttpsAwareFiltersAdapter {
 
     private static HarResponse _createDefaultResponse() {
         HarResponse defaultHarResponse = HarCaptureUtil.createHarResponseForFailure();
-        defaultHarResponse.setError(HarCaptureUtil.getNoResponseReceivedErrorMessage());
+        defaultHarResponse.setAdditionalField("_error", HarCaptureUtil.getNoResponseReceivedErrorMessage());
         return defaultHarResponse;
     }
 
@@ -258,7 +259,7 @@ public class TrafficMonitorFilter extends HttpsAwareFiltersAdapter {
      * @param httpRequest HTTP request on which the HarRequest will be based
      */
     private void populateHarRequestFromHttpRequest(HttpRequest httpRequest, HarRequest harRequest) {
-        harRequest.setMethod(httpRequest.method().toString());
+        harRequest.setMethod(BrowserMobs.toHarHttpMethod(httpRequest.method()));
         harRequest.setUrl(getFullUrl(httpRequest));
         harRequest.setHttpVersion(httpRequest.protocolVersion().text());
         // the HAR spec defines the request.url field as:
@@ -275,7 +276,7 @@ public class TrafficMonitorFilter extends HttpsAwareFiltersAdapter {
         try {
             for (Map.Entry<String, List<String>> entry : queryStringDecoder.parameters().entrySet()) {
                 for (String value : entry.getValue()) {
-                    harRequest.getQueryString().add(new HarNameValuePair(entry.getKey(), value));
+                    harRequest.getQueryString().add(BrowserMobs.newHarQueryParam(entry.getKey(), value));
                 }
             }
         } catch (IllegalArgumentException e) {
@@ -297,7 +298,7 @@ public class TrafficMonitorFilter extends HttpsAwareFiltersAdapter {
 
     protected void captureHeaders(HttpHeaders headers, HarRequest harRequest) {
         for (Map.Entry<String, String> header : headers.entries()) {
-            harRequest.getHeaders().add(new HarNameValuePair(header.getKey(), header.getValue()));
+            harRequest.getHeaders().add(BrowserMobs.newHarHeader(header.getKey(), header.getValue()));
         }
     }
 
@@ -308,8 +309,8 @@ public class TrafficMonitorFilter extends HttpsAwareFiltersAdapter {
 
         String contentType = httpRequest.headers().get(HttpHeaderNames.CONTENT_TYPE);
         if (contentType == null) {
-            log.warn("No content type specified in request to {}. Content will be treated as {}", httpRequest.uri(), BrowserMobHttpUtil.UNKNOWN_CONTENT_TYPE);
-            contentType = BrowserMobHttpUtil.UNKNOWN_CONTENT_TYPE;
+            log.warn("No content type specified in request to {}. Content will be treated as {}", httpRequest.uri(), BrowserUpHttpUtil.UNKNOWN_CONTENT_TYPE);
+            contentType = BrowserUpHttpUtil.UNKNOWN_CONTENT_TYPE;
         }
 
         HarPostData postData = new HarPostData();
@@ -321,7 +322,7 @@ public class TrafficMonitorFilter extends HttpsAwareFiltersAdapter {
 
         Charset charset;
         try {
-            charset = BrowserMobHttpUtil.readCharsetInContentTypeHeader(contentType);
+            charset = BrowserUpHttpUtil.readCharsetInContentTypeHeader(contentType);
         } catch (UnsupportedCharsetException e) {
             log.warn("Found unsupported character set in Content-Type header '{}' in HTTP request to {}. Content will not be captured in HAR.", contentType, httpRequest.uri(), e);
             return;
@@ -329,12 +330,12 @@ public class TrafficMonitorFilter extends HttpsAwareFiltersAdapter {
 
         if (charset == null) {
             // no charset specified, so use the default -- but log a message since this might not encode the data correctly
-            charset = BrowserMobHttpUtil.DEFAULT_HTTP_CHARSET;
+            charset = BrowserUpHttpUtil.DEFAULT_HTTP_CHARSET;
             log.debug("No charset specified; using charset {} to decode contents to {}", charset, httpRequest.uri());
         }
 
         if (urlEncoded) {
-            String textContents = BrowserMobHttpUtil.getContentAsString(fullMessage, charset);
+            String textContents = BrowserUpHttpUtil.getContentAsString(fullMessage, charset);
 
             QueryStringDecoder queryStringDecoder = new QueryStringDecoder(textContents, charset, false);
 
@@ -342,7 +343,7 @@ public class TrafficMonitorFilter extends HttpsAwareFiltersAdapter {
 
             for (Map.Entry<String, List<String>> entry : queryStringDecoder.parameters().entrySet()) {
                 for (String value : entry.getValue()) {
-                    paramBuilder.add(new HarPostDataParam(entry.getKey(), value));
+                    paramBuilder.add(BrowserMobs.newHarPostDataParam(entry.getKey(), value));
                 }
             }
 
@@ -351,7 +352,7 @@ public class TrafficMonitorFilter extends HttpsAwareFiltersAdapter {
             //TODO: implement capture of files and multipart form data
 
             // not URL encoded, so let's grab the body of the POST and capture that
-            String postBody = BrowserMobHttpUtil.getContentAsString(fullMessage, charset);
+            String postBody = BrowserUpHttpUtil.getContentAsString(fullMessage, charset);
             harRequest.getPostData().setText(postBody);
         }
     }
@@ -362,8 +363,8 @@ public class TrafficMonitorFilter extends HttpsAwareFiltersAdapter {
 
         String contentType = httpResponse.headers().get(HttpHeaderNames.CONTENT_TYPE);
         if (contentType == null) {
-            log.warn("No content type specified in response from {}. Content will be treated as {}", originalRequest.uri(), BrowserMobHttpUtil.UNKNOWN_CONTENT_TYPE);
-            contentType = BrowserMobHttpUtil.UNKNOWN_CONTENT_TYPE;
+            log.warn("No content type specified in response from {}. Content will be treated as {}", originalRequest.uri(), BrowserUpHttpUtil.UNKNOWN_CONTENT_TYPE);
+            contentType = BrowserUpHttpUtil.UNKNOWN_CONTENT_TYPE;
         }
 
         if (responseCaptureFilter.isResponseCompressed() && !responseCaptureFilter.isDecompressionSuccessful()) {
@@ -373,7 +374,7 @@ public class TrafficMonitorFilter extends HttpsAwareFiltersAdapter {
 
         Charset charset;
         try {
-            charset = BrowserMobHttpUtil.readCharsetInContentTypeHeader(contentType);
+            charset = BrowserUpHttpUtil.readCharsetInContentTypeHeader(contentType);
         } catch (UnsupportedCharsetException e) {
             log.warn("Found unsupported character set in Content-Type header '{}' in HTTP response from {}. Content will not be captured in HAR.", contentType, originalRequest.uri(), e);
             return;
@@ -381,19 +382,19 @@ public class TrafficMonitorFilter extends HttpsAwareFiltersAdapter {
 
         if (charset == null) {
             // no charset specified, so use the default -- but log a message since this might not encode the data correctly
-            charset = BrowserMobHttpUtil.DEFAULT_HTTP_CHARSET;
+            charset = BrowserUpHttpUtil.DEFAULT_HTTP_CHARSET;
             log.debug("No charset specified; using charset {} to decode contents from {}", charset, originalRequest.uri());
         }
 
-        if (!forceBinary && BrowserMobHttpUtil.hasTextualContent(contentType)) {
-            String text = BrowserMobHttpUtil.getContentAsString(fullMessage, charset);
+        if (!forceBinary && BrowserUpHttpUtil.hasTextualContent(contentType)) {
+            String text = BrowserUpHttpUtil.getContentAsString(fullMessage, charset);
             harResponse.getContent().setText(text);
         } else {
             harResponse.getContent().setText(BaseEncoding.base64().encode(fullMessage));
             harResponse.getContent().setEncoding("base64");
         }
 
-        harResponse.getContent().setSize(fullMessage.length);
+        harResponse.getContent().setSize(Long.valueOf(fullMessage.length));
     }
 
     protected void captureResponse(HttpResponse httpResponse, HarResponse harResponse) {
@@ -403,7 +404,7 @@ public class TrafficMonitorFilter extends HttpsAwareFiltersAdapter {
         captureResponseHeaderSize(httpResponse, harResponse);
         captureResponseMimeType(httpResponse, harResponse);
         captureResponseHeaders(httpResponse, harResponse);
-        if (BrowserMobHttpUtil.isRedirect(httpResponse)) {
+        if (BrowserUpHttpUtil.isRedirect(httpResponse)) {
             captureRedirectUrl(httpResponse, harResponse);
         }
     }
@@ -421,7 +422,7 @@ public class TrafficMonitorFilter extends HttpsAwareFiltersAdapter {
         // +2 => CRLF after status line, +4 => header/data separation
         long responseHeadersSize = statusLine.length() + 6;
         HttpHeaders headers = httpResponse.headers();
-        responseHeadersSize += BrowserMobHttpUtil.getHeaderSize(headers);
+        responseHeadersSize += BrowserUpHttpUtil.getHeaderSize(headers);
 
         harResponse.setHeadersSize(responseHeadersSize);
     }
@@ -431,7 +432,7 @@ public class TrafficMonitorFilter extends HttpsAwareFiltersAdapter {
         for (Map.Entry<String, String> header : headers.entries()) {
             String name = header.getKey();
             String value = header.getValue();
-            harResponse.getHeaders().add(new HarNameValuePair(name, value));
+            harResponse.getHeaders().add(BrowserMobs.newHarHeader(name, value));
         }
     }
 
@@ -486,7 +487,7 @@ public class TrafficMonitorFilter extends HttpsAwareFiltersAdapter {
     @Override
     public void proxyToServerResolutionFailed(String hostAndPort) {
         HarResponse response = HarCaptureUtil.createHarResponseForFailure();
-        response.setError(HarCaptureUtil.getResolutionFailedErrorMessage(hostAndPort));
+        BrowserMobs.setHarResponseError(response, HarCaptureUtil.getResolutionFailedErrorMessage(hostAndPort));
         sendResponseNotification(response);
     }
 
@@ -494,7 +495,7 @@ public class TrafficMonitorFilter extends HttpsAwareFiltersAdapter {
     @Override
     public void proxyToServerConnectionFailed() {
         HarResponse response = HarCaptureUtil.createHarResponseForFailure();
-        response.setError(HarCaptureUtil.getConnectionFailedErrorMessage());
+        BrowserMobs.setHarResponseError(response, HarCaptureUtil.getConnectionFailedErrorMessage());
         sendResponseNotification(response);
     }
 
@@ -502,7 +503,7 @@ public class TrafficMonitorFilter extends HttpsAwareFiltersAdapter {
     public void serverToProxyResponseTimedOut() {
         // replace any existing HarResponse that was created if the server sent a partial response
         HarResponse response = HarCaptureUtil.createHarResponseForFailure();
-        response.setError(HarCaptureUtil.getResponseTimedOutErrorMessage());
+        BrowserMobs.setHarResponseError(response, HarCaptureUtil.getResponseTimedOutErrorMessage());
         sendResponseNotification(response);
     }
 

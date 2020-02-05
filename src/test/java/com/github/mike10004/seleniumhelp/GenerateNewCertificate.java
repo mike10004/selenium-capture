@@ -9,10 +9,10 @@ import com.google.gson.JsonParser;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpObject;
 import io.netty.handler.codec.http.HttpRequest;
-import net.lightbody.bmp.BrowserMobProxy;
-import net.lightbody.bmp.BrowserMobProxyServer;
-import net.lightbody.bmp.mitm.CertificateAndKeySource;
-import net.lightbody.bmp.mitm.manager.ImpersonatingMitmManager;
+import com.browserup.bup.BrowserUpProxy;
+import com.browserup.bup.BrowserUpProxyServer;
+import com.browserup.bup.mitm.CertificateAndKeySource;
+import com.browserup.bup.mitm.manager.ImpersonatingMitmManager;
 import org.apache.commons.io.FileUtils;
 import org.apache.http.HttpHost;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -118,7 +118,7 @@ public class GenerateNewCertificate {
                 .build();
         String HEADER_NAME = "X-This-Was-Sent-Through-The-Proxy";
         String headerValue = UUID.randomUUID().toString();
-        BrowserMobProxy proxy = new BrowserMobProxyServer();
+        BrowserUpProxy proxy = new BrowserUpProxyServer();
         proxy.setMitmManager(mitmManager);
         proxy.addLastHttpFilterFactory(new HttpFiltersSourceAdapter() {
             @Override

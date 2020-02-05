@@ -1,15 +1,16 @@
 package com.github.mike10004.seleniumhelp;
 
+import com.browserup.harreader.model.HttpMethod;
 import com.github.mike10004.seleniumhelp.ImmutableHttpMessage.HttpContentSource;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.google.common.io.CharSource;
 import com.google.common.net.MediaType;
-import net.lightbody.bmp.core.har.HarContent;
-import net.lightbody.bmp.core.har.HarPostData;
-import net.lightbody.bmp.core.har.HarPostDataParam;
-import net.lightbody.bmp.core.har.HarRequest;
-import net.lightbody.bmp.core.har.HarResponse;
+import com.browserup.harreader.model.HarContent;
+import com.browserup.harreader.model.HarPostData;
+import com.browserup.harreader.model.HarPostDataParam;
+import com.browserup.harreader.model.HarRequest;
+import com.browserup.harreader.model.HarResponse;
 import org.apache.http.client.utils.URLEncodedUtils;
 import org.apache.http.message.BasicNameValuePair;
 import org.slf4j.LoggerFactory;
@@ -97,7 +98,7 @@ final class HarInteractions {
             throw new IllegalArgumentException("url is null in " + HarAnalysis.describe(harRequest));
         }
         return ImmutableHttpRequest.builder(parseUri(harRequest.getUrl()))
-                .method(Optional.ofNullable(harRequest.getMethod()).orElse("GET"))
+                .method(Optional.ofNullable(harRequest.getMethod()).map(HttpMethod::name).orElse("GET"))
                 .addHeaders(harRequest.getHeaders().stream().map(pair -> new SimpleImmutableEntry<>(pair.getName(), pair.getValue())))
                 .content(toContentSource(harRequest.getPostData()))
                 .build();

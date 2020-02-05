@@ -40,6 +40,7 @@
         <chrome-cookie-implant.version>1.5.15</chrome-cookie-implant.version>
         <antiprint.version>0.16</antiprint.version>
         <common-helper.version>10.0.0</common-helper.version>
+        <browserup-proxy.version>2.0.1</browserup-proxy.version>
         <!--suppress CheckTagEmptyBody -->
         <proxy.http></proxy.http>
         <headlessChromeTestsDisabled>false</headlessChromeTestsDisabled>
@@ -319,12 +320,20 @@
             <dependency>
                 <groupId>com.google.guava</groupId>
                 <artifactId>guava</artifactId>
-                <version>24.1-jre</version>
+                <version>27.0.1-jre</version>
             </dependency>
             <dependency>
                 <groupId>io.netty</groupId>
                 <artifactId>netty-all</artifactId>
                 <version>4.1.42.Final</version>
+            </dependency>
+            <dependency>
+                <!-- This is a runtime dependency of browserup-proxy, but we need it to be scope=compile. -->
+                <!-- Make sure to keep this in sync with browserup-proxy-mitm dependency.                 -->
+                <groupId>xyz.rogfam</groupId>
+                <artifactId>littleproxy</artifactId>
+                <version>2.0.0-beta-5</version>
+                <scope>compile</scope>
             </dependency>
         </dependencies>
     </dependencyManagement>
@@ -354,25 +363,14 @@
             <version>1.4</version>
         </dependency>
         <dependency>
-            <groupId>net.lightbody.bmp</groupId>
-            <artifactId>browsermob-core</artifactId>
-            <version>2.1.5</version>
-            <!-- replace transitive dependencies with version that supports chained SOCKS proxies -->
-            <exclusions>
-                <exclusion>
-                    <groupId>org.littleshoot</groupId>
-                    <artifactId>littleproxy</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>net.lightbody.bmp</groupId>
-                    <artifactId>littleproxy</artifactId>
-                </exclusion>
-            </exclusions>
+            <groupId>com.browserup</groupId>
+            <artifactId>browserup-proxy-core</artifactId>
+            <version>${browserup-proxy.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.github.mike10004</groupId>
-            <artifactId>littleproxy</artifactId>
-            <version>1.1.3socksmod1</version>
+            <groupId>com.browserup</groupId>
+            <artifactId>browserup-proxy-mitm</artifactId>
+            <version>${browserup-proxy.version}</version>
         </dependency>
         <dependency>
             <groupId>org.seleniumhq.selenium</groupId>

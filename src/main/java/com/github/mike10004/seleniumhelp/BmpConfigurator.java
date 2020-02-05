@@ -1,7 +1,7 @@
 package com.github.mike10004.seleniumhelp;
 
-import net.lightbody.bmp.BrowserMobProxy;
-import net.lightbody.bmp.mitm.CertificateAndKeySource;
+import com.browserup.bup.BrowserUpProxy;
+import com.browserup.bup.mitm.CertificateAndKeySource;
 
 import javax.annotation.Nullable;
 
@@ -19,7 +19,7 @@ interface BmpConfigurator {
      * Configures the chained proxy manager of a proxy instance.
      * @param proxy the proxy to configure
      */
-    void configureUpstream(BrowserMobProxy proxy);
+    void configureUpstream(BrowserUpProxy proxy);
 
     /**
      * Creates a set of webdriving configuration values that are appropriate for the upstream proxy configuration.
@@ -27,7 +27,7 @@ interface BmpConfigurator {
      * @param certificateAndKeySource the certificate and key source
      * @return a new webdriving config instance
      */
-    WebdrivingConfig createWebdrivingConfig(BrowserMobProxy bmp, @Nullable CertificateAndKeySource certificateAndKeySource);
+    WebdrivingConfig createWebdrivingConfig(BrowserUpProxy bmp, @Nullable CertificateAndKeySource certificateAndKeySource);
 
     /**
      * Returns a configurator that configures a direct connection upstream, meaning no proxy is to be used.

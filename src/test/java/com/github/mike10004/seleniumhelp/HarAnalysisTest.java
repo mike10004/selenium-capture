@@ -1,13 +1,13 @@
 package com.github.mike10004.seleniumhelp;
 
+import com.browserup.harreader.model.HarTiming;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.net.HttpHeaders;
 import com.google.gson.Gson;
-import net.lightbody.bmp.core.har.HarEntry;
-import net.lightbody.bmp.core.har.HarNameValuePair;
-import net.lightbody.bmp.core.har.HarRequest;
-import net.lightbody.bmp.core.har.HarResponse;
-import net.lightbody.bmp.core.har.HarTimings;
+import com.browserup.harreader.model.HarEntry;
+import com.browserup.harreader.model.HarHeader;
+import com.browserup.harreader.model.HarRequest;
+import com.browserup.harreader.model.HarResponse;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -15,6 +15,7 @@ import org.junit.rules.TemporaryFolder;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
@@ -61,23 +62,23 @@ public class HarAnalysisTest {
         checkArgument(duration >= 6, "duration must be at least 6 milliseconds");
         HarEntry entry = new HarEntry();
         entry.setStartedDateTime(start);
-        HarTimings timings = new HarTimings();
+        HarTiming timings = new HarTiming();
         timings.setBlocked(1);
         timings.setConnect(1);
         timings.setDns(1);
         timings.setReceive(1);
         timings.setSend(1);
         timings.setSsl(1);
-        timings.setWait(duration - 6);
+        timings.setWait(duration - 6, TimeUnit.MILLISECONDS);
         entry.setTimings(timings);
         HarRequest request = new HarRequest();
         request.setUrl("https://www.example.com/");
         entry.setRequest(request);
         HarResponse response = new HarResponse();
         entry.setResponse(response);
-        List<HarNameValuePair> headers = response.getHeaders();
+        List<HarHeader> headers = response.getHeaders();
         cookieNamesAndValues.forEach((name, value) -> {
-            headers.add(new HarNameValuePair(HttpHeaders.SET_COOKIE, String.format("%s=%s", name, value)));
+            headers.add(BrowserMobs.newHarHeader(HttpHeaders.SET_COOKIE, String.format("%s=%s", name, value)));
         });
         return entry;
     }

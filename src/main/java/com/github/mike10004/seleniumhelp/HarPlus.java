@@ -1,6 +1,6 @@
 package com.github.mike10004.seleniumhelp;
 
-import net.lightbody.bmp.core.har.Har;
+import com.browserup.harreader.model.Har;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 

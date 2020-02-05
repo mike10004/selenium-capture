@@ -5,9 +5,9 @@ import com.github.mike10004.xvfbtesting.XvfbRule;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.net.HttpHeaders;
-import net.lightbody.bmp.core.har.Har;
-import net.lightbody.bmp.core.har.HarEntry;
-import net.lightbody.bmp.core.har.HarNameValuePair;
+import com.browserup.harreader.model.Har;
+import com.browserup.harreader.model.HarEntry;
+import com.browserup.harreader.model.HarHeader;
 import org.apache.commons.lang3.time.DateUtils;
 import org.junit.Rule;
 import org.openqa.selenium.WebDriverException;
@@ -105,7 +105,9 @@ public abstract class CookieUsageTestBase {
     protected void browsingFinished(Multimap<String, String> cookieHeaderValues, URL cookieGetUrl, Har har, List<DeserializableCookie> cookiesSetByServer) {
         System.out.format("cookie header values for paths %s: %s%n", cookieHeaderValues.keySet(), cookieHeaderValues);
         Stream<HarEntry> entries = har.getLog().getEntries().stream().filter(harEntry -> cookieGetUrl.toString().equals(harEntry.getRequest().getUrl()));
-        List<String> cookiesSent = entries.flatMap(entry -> entry.getRequest().getHeaders().stream()).filter(header -> HttpHeaders.COOKIE.equalsIgnoreCase(header.getName())).map(HarNameValuePair::getValue).collect(Collectors.toList());
+        List<String> cookiesSent = entries.flatMap(entry -> entry.getRequest().getHeaders().stream())
+                .filter(header -> HttpHeaders.COOKIE.equalsIgnoreCase(header.getName()))
+                .map(HarHeader::getValue).collect(Collectors.toList());
         System.out.format("sent: %s%n", cookiesSent);
         assertFalse("expected at least one cookie to have been sent", cookiesSent.isEmpty());
 
