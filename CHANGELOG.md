@@ -1,6 +1,13 @@
 Changelog
 =========
 
+0.55
+----
+
+* migrate from (no longer maintained) **browsermob-proxy** to (currently 
+  maintained) **browserup-proxy**
+* use standard methods of installing Firefox extensions
+
 0.54
 ----
 
