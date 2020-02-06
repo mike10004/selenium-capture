@@ -1,6 +1,7 @@
 package com.github.mike10004.seleniumhelp;
 
 import io.github.bonigarcia.wdm.WebDriverManager;
+import io.github.mike10004.seleniumcapture.BrowserUpHars;
 import org.apache.commons.io.FileUtils;
 import org.openqa.selenium.WebDriver;
 
@@ -35,7 +36,7 @@ public class ReadmeExample {
             });
             System.out.println("collected page with title " + harPlus.result);
             File harFile = File.createTempFile("selenium-capture-example", ".har");
-            BrowserUpHars.writeHarTo(harPlus.har, harFile, StandardCharsets.UTF_8);
+            BrowserUpHars.writeHar(harPlus.har, harFile, StandardCharsets.UTF_8);
             System.out.format("%s contains captured traffic%n", harFile);
         } finally {
             FileUtils.forceDelete(scratchDir.toFile());

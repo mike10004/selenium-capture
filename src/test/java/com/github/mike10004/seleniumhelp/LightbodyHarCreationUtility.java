@@ -7,10 +7,9 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
-import io.github.bonigarcia.wdm.ChromeDriverManager;
-import io.github.bonigarcia.wdm.FirefoxDriverManager;
 import io.github.bonigarcia.wdm.WebDriverManager;
 import com.browserup.harreader.model.Har;
+import io.github.mike10004.seleniumcapture.BrowserUpHars;
 import org.apache.commons.io.FileUtils;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
@@ -137,7 +136,7 @@ public class LightbodyHarCreationUtility {
         Har har = collector.collect(new InteractiveTrafficGenerator()).har;
         File harFile = File.createTempFile("lightbody", ".har", scratchDir);
         Charset charset = StandardCharsets.UTF_8;
-        BrowserUpHars.writeHarTo(har, harFile, charset);
+        BrowserUpHars.writeHar(har, harFile, charset);
         prettify(harFile, charset, UTF_8);
         return harFile;
     }
