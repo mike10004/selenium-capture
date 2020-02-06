@@ -60,7 +60,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * limited use cases at this stage. Don't expect the HTTP request/response objects
  * contained in the notification to be perfect representations.
  *
- * <p>Most of this code is copied from {@link net.lightbody.bmp.filters.HarCaptureFilter}.
+ * <p>Most of this code is copied from {@code net.lightbody.bmp.filters.HarCaptureFilter}.
  * The main difference is that the HAR filter keeps adding to the HAR object when
  * HTTP requests or responses are intercepted, but this implementation accumulates
  * (most of) the same data and packages it up in a notification when the request/response
