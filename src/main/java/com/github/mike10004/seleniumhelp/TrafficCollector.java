@@ -16,6 +16,9 @@ import java.util.function.Supplier;
 
 import static java.util.Objects.requireNonNull;
 
+/**
+ * Interface of a service that enables collection of HTTP traffic driven by a web-browsing session.
+ */
 public interface TrafficCollector {
 
     /**
@@ -73,6 +76,9 @@ public interface TrafficCollector {
         return new TrafficCollectorImpl.Builder(webDriverFactory);
     }
 
+    /**
+     * Builder of traffic collector instances.
+     */
     final class Builder {
 
         private final WebDriverFactory webDriverFactory;

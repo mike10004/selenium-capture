@@ -4,11 +4,28 @@ import com.browserup.harreader.model.Har;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+/**
+ * Class that represents the result of a traffic capture session.
+ * @param <T>
+ * @see TrafficCollector#collect(TrafficGenerator)
+ */
 public class HarPlus<T> {
 
+    /**
+     * HAR object containing HTTP interactions of a web browsing session.
+     */
     public final Har har;
+
+    /**
+     * Arbitrary result object obtained during a web browsing session.
+     */
     public final T result;
 
+    /**
+     * Constructs an instance.
+     * @param har the HAR file
+     * @param result a result object
+     */
     public HarPlus(Har har, T result) {
         this.har = checkNotNull(har);
         this.result = result;

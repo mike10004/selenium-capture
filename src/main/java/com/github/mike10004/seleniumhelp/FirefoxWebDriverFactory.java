@@ -1,6 +1,5 @@
 package com.github.mike10004.seleniumhelp;
 
-import com.github.mike10004.seleniumhelp.FirefoxCookieDb.Importer;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -35,7 +34,13 @@ import java.util.function.Supplier;
 import static com.google.common.base.Preconditions.checkArgument;
 import static java.util.Objects.requireNonNull;
 
+/**
+ * Webdriver factory for Firefox webdriving sessions.
+ */
 public class FirefoxWebDriverFactory extends CapableWebDriverFactory<FirefoxOptions> {
+
+    private static final ImmutableSet<Class<?>> ALLOWED_PREFERENCE_TYPES = ImmutableSet.of(String.class, Integer.class, Boolean.class);
+    private static final Predicate<Object> PREFERENCE_VALUE_CHECKER = newTypePredicate(ALLOWED_PREFERENCE_TYPES);
 
     private final Supplier<FirefoxBinary> binarySupplier;
     private final Map<String, Object> profilePreferences;
@@ -45,11 +50,7 @@ public class FirefoxWebDriverFactory extends CapableWebDriverFactory<FirefoxOpti
     private final Path scratchDir;
     private final java.util.logging.Level webdriverLogLevel;
     private final GeckoServiceConstructor geckoServiceConstructor;
-
-    @SuppressWarnings("unused")
-    public FirefoxWebDriverFactory() {
-        this(builder());
-    }
+    private final FirefoxCookieDb.Importer cookieDbImporter;
 
     protected FirefoxWebDriverFactory(Builder builder) {
         super(builder);
@@ -62,6 +63,7 @@ public class FirefoxWebDriverFactory extends CapableWebDriverFactory<FirefoxOpti
         this.profileFolderActions = ImmutableList.copyOf(builder.profileFolderActions);
         this.webdriverLogLevel = builder.webdriverLogLevel;
         this.geckoServiceConstructor = builder.geckoServiceConstructor;
+        this.cookieDbImporter = builder.cookieDbImporter;
     }
 
     protected ImmutableList<DeserializableCookie> getCookies() {
@@ -86,9 +88,24 @@ public class FirefoxWebDriverFactory extends CapableWebDriverFactory<FirefoxOpti
         return new ServicedSession(driver, service);
     }
 
+    /**
+     * Interface that provides a method to construct a Firefox driver service.
+     */
     public interface GeckoServiceConstructor {
+
+        /**
+         * Builds a Firefox driver service instance.
+         * @param env environment to be provided to web browser process
+         * @param binary Firefox executable
+         * @return a driver service instance
+         * @throws IOException on I/O error
+         */
         GeckoDriverService build(Map<String, String> env, FirefoxBinary binary) throws IOException;
 
+        /**
+         * Returns a constructor that produces a standard driver service.
+         * @return a standard constructor
+         */
         static GeckoServiceConstructor standard() {
             return (env, binary) -> {
                 return new GeckoDriverService.Builder()
@@ -104,7 +121,7 @@ public class FirefoxWebDriverFactory extends CapableWebDriverFactory<FirefoxOpti
         List<FirefoxProfileFolderAction> actions = new ArrayList<>(2);
         List<DeserializableCookie> cookies_ = getCookies();
         if (!cookies.isEmpty()) {
-            actions.add(new CookieInstallingProfileAction(cookies_, FirefoxCookieDb.getImporter(), scratchDir));
+            actions.add(new CookieInstallingProfileAction(cookies_, cookieDbImporter, scratchDir));
         }
         actions.addAll(profileFolderActions);
         FirefoxProfile profile = createFirefoxProfile(actions);
@@ -146,7 +163,8 @@ public class FirefoxWebDriverFactory extends CapableWebDriverFactory<FirefoxOpti
         new FirefoxOptionsProxyConfigurator().configureProxy(options, profile, proxySpecification);
     }
 
-    public static class FirefoxOptionsProxyConfigurator {
+    @VisibleForTesting
+    static class FirefoxOptionsProxyConfigurator {
 
         public void configureProxy(FirefoxOptions options, FirefoxProfile profile, @Nullable WebdrivingProxyDefinition proxySpecification) {
             @Nullable org.openqa.selenium.Proxy seleniumProxy = null;
@@ -192,7 +210,8 @@ public class FirefoxWebDriverFactory extends CapableWebDriverFactory<FirefoxOpti
 
     }
 
-    public static class FirefoxProfilePreferenceConfigurator {
+    @VisibleForTesting
+    static class FirefoxProfilePreferenceConfigurator {
 
         public void disableSomeMediaSupport(FirefoxProfile profile) {
             profile.setPreference("extensions.getAddons.cache.enabled", false);
@@ -260,14 +279,11 @@ public class FirefoxWebDriverFactory extends CapableWebDriverFactory<FirefoxOpti
         }
     }
 
-    private static final ImmutableSet<Class<?>> allowedTypes = ImmutableSet.of(String.class, Integer.class, Boolean.class);
-    private static final Predicate<Object> preferenceValueChecker =newTypePredicate(allowedTypes);
-
     @VisibleForTesting
     static void checkPreferencesValues(Iterable<?> values) throws IllegalArgumentException {
         for (Object value : values) {
-            if (!preferenceValueChecker.test(value)) {
-                throw new IllegalArgumentException(String.format("preference value %s (%s) must have type that is one of %s", value, value == null ? "N/A" : value.getClass(), allowedTypes));
+            if (!PREFERENCE_VALUE_CHECKER.test(value)) {
+                throw new IllegalArgumentException(String.format("preference value %s (%s) must have type that is one of %s", value, value == null ? "N/A" : value.getClass(), ALLOWED_PREFERENCE_TYPES));
             }
         }
     }
@@ -287,6 +303,10 @@ public class FirefoxWebDriverFactory extends CapableWebDriverFactory<FirefoxOpti
         };
     }
 
+    /**
+     * Constructs and returns a new builder with all defaults assigned.
+     * @return a new builder
+     */
     public static Builder builder() {
         return new Builder();
     }
@@ -298,10 +318,10 @@ public class FirefoxWebDriverFactory extends CapableWebDriverFactory<FirefoxOpti
         public static final String COOKIES_DB_FILENAME = "cookies.sqlite";
 
         private final List<DeserializableCookie> cookies;
-        private final Importer cookieImporter;
+        private final FirefoxCookieDb.Importer cookieImporter;
         private final Path scratchDir;
 
-        CookieInstallingProfileAction(List<DeserializableCookie> cookies, Importer cookieImporter, Path scratchDir) {
+        CookieInstallingProfileAction(List<DeserializableCookie> cookies, FirefoxCookieDb.Importer cookieImporter, Path scratchDir) {
             this.cookies = requireNonNull(cookies);
             this.cookieImporter = requireNonNull(cookieImporter);
             this.scratchDir = requireNonNull(scratchDir);
@@ -337,8 +357,17 @@ public class FirefoxWebDriverFactory extends CapableWebDriverFactory<FirefoxOpti
         void perform(FirefoxProfile profile) throws IOException;
     }
 
-    interface FirefoxProfileFolderAction {
+    /**
+     * Interface of a service that performs an action on a Firefox profile directory.
+     */
+    public interface FirefoxProfileFolderAction {
+
+        /**
+         * Performs the action.
+         * @param profileDir the profile director
+         */
         void perform(File profileDir);
+
         @SuppressWarnings("unused")
         class ProfilePreparationException extends IllegalStateException {
             public ProfilePreparationException() {
@@ -377,6 +406,9 @@ public class FirefoxWebDriverFactory extends CapableWebDriverFactory<FirefoxOpti
         }
     }
 
+    /**
+     * Builder of Firefox web driver factories.
+     */
     @SuppressWarnings("unused")
     public static class Builder extends CapableWebDriverFactoryBuilder<Builder, FirefoxOptions> {
 
@@ -388,10 +420,16 @@ public class FirefoxWebDriverFactory extends CapableWebDriverFactory<FirefoxOpti
         private List<FirefoxProfileFolderAction> profileFolderActions = new ArrayList<>();
         private GeckoServiceConstructor geckoServiceConstructor = GeckoServiceConstructor.standard();
         private java.util.logging.Level webdriverLogLevel = null;
+        private FirefoxCookieDb.Importer cookieDbImporter = FirefoxCookieDb.getImporter();
 
         private Builder() {
         }
 
+        /**
+         * Sets the webdriver log level.
+         * @param webdriverLogLevel log level
+         * @return this builder
+         */
         public Builder webdriverLogLevel(java.util.logging.Level webdriverLogLevel) {
             this.webdriverLogLevel = webdriverLogLevel;
             return this;
@@ -412,10 +450,20 @@ public class FirefoxWebDriverFactory extends CapableWebDriverFactory<FirefoxOpti
             return headless(true);
         }
 
+        /**
+         * Sets the Firefox binary.
+         * @param binary the binary
+         * @return this builder
+         */
         public Builder binary(FirefoxBinary binary) {
             return binary(() -> binary);
         }
 
+        /**
+         * Sets the supplier that will provide the Firefox binary.
+         * @param binarySupplier the binary supplier
+         * @return this builder
+         */
         public Builder binary(Supplier<FirefoxBinary> binarySupplier) {
             this.binarySupplier = requireNonNull(binarySupplier);
             return this;
@@ -474,42 +522,97 @@ public class FirefoxWebDriverFactory extends CapableWebDriverFactory<FirefoxOpti
             return addCookies(cookies);
         }
 
+        /**
+         * Sets a profile preference.
+         * @param key preference key
+         * @param value preference value
+         * @return this builder
+         * @see FirefoxProfile#setPreference(String, boolean)
+         */
         @SuppressWarnings("BooleanParameter")
         public Builder preference(String key, boolean value) {
             profilePreferences.put(key, value);
             return this;
         }
 
+        /**
+         * Sets a profile preference.
+         * @param key preference key
+         * @param value preference value
+         * @return this builder
+         * @see FirefoxProfile#setPreference(String, int)
+         */
         public Builder preference(String key, int value) {
             profilePreferences.put(key, value);
             return this;
         }
 
+        /**
+         * Sets a profile preference.
+         * @param key preference key
+         * @param value preference value
+         * @return this builder
+         * @see FirefoxProfile#setPreference(String, String)
+         */
         public Builder preference(String key, String value) {
             profilePreferences.put(key, value);
             return this;
         }
 
+        /**
+         * Adds a profile action to the list of profile actions to be performed.
+         * @param profileAction the action
+         * @return this builder
+         */
         public Builder profileAction(FirefoxProfileAction profileAction) {
             profileActions.add(profileAction);
             return this;
         }
 
+        /**
+         * Adds a profile folder action to the list of profile folder actions to be performed.
+         * @param profileFolderAction the action
+         * @return this builder
+         */
         public Builder profileFolderAction(FirefoxProfileFolderAction profileFolderAction) {
             profileFolderActions.add(profileFolderAction);
             return this;
         }
 
+        /**
+         * Sets the directory that will be the parent of the profile folder.
+         * @param scratchDir directory pathname
+         * @return this builder
+         */
         public Builder scratchDir(Path scratchDir) {
             this.scratchDir = requireNonNull(scratchDir);
             return this;
         }
 
+        /**
+         * Sets the driver service constructor to be used.
+         * @param ctor constructor
+         * @return this builder
+         */
         public Builder geckoServiceConstructor(GeckoServiceConstructor ctor) {
             this.geckoServiceConstructor = requireNonNull(ctor);
             return this;
         }
 
+        /**
+         * Sets the cookie database importer to be used.
+         * @param cookieDbImporter the cookie database importer
+         * @return this builder
+         */
+        public Builder cookieDatabaseImporter(FirefoxCookieDb.Importer cookieDbImporter) {
+            this.cookieDbImporter = requireNonNull(cookieDbImporter);
+            return this;
+        }
+
+        /**
+         * Constructs and returns a new factory instance parameterized by this builder.
+         * @return a new factory instance
+         */
         public FirefoxWebDriverFactory build() {
             return new FirefoxWebDriverFactory(this);
         }

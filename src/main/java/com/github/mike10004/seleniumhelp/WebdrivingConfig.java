@@ -32,11 +32,22 @@ public interface WebdrivingConfig {
     CertificateAndKeySource getCertificateAndKeySource();
 
     /**
-     * Returns a config instance that does not affect the webdriving session.
+     * Returns an instance that does not configure the webdriving session for traffic capture.
      * No traffic will be captured.
-     * @return a
+     * @return a non-capturing config instance
+     * @deprecated use {@link #nonCapturing()} instead because the name is more descriptive of the purpose
      */
+    @Deprecated
     static WebdrivingConfig inactive() {
+        return WebdrivingConfigs.empty();
+    }
+
+    /**
+     * Returns an instance that does not configure the webdriving session for traffic capture.
+     * No traffic will be captured.
+     * @return a non-capturing config instance
+     */
+    static WebdrivingConfig nonCapturing() {
         return WebdrivingConfigs.empty();
     }
 
@@ -57,7 +68,7 @@ public interface WebdrivingConfig {
     }
 
     /**
-     *
+     * Builder of webdriving config instances.
      */
     final class Builder {
 
@@ -99,11 +110,20 @@ public interface WebdrivingConfig {
             return proxy(ps);
         }
 
+        /**
+         * Sets the certifiate and key source used by the intercepting proxy to MITM HTTPS traffic.
+         * @param certificateAndKeySource the source
+         * @return this builder
+         */
         public Builder certificateAndKeySource(CertificateAndKeySource certificateAndKeySource) {
             this.certificateAndKeySource = certificateAndKeySource;
             return this;
         }
 
+        /**
+         * Builds a config instance.
+         * @return a new instance parameterized by this builder
+         */
         public WebdrivingConfig build() {
             return new WebdrivingConfigImpl(this);
         }
