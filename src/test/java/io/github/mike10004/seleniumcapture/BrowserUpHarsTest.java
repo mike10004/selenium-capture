@@ -3,6 +3,7 @@ package io.github.mike10004.seleniumcapture;
 import com.browserup.harreader.HarReaderMode;
 import com.browserup.harreader.model.Har;
 import com.browserup.harreader.model.HarEntry;
+import com.browserup.harreader.model.HarLog;
 import com.browserup.harreader.model.HarRequest;
 import com.browserup.harreader.model.HarResponse;
 import com.github.mike10004.seleniumhelp.FirefoxWebDriverFactory;
@@ -11,6 +12,8 @@ import com.github.mike10004.seleniumhelp.TrafficCollector;
 import com.github.mike10004.seleniumhelp.TrafficGenerator;
 import com.github.mike10004.seleniumhelp.WebDriverFactory;
 import com.google.common.net.MediaType;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import io.github.bonigarcia.wdm.WebDriverManager;
 import io.github.mike10004.nanochamp.server.NanoControl;
 import io.github.mike10004.nanochamp.server.NanoResponse;
@@ -22,7 +25,10 @@ import org.junit.rules.TemporaryFolder;
 import org.openqa.selenium.WebDriver;
 
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.StringWriter;
+import java.io.Writer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -34,13 +40,51 @@ public class BrowserUpHarsTest {
 
     private static final Charset HAR_CHARSET = StandardCharsets.UTF_8;
 
-    @BeforeClass
-    public static void setupGeckodriver() {
+    private static void setupWebdriver() {
         WebDriverManager.firefoxdriver().setup();
     }
 
     @ClassRule
     public static TemporaryFolder temporaryFolder = new TemporaryFolder();
+
+    @Test
+    public void writeHar() throws IOException {
+        StringWriter w = new StringWriter(128);
+        Har har = newFakeHar();
+        BrowserUpHars.writeHar(har, w);
+        String harJson = w.toString();
+        JsonObject obj = new Gson().fromJson(harJson, JsonObject.class);
+        assertTrue("har has log", obj.has("log"));
+    }
+
+    private static Har newFakeHar() {
+        Har har = new Har();
+        HarLog log = new HarLog();
+        HarEntry entry = new HarEntry();
+        HarRequest request = new HarRequest();
+        HarResponse response = new HarResponse();
+        entry.setRequest(request);
+        entry.setResponse(response);
+        entry.setServerIPAddress("127.0.0.1");
+        entry.setTime(123);
+        log.getEntries().add(entry);
+        har.setLog(log);
+        return har;
+    }
+
+    @Test
+    public void writeHar_ioException() throws IOException {
+        File outputFile = temporaryFolder.newFile();
+        Writer w = new FileWriter(outputFile);
+        w.close();
+        Har har = newFakeHar();
+        try {
+            BrowserUpHars.writeHar(har, w);
+            fail("this is not how this should go");
+        } catch (IOException ignore) {
+        }
+
+    }
 
     /**
      * Checks that har I/O works reasonably well.
@@ -50,7 +94,8 @@ public class BrowserUpHarsTest {
      * @throws Exception
      */
     @Test
-    public void readAndWriteHar() throws Exception {
+    public void readAndWriteRealHar() throws Exception {
+        setupWebdriver();
         checkState(new Har().equals(new Har()));
         Har har = captureHar(FirefoxWebDriverFactory.builder().configure(o -> o.setHeadless(true)).build());
         checkState(!har.getLog().getEntries().isEmpty(), "expect nonempty har captured");

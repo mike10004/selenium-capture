@@ -1,6 +1,7 @@
 package io.github.mike10004.seleniumcapture;
 
 import com.browserup.harreader.HarReaderMode;
+import com.browserup.harreader.jackson.DefaultMapperFactory;
 import com.browserup.harreader.model.Har;
 import com.browserup.harreader.model.HarContent;
 import com.browserup.harreader.model.HarEntry;
@@ -37,7 +38,7 @@ public class BrowserUpHars {
      * @throws IOException on I/O error
      */
     public static void writeHar(Har har, Writer writer) throws IOException {
-        new com.browserup.harreader.jackson.DefaultMapperFactory().instance(HarReaderMode.STRICT).writeValue(writer, har);
+        new DefaultMapperFactory().instance(HarReaderMode.STRICT).writeValue(writer, har);
     }
 
     /**
@@ -73,7 +74,7 @@ public class BrowserUpHars {
      * @throws IOException on I/O error
      */
     public static Har readHar(Reader reader, HarReaderMode mode) throws IOException {
-        return new com.browserup.harreader.jackson.DefaultMapperFactory().instance(mode).readValue(reader, Har.class);
+        return new DefaultMapperFactory().instance(mode).readValue(reader, Har.class);
     }
 
     /**
