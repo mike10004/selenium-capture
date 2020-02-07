@@ -460,11 +460,6 @@
             <version>${chrome-cookie-implant.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.helger</groupId>
-            <artifactId>ph-css</artifactId>
-            <version>5.0.3</version>
-        </dependency>
-        <dependency>
             <groupId>com.github.mike10004</groupId>
             <artifactId>nanohttpd-server</artifactId>
             <version>0.14</version>
