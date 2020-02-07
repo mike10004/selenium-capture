@@ -29,7 +29,7 @@ public abstract class Sqlite3Runner {
 
     private static final Logger log = LoggerFactory.getLogger(Sqlite3Runner.class);
     private static final Charset SQLITE3_CHARSET = Charset.defaultCharset();
-    private final ExecutableConfig config;
+    protected final ExecutableConfig config;
 
     protected Sqlite3Runner(ExecutableConfig config) {
         this.config = requireNonNull(config);
@@ -49,8 +49,8 @@ public abstract class Sqlite3Runner {
         }
     }
 
-    protected Subprocess.Builder getSqlite3Builder() {
-        return config.subprocessBuilder();
+    Subprocess.Builder getSqlite3Builder() {
+        return Subprocess.running(config.getExecutableName());
     }
 
     static class Sqlite3GenericExporter extends Sqlite3Runner {

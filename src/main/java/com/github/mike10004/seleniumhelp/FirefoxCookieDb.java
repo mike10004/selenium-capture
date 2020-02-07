@@ -1,15 +1,14 @@
 package com.github.mike10004.seleniumhelp;
 
-import io.github.mike10004.subprocess.ProcessResult;
-import io.github.mike10004.subprocess.Subprocess;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Converter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
+import io.github.mike10004.subprocess.ProcessResult;
+import io.github.mike10004.subprocess.Subprocess;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -22,6 +21,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 @SuppressWarnings({"Convert2Lambda"})
 public class FirefoxCookieDb {
+
+    private static final String SQLITE3_EXECUTABLE_NAME = "sqlite3";
 
     private FirefoxCookieDb() {}
 
@@ -44,39 +45,24 @@ public class FirefoxCookieDb {
     @VisibleForTesting
     static final String TABLE_NAME = "moz_cookies";
 
-    public static class CookieTransferConfig extends ExecutableConfig.BasicExecutableConfig {
-
-        private static final String SQLITE3_EXECUTABLE_NAME = "sqlite3";
-
-        public CookieTransferConfig(@Nullable File executablePathname, String executableFilename) {
-            super(executablePathname, executableFilename);
-        }
-
-        @SuppressWarnings("unused")
-        public static CookieTransferConfig forSqlite3Executable(File executable) {
-            return new CookieTransferConfig(executable, SQLITE3_EXECUTABLE_NAME);
-        }
-
-        public static CookieTransferConfig createDefault() {
-            return new CookieTransferConfig(null, SQLITE3_EXECUTABLE_NAME);
-        }
-
+    public static ExecutableConfig createDefaultSqlite3Config() {
+        return new StringExecutableConfig(SQLITE3_EXECUTABLE_NAME);
     }
 
     public static Importer getImporter() {
-        return getImporter(CookieTransferConfig.createDefault());
+        return getImporter(createDefaultSqlite3Config());
     }
 
     public static Exporter getExporter() {
-        return getExporter(CookieTransferConfig.createDefault());
+        return getExporter(createDefaultSqlite3Config());
     }
 
-    public static Importer getImporter(CookieTransferConfig config) {
-        return new Sqlite3ProgramImporter(config);
+    public static Importer getImporter(ExecutableConfig sqlite3Config) {
+        return new Sqlite3ProgramImporter(sqlite3Config);
     }
 
-    public static Exporter getExporter(CookieTransferConfig config) {
-        return new Sqlite3ProgramExporter(config);
+    public static Exporter getExporter(ExecutableConfig sqlite3Config) {
+        return new Sqlite3ProgramExporter(sqlite3Config);
     }
 
     public interface Exporter {
@@ -92,8 +78,8 @@ public class FirefoxCookieDb {
 
         private static final Logger log = LoggerFactory.getLogger(Sqlite3ProgramExporter.class);
 
-        public Sqlite3ProgramExporter(CookieTransferConfig config) {
-            super(config);
+        public Sqlite3ProgramExporter(ExecutableConfig sqliteConfig) {
+            super(sqliteConfig);
         }
 
         public List<DeserializableCookie> exportCookies(File sqliteDbFile) throws SQLException, IOException {
@@ -145,7 +131,7 @@ public class FirefoxCookieDb {
                 "CREATE INDEX moz_basedomain ON moz_cookies (baseDomain, originAttributes);"
         );
 
-        public Sqlite3ProgramImporter(CookieTransferConfig config) {
+        public Sqlite3ProgramImporter(ExecutableConfig config) {
             super(config);
         }
 

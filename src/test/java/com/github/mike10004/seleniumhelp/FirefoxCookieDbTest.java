@@ -52,7 +52,7 @@ public class FirefoxCookieDbTest {
     }
 
     private Map<String, String> importAndCheck(Map<String, String> cookieFieldMap) throws IOException, SQLException {
-        FirefoxCookieDb.CookieTransferConfig config = FirefoxCookieDb.CookieTransferConfig.createDefault();
+        ExecutableConfig config = FirefoxCookieDb.createDefaultSqlite3Config();
         FirefoxCookieDb.Sqlite3ProgramImporter importer = new FirefoxCookieDb.Sqlite3ProgramImporter(config);
         File dbFile = tmp.newFile();
         importer.importRows(ImmutableList.of(cookieFieldMap), dbFile, tmp.getRoot().toPath());
@@ -71,7 +71,7 @@ public class FirefoxCookieDbTest {
         File dbFile = tmp.newFile();
         Resources.asByteSource(getClass().getResource("/firefox-cookies-db-with-google-cookie.sqlite"))
                 .copyTo(Files.asByteSink(dbFile));
-        FirefoxCookieDb.CookieTransferConfig config = FirefoxCookieDb.CookieTransferConfig.createDefault();
+        ExecutableConfig config = FirefoxCookieDb.createDefaultSqlite3Config();
         FirefoxCookieDb.Sqlite3ProgramExporter exporter = new FirefoxCookieDb.Sqlite3ProgramExporter(config);
         List<Map<String, String>> rowMaps = exporter.dumpRows(FirefoxCookieDb.TABLE_NAME, dbFile);
         assertEquals("rowMaps.size", 1, rowMaps.size());

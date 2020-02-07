@@ -62,7 +62,7 @@ public class UnproxiedWebDriverTest {
         testUnproxied(() -> factory.startWebdriving(EMPTY_WEBDRIVER_CONFIG));
     }
 
-    private static final WebdrivingConfig EMPTY_WEBDRIVER_CONFIG = WebdrivingConfig.inactive();
+    private static final WebdrivingConfig EMPTY_WEBDRIVER_CONFIG = WebdrivingConfig.nonCapturing();
 
     @Test
     public void testFirefox() throws Exception {

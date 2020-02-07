@@ -61,7 +61,7 @@ public class OpensslKeystoreFileCreator implements KeystoreFileCreator {
             keystore.getBytes().copyTo(Files.asByteSink(keystoreFile));
             String keystorePassword = keystore.getPassword();
             {
-                Subprocess program = keytoolConfig.subprocessBuilder()
+                Subprocess program = Subprocess.running(keytoolConfig.getExecutableName())
                         .arg("-importkeystore")
                         .args("-srckeystore", keystoreFile.getAbsolutePath())
                         .args("-srcstoretype", "jks")
@@ -86,7 +86,7 @@ public class OpensslKeystoreFileCreator implements KeystoreFileCreator {
     @SuppressWarnings("RedundantThrows")
     @Override
     public void createPemFile(File pkcs12File, String keystorePassword, File pemFile) throws IOException {
-        Subprocess subprocess = opensslConfig.subprocessBuilder()
+        Subprocess subprocess = Subprocess.running(opensslConfig.getExecutableName())
                 .arg("pkcs12")
                 .args("-in", pkcs12File.getAbsolutePath())
                 .args("-passin", "pass:" + keystorePassword)
