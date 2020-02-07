@@ -41,7 +41,7 @@ public class FirefoxWebDriverFactory_LogLevelTest {
         System.out.format("capturing stderr for session with %s%n", wdf);
         ProcessStreamCaptor captor = new ProcessStreamCaptor(1024);
         try (ProcessStreamCaptor.CaptureScope ignore = captor.start()) {
-            try (WebdrivingSession session = wdf.startWebdriving(WebdrivingConfig.inactive())) {
+            try (WebdrivingSession session = wdf.startWebdriving(WebdrivingConfig.nonCapturing())) {
                 WebDriver driver = session.getWebDriver();
                 driver.get("https://microsoft.com/");
             }
