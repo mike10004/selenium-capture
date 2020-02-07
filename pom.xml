@@ -37,7 +37,8 @@
         <xvfb-manager.version>0.19</xvfb-manager.version>
         <test.log.level>info</test.log.level>
         <selenium.version>3.141.59</selenium.version>
-        <chrome-cookie-implant.version>1.5.15</chrome-cookie-implant.version>
+        <chrome-cookie-implant.version>1.5.16</chrome-cookie-implant.version>
+        <guava.version>28.2-jre</guava.version>
         <antiprint.version>0.16</antiprint.version>
         <common-helper.version>10.0.0</common-helper.version>
         <browserup-proxy.version>2.0.1</browserup-proxy.version>
@@ -313,14 +314,9 @@
                 <version>${selenium.version}</version>
             </dependency>
             <dependency>
-                <groupId>net.sourceforge.htmlunit</groupId>
-                <artifactId>htmlunit</artifactId>
-                <version>2.23</version>
-            </dependency>
-            <dependency>
                 <groupId>com.google.guava</groupId>
                 <artifactId>guava</artifactId>
-                <version>27.0.1-jre</version>
+                <version>${guava.version}</version>
             </dependency>
             <dependency>
                 <groupId>io.netty</groupId>
@@ -334,6 +330,22 @@
                 <artifactId>littleproxy</artifactId>
                 <version>2.0.0-beta-5</version>
                 <scope>compile</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-core</artifactId>
+                <version>2.9.10</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-databind</artifactId>
+                <version>2.9.10.1</version>
+                <scope>compile</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-annotations</artifactId>
+                <version>2.9.10</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
@@ -489,17 +501,13 @@
             <groupId>javax.xml.bind</groupId>
             <artifactId>jaxb-api</artifactId>
             <version>1.0.6</version>
+            <scope>runtime</scope>
         </dependency>
         <dependency>
             <groupId>com.github.mike10004</groupId>
             <artifactId>nitsick-junit</artifactId>
             <version>0.2</version>
             <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-databind</artifactId>
-            <version>2.9.9.1</version>
         </dependency>
     </dependencies>
 </project>
