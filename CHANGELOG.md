@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.56
+----
+
+* upgrade dependencies
+
 0.55
 ----
 
