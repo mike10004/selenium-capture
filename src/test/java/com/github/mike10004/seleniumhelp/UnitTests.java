@@ -43,7 +43,7 @@ import static org.openqa.selenium.Platform.WINDOWS;
 public class UnitTests {
 
     private static final String PROPKEY_DOMAIN = "selenium-help.tests";
-    public static final SettingSet Settings = SettingSet.global(PROPKEY_DOMAIN);
+    public static final SettingSet Settings = SettingSet.system(PROPKEY_DOMAIN);
 
     static final String IGNORE_BECAUSE_UPGRADE_INSECURE_REQUESTS_UNAVOIDABLE =
             "We would like to test HTTPS but requests are sent with header " +
