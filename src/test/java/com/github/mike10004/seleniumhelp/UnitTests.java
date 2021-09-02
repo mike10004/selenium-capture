@@ -8,7 +8,7 @@ import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.Resources;
-import io.github.bonigarcia.wdm.DriverManagerType;
+import io.github.bonigarcia.wdm.config.DriverManagerType;
 import io.github.mike10004.nitsick.SettingSet;
 import org.apache.commons.text.StringEscapeUtils;
 import org.jsoup.Jsoup;
