@@ -150,21 +150,37 @@ public class ChromeWebDriverFactory extends CapableWebDriverFactory<ChromeOption
         void prepareCookies(ChromeDriver driver) throws WebDriverException;
     }
 
-    private static final CookiePreparer cookielessPreparer = new CookiePreparer() {
-        @Override
-        public void supplementOptions(ChromeOptions options) {
-            // no op
-        }
+    private static CookiePreparer cookielessPreparer() {
+        return new CookiePreparer() {
+            @Override
+            public void supplementOptions(ChromeOptions options) {
+                // no op
+            }
 
-        @Override
-        public void prepareCookies(ChromeDriver driver) {
-            // no op
-        }
-    };
-
-    public static CookiePreparer makeCookieImplanter(Path scratchDir, Supplier<? extends Collection<DeserializableCookie>> cookiesSupplier) {
-        return new ChromeCookiePreparer(scratchDir, cookiesSupplier);
+            @Override
+            public void prepareCookies(ChromeDriver driver) {
+                // no op
+            }
+        };
     }
+    /**
+     * Throws an exception.
+     * @deprecated support for Chrome cookies removed as of 0.57
+     */
+    @Deprecated
+    public static CookiePreparer makeCookieImplanter(Path scratchDir, Supplier<? extends Collection<DeserializableCookie>> cookiesSupplier) {
+        if (isIgnoreCookieSupport()) {
+            return cookielessPreparer();
+        } else {
+            throw new UnsupportedOperationException("support for implanting cookies in Chrome is disabled as of version 0.57; to silently ignore cookie support, set system property " + SYSPROP_IGNORE_COOKIE_IMPLANTER + "=true");
+        }
+    }
+
+    private static boolean isIgnoreCookieSupport() {
+        return Boolean.parseBoolean(System.getProperty(SYSPROP_IGNORE_COOKIE_IMPLANTER, "false"));
+    }
+
+    private static final String SYSPROP_IGNORE_COOKIE_IMPLANTER = "selenium-capture.chrome.cookies.ignore";
 
     public interface DriverServiceBuilderConfigurator {
         void configure(ChromeDriverService.Builder builder);
@@ -173,10 +189,11 @@ public class ChromeWebDriverFactory extends CapableWebDriverFactory<ChromeOption
     @SuppressWarnings("unused")
     public static final class Builder extends CapableWebDriverFactoryBuilder<Builder, ChromeOptions> {
 
-        private CookiePreparer cookiePreparer = cookielessPreparer;
+        private CookiePreparer cookiePreparer;
         private List<DriverServiceBuilderConfigurator> driverServiceBuilderConfigurators = new ArrayList<>();
 
         private Builder() {
+            cookiePreparer = cookielessPreparer();
         }
 
         public Builder driverServiceBuilderConfigurator(DriverServiceBuilderConfigurator configurator) {

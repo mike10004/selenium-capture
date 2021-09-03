@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
+@org.junit.Ignore("Chrome cookie support is indefinitely disabled as of 0.57")
 public class ChromeCookieUsageTest extends CookieUsageTestBase {
 
     @Rule
