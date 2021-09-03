@@ -6,6 +6,7 @@ import org.openqa.selenium.MutableCapabilities;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -19,7 +20,7 @@ public abstract class EnvironmentWebDriverFactory implements WebDriverFactory {
     protected final Supplier<Map<String, String>> environmentSupplier;
 
     protected EnvironmentWebDriverFactory(Builder<?> builder) {
-        this.environmentSupplier = checkNotNull(builder.environmentSupplier);
+        this.environmentSupplier = checkNotNull(builder.mergedEnvironment());
     }
 
     static Map<String, String> createEnvironmentForDisplay(@Nullable String display) {
@@ -44,9 +45,20 @@ public abstract class EnvironmentWebDriverFactory implements WebDriverFactory {
 
     @SuppressWarnings("unchecked")
     public static abstract class Builder<B extends Builder> {
+
+        private final Map<String, String> hiddenEnvironment;
         private Supplier<Map<String, String>> environmentSupplier = HashMap::new;
 
         protected Builder() {
+            hiddenEnvironment = new LinkedHashMap<>();
+        }
+
+        protected void hiddenEnvironmentVariable(String name, @Nullable String value) {
+            if (value == null) {
+                hiddenEnvironment.remove(name);
+            } else {
+                hiddenEnvironment.put(name, value);
+            }
         }
 
         public final B environment(Supplier<Map<String, String>> environmentSupplier) {
@@ -57,6 +69,14 @@ public abstract class EnvironmentWebDriverFactory implements WebDriverFactory {
         public final B environment(Map<String, String> environment) {
             this.environmentSupplier = () -> environment;
             return (B) this;
+        }
+
+        private Supplier<Map<String, String>> mergedEnvironment() {
+            return () -> {
+                Map<String, String> merged = new LinkedHashMap<>(hiddenEnvironment);
+                merged.putAll(environmentSupplier.get());
+                return merged;
+            };
         }
     }
 

@@ -1,7 +1,9 @@
 package com.github.mike10004.seleniumhelp;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 import com.google.common.primitives.UnsignedInts;
@@ -28,16 +30,20 @@ import org.openqa.selenium.WebDriver;
 import javax.net.ssl.SSLEngine;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
 
+import static com.google.common.base.Preconditions.checkState;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+@SuppressWarnings("HttpUrlsUsage")
 public class TrafficCollectorTest {
 
     @Rule
@@ -59,11 +65,14 @@ public class TrafficCollectorTest {
         Random random = new Random(getClass().getName().hashCode());
         List<String> rejectionTexts = new ArrayList<>();
         Set<String> rejectTargets = Collections.singleton("http://icanhazip.com/");
+        Set<String> isRejectTargetFullUrls = Collections.synchronizedSet(new TreeSet<>());
         RejectingFiltersSource rejectingFiltersSource = new RejectingFiltersSource() {
             @Override
             protected boolean isRejectTarget(HttpRequest originalRequest, String fullUrl, HttpObject httpObject) {
-                System.out.format("checking whether to reject %s (%08x %s@%08x)%n", fullUrl, System.identityHashCode(originalRequest), getHttpObjectClass(httpObject), System.identityHashCode(httpObject));
-                return rejectTargets.contains(fullUrl);
+                isRejectTargetFullUrls.add(fullUrl);
+                boolean reject = rejectTargets.contains(fullUrl);
+                System.out.format("reject=%s for %s (%08x %s@%08x)%n", reject, fullUrl, System.identityHashCode(originalRequest), getHttpObjectClass(httpObject), System.identityHashCode(httpObject));
+                return reject;
             }
 
             @Override
@@ -72,12 +81,18 @@ public class TrafficCollectorTest {
                 rejectionTexts.add(text);
                 return text;
             }
+
         };
-        TrafficCollector collector = TrafficCollector.builder(UnitTests.headlessWebDriverFactory())
+        FirefoxWebDriverFactory webDriverFactory = UnitTests.headlessWebDriverFactoryBuilder()
+                .disableTrackingProtection()
+                .disableRemoteSettings()
+                .build();
+        TrafficCollector collector = TrafficCollector.builder(webDriverFactory)
                 .filter(rejectingFiltersSource)
                 .build();
         Set<String> nonRejectTargets = ImmutableSet.of("http://checkip.amazonaws.com/");
-        List<String> urlTargets = ImmutableList.copyOf(Iterables.concat(nonRejectTargets, rejectTargets));
+        Set<String> urlTargets = ImmutableSortedSet.copyOf(Iterables.concat(nonRejectTargets, rejectTargets));
+        checkState(urlTargets.size() == rejectTargets.size() + nonRejectTargets.size());
         HarPlus<List<String>> collection = collector.collect(new TrafficGenerator<List<String>>() {
             @Override
             public List<String> generate(WebDriver driver) {
@@ -87,7 +102,9 @@ public class TrafficCollectorTest {
                 }).collect(Collectors.toList());
             }
         });
-        assertEquals("filter invocations", urlTargets.size(), rejectingFiltersSource.getRequestCount());
+        assertEquals("count of URLs seen in isRejectTarget equals number of URL visits attempted; " +
+                "attempted " + urlTargets + " and saw " + isRejectTargetFullUrls,
+                urlTargets, isRejectTargetFullUrls);
         System.out.format("results: %s%n", collection.result);
         assertTrue("all rejection texts in results", collection.result.containsAll(rejectionTexts));
         List<HarEntry> entries = collection.har.getLog().getEntries();

@@ -215,7 +215,7 @@ public class CollectionTestBase {
             driver.get(url.toString());
             String currentUrl = driver.getCurrentUrl(), pageSource = driver.getPageSource();
             String title = StringEscapeUtils.escapeJava(Strings.nullToEmpty(driver.getTitle()));
-            System.out.format("%s: '%s' (length=%d)%n", currentUrl, title.isEmpty() ? "[untitled]" : title, pageSource.length());
+            System.out.format("%s: '%s' (length=%d)%n%n%s%n%n", currentUrl, title.isEmpty() ? "[untitled]" : title, pageSource.length(), pageSource);
             return driver.getPageSource();
         };
         HarPlus<String> collection = testTrafficCollector(webDriverFactory, urlTrafficGenerator);

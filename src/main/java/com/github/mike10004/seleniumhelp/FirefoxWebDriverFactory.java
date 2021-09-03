@@ -7,6 +7,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.io.Files;
 import com.google.common.io.Resources;
+import com.google.common.primitives.Ints;
 import org.apache.commons.io.FileUtils;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.firefox.FirefoxBinary;
@@ -23,6 +24,8 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.sql.SQLException;
+import java.time.Clock;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -213,46 +216,101 @@ public class FirefoxWebDriverFactory extends CapableWebDriverFactory<FirefoxOpti
     @VisibleForTesting
     static class FirefoxProfilePreferenceConfigurator {
 
+        private final Clock clock;
+
+        public FirefoxProfilePreferenceConfigurator(Clock clock) {
+            this.clock = clock;
+        }
+
+        public FirefoxProfilePreferenceConfigurator() {
+            this(Clock.systemUTC());
+        }
+
         public void disableSomeMediaSupport(FirefoxProfile profile) {
             profile.setPreference("extensions.getAddons.cache.enabled", false);
             profile.setPreference("media.gmp-gmpopenh264.enabled", false);
             profile.setPreference("browser.newtabpage.enabled", false);
             profile.setPreference("extensions.screenshots.disabled", true);
             profile.setPreference("extensions.screenshots.upload-disabled", true);
+            profile.setPreference("media.mediacapabilities.from-database", false);
+        }
+
+        public void disableTrackingProtection(FirefoxProfile profile) {
+            // https://github.com/arkenfox/user.js/issues/820
+            profile.setPreference("privacy.trackingprotection.fingerprinting.enabled", false);
+            profile.setPreference("privacy.trackingprotection.cryptomining.enabled", false);
+            profile.setPreference("privacy.trackingprotection.pbmode.enabled", false);
+            profile.setPreference("privacy.trackingprotection.socialtracking.enabled", false);
+            profile.setPreference("privacy.trackingprotection.cryptomining.enabled", false);
+            profile.setPreference("browser.contentblocking.report.lockwise.enabled", false);
+            profile.setPreference("browser.contentblocking.report.monitor.enabled", false);
+            profile.setPreference("browser.safebrowsing.provider.mozilla.updateURL", "");
+            profile.setPreference("browser.safebrowsing.provider.mozilla.gethashURL", "");
         }
 
         public void avoidAutomaticConnections(FirefoxProfile profile) {
-            profile.setPreference("media.gmp-manager.url", "");
-
+            // These come from various sources
             // https://support.mozilla.org/en-US/kb/how-stop-firefox-making-automatic-connections?redirectlocale=en-US&redirectslug=Firefox+makes+unrequested+connections
-            profile.setPreference("browser.safebrowsing.provider.mozilla.updateURL", "");
+            // https://secureideas.com/blog/2018/10/silencing-firefoxs-chattiness-for-web-app-testing.html
+
             profile.setPreference("app.update.auto", false);
             profile.setPreference("app.update.url", "");
+
+            profile.setPreference("browser.safebrowsing.enabled", false);
+            profile.setPreference("browser.safebrowsing.phishing.enabled", false);
+            profile.setPreference("browser.safebrowsing.malware.enabled", false);
+            profile.setPreference("browser.safebrowsing.downloads.enabled", false);
+            profile.setPreference("browser.safebrowsing.downloads.remote.url", "");
+            profile.setPreference("browser.safebrowsing.provider.mozilla.updateURL", "");
+            profile.setPreference("browser.safebrowsing.downloads.remote.enabled", false);
+            profile.setPreference("browser.aboutHomeSnippets.updateUrl", "");
+            profile.setPreference("browser.messaging-system.whatsNewPanel.enabled", false);
+            profile.setPreference("browser.messaging-system.fxatoolbarbadge.enabled", false);
+            profile.setPreference("browser.startup.homepage_override.mstone", "ignore");
+            profile.setPreference("browser.selfsupport.url", "");
+            profile.setPreference("browser.casting.enabled", false);
             profile.setPreference("browser.search.geoip.url", "");
-            profile.setPreference("network.prefetch-next", false);
-            profile.setPreference("network.http.speculative-parallel-limit", 0);
+
+            profile.setPreference("extensions.blocklist.enabled", false);
             profile.setPreference("extensions.update.enabled", false);
             profile.setPreference("extensions.update.url", "");
             profile.setPreference("extensions.update.background.url", "");
             profile.setPreference("extensions.systemAddon.update.enabled", false);
             profile.setPreference("extensions.systemAddon.update.url", "");
-            profile.setPreference("toolkit.telemetry.updatePing.enabled", false);
-            profile.setPreference("services.sync.prefs.sync.browser.search.update", false);
-            profile.setPreference("identity.fxaccounts.enabled", false);
             profile.setPreference("extensions.blocklist.enabled", false);
-            profile.setPreference("browser.safebrowsing.downloads.remote.enabled", false);
-            profile.setPreference("network.dns.disablePrefetch", true);
-            profile.setPreference("browser.aboutHomeSnippets.updateUrl", "");
-            profile.setPreference("browser.startup.homepage_override.mstone", "ignore");
             profile.setPreference("extensions.getAddons.cache.enabled", false);
-            profile.setPreference("browser.selfsupport.url", "");
-            profile.setPreference("browser.casting.enabled", false);
+            profile.setPreference("extensions.fxmonitor.enabled", false);
+
+
+            profile.setPreference("identity.fxaccounts.enabled", false);
+
+            profile.setPreference("media.gmp-manager.url", "");
+
+            profile.setPreference("security.certerrors.mitm.priming.enabled", false);
+            profile.setPreference("security.certerrors.mitm.priming.endpoint", "");
+            profile.setPreference("services.sync.prefs.sync.browser.search.update", false);
+            profile.setPreference("signon.management.page.breach-alerts.enabled", false);
+            profile.setPreference("signon.management.page.breachAlertUrl", "");
+            profile.setPreference("signon.management.page.enabled", false);
+            profile.setPreference("browser.contentblocking.report.lockwise.enabled", false);
+            profile.setPreference("services.settings.main.fxmonitor-breaches.last_check", getVeryRecentSecondsTimestamp());
+            profile.setPreference("toolkit.telemetry.updatePing.enabled", false);
+
+            profile.setPreference("network.dns.disablePrefetch", true);
             profile.setPreference("network.captive-portal-service.enabled", false);
+            profile.setPreference("network.prefetch-next", false);
+            profile.setPreference("network.http.speculative-parallel-limit", 0);
 
             // https://support.mozilla.org/en-US/questions/1148198
             profile.setPreference("security.ssl.enable_ocsp_stapling", false);
             // https://bugzilla.mozilla.org/show_bug.cgi?id=110161
             profile.setPreference("security.OCSP.enabled", 0);
+        }
+
+        private int getVeryRecentSecondsTimestamp() {
+            Instant now = clock.instant();
+            // this cast shouldn't matter for the next few decades
+            return Ints.saturatedCast(now.getEpochSecond());
         }
     }
 
@@ -615,6 +673,28 @@ public class FirefoxWebDriverFactory extends CapableWebDriverFactory<FirefoxOpti
          */
         public FirefoxWebDriverFactory build() {
             return new FirefoxWebDriverFactory(this);
+        }
+
+        public Builder disableTrackingProtection() {
+            return profileAction(new FirefoxProfileAction() {
+                @Override
+                public void perform(FirefoxProfile profile) throws IOException {
+                    new FirefoxProfilePreferenceConfigurator().disableTrackingProtection(profile);
+                }
+            });
+        }
+
+        public Builder disableRemoteSettings() {
+            profileAction(new FirefoxProfileAction() {
+                @Override
+                public void perform(FirefoxProfile profile) {
+                    profile.setPreference("services.settings.server", "");
+                }
+            });
+            // https://bugzilla.mozilla.org/show_bug.cgi?id=1598562#c13
+            // https://searchfox.org/mozilla-central/source/services/settings/Utils.jsm#71 at commit 55e8eba7
+            hiddenEnvironmentVariable("XPCSHELL_TEST_PROFILE_DIR", "/dev/null");
+            return this;
         }
     }
 

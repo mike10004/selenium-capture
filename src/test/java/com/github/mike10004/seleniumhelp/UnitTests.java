@@ -348,13 +348,20 @@ public class UnitTests {
     }
 
     public static WebDriverFactory headlessWebDriverFactory(boolean acceptInsecureCerts) {
+        return headlessWebDriverFactoryBuilder(acceptInsecureCerts).build();
+    }
+
+    public static FirefoxWebDriverFactory.Builder headlessWebDriverFactoryBuilder() {
+        return headlessWebDriverFactoryBuilder(false);
+    }
+
+    public static FirefoxWebDriverFactory.Builder headlessWebDriverFactoryBuilder(boolean acceptInsecureCerts) {
         WebDriverTestParameter.DriverManagerSetupCache.doSetup(DriverManagerType.FIREFOX);
         return FirefoxWebDriverFactory.builder()
                 .binary(UnitTests.createFirefoxBinarySupplier())
                 .configure(o -> o.setHeadless(!isShowBrowserWindowEnabled()))
                 .acceptInsecureCerts(acceptInsecureCerts)
-                .putPreferences(UnitTests.createFirefoxPreferences())
-                .build();
+                .putPreferences(UnitTests.createFirefoxPreferences());
     }
 
     @Nullable
