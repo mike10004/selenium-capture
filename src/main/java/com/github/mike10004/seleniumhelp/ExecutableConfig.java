@@ -1,6 +1,7 @@
 package com.github.mike10004.seleniumhelp;
 
 import java.io.File;
+import java.nio.charset.Charset;
 
 /**
  * Interface that provides a method to create a subprocess builder for an executable.
@@ -25,4 +26,14 @@ public interface ExecutableConfig {
     static ExecutableConfig byPathOnly(File executableFile) {
         return new FileExecutableConfig(executableFile);
     }
+
+    /**
+     * Returns the charset for text input/output.
+     * By default, this returns the platform charset.
+     * @return charset charset
+     */
+    default Charset getEncoding() {
+        return Charset.defaultCharset();
+    }
+
 }

@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 import java.nio.file.Path;
 import java.sql.SQLException;
 import java.time.Clock;
@@ -53,7 +54,7 @@ public class FirefoxWebDriverFactory extends CapableWebDriverFactory<FirefoxOpti
     private final Path scratchDir;
     private final java.util.logging.Level webdriverLogLevel;
     private final GeckoServiceConstructor geckoServiceConstructor;
-    private final FirefoxCookieDb.Importer cookieDbImporter;
+    private final FirefoxCookieImporter cookieDbImporter;
 
     protected FirefoxWebDriverFactory(Builder builder) {
         super(builder);
@@ -376,10 +377,10 @@ public class FirefoxWebDriverFactory extends CapableWebDriverFactory<FirefoxOpti
         public static final String COOKIES_DB_FILENAME = "cookies.sqlite";
 
         private final List<DeserializableCookie> cookies;
-        private final FirefoxCookieDb.Importer cookieImporter;
+        private final FirefoxCookieImporter cookieImporter;
         private final Path scratchDir;
 
-        CookieInstallingProfileAction(List<DeserializableCookie> cookies, FirefoxCookieDb.Importer cookieImporter, Path scratchDir) {
+        CookieInstallingProfileAction(List<DeserializableCookie> cookies, FirefoxCookieImporter cookieImporter, Path scratchDir) {
             this.cookies = requireNonNull(cookies);
             this.cookieImporter = requireNonNull(cookieImporter);
             this.scratchDir = requireNonNull(scratchDir);
@@ -389,7 +390,10 @@ public class FirefoxWebDriverFactory extends CapableWebDriverFactory<FirefoxOpti
         public void perform(File profileDir) {
             File sqliteDbFile = new File(profileDir, COOKIES_DB_FILENAME);
             try {
-                Resources.asByteSource(getClass().getResource("/empty-firefox-cookies-db.sqlite")).copyTo(Files.asByteSink(sqliteDbFile));
+                String resourcePath = cookieImporter.getEmptyDbResourcePath();
+                URL resource = getClass().getResource(resourcePath);
+                requireNonNull(resource, "not found: classpath:" + resourcePath);
+                Resources.asByteSource(resource).copyTo(Files.asByteSink(sqliteDbFile));
                 cookieImporter.importCookies(cookies, sqliteDbFile, scratchDir);
                 log.debug("imported {} cookies into firefox profile sqlite database {}", cookies.size(), sqliteDbFile);
             } catch (SQLException | IOException e) {
@@ -472,13 +476,13 @@ public class FirefoxWebDriverFactory extends CapableWebDriverFactory<FirefoxOpti
 
         private Supplier<FirefoxBinary> binarySupplier = FirefoxBinary::new;
         private Map<String, Object> profilePreferences = new LinkedHashMap<>();
-        private List<DeserializableCookie> cookies = new ArrayList<>();
+        private final List<DeserializableCookie> cookies = new ArrayList<>();
         private Path scratchDir = FileUtils.getTempDirectory().toPath();
-        private List<FirefoxProfileAction> profileActions = new ArrayList<>();
-        private List<FirefoxProfileFolderAction> profileFolderActions = new ArrayList<>();
+        private final List<FirefoxProfileAction> profileActions = new ArrayList<>();
+        private final List<FirefoxProfileFolderAction> profileFolderActions = new ArrayList<>();
         private GeckoServiceConstructor geckoServiceConstructor = GeckoServiceConstructor.standard();
         private java.util.logging.Level webdriverLogLevel = null;
-        private FirefoxCookieDb.Importer cookieDbImporter = FirefoxCookieDb.getImporter();
+        private FirefoxCookieImporter cookieDbImporter = new Firefox91CookieImporter(Sqlite3Runner.createDefault(), new Sqlite3GenericImporter());
 
         private Builder() {
         }
@@ -662,7 +666,7 @@ public class FirefoxWebDriverFactory extends CapableWebDriverFactory<FirefoxOpti
          * @param cookieDbImporter the cookie database importer
          * @return this builder
          */
-        public Builder cookieDatabaseImporter(FirefoxCookieDb.Importer cookieDbImporter) {
+        public Builder cookieDatabaseImporter(FirefoxCookieImporter cookieDbImporter) {
             this.cookieDbImporter = requireNonNull(cookieDbImporter);
             return this;
         }
@@ -678,7 +682,7 @@ public class FirefoxWebDriverFactory extends CapableWebDriverFactory<FirefoxOpti
         public Builder disableTrackingProtection() {
             return profileAction(new FirefoxProfileAction() {
                 @Override
-                public void perform(FirefoxProfile profile) throws IOException {
+                public void perform(FirefoxProfile profile) {
                     new FirefoxProfilePreferenceConfigurator().disableTrackingProtection(profile);
                 }
             });

@@ -9,6 +9,7 @@ import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -37,7 +38,7 @@ public class Sqlite3RunnerTest {
     }
 
     private ExecutableConfig createConfig() {
-        return FirefoxCookieDb.createDefaultSqlite3Config();
+        return Sqlite3Runner.createDefaultSqlite3Config();
     }
 
     /**
@@ -64,9 +65,9 @@ public class Sqlite3RunnerTest {
         for (String filename : filenames) {
             File sqliteDbFile = new File(folder, filename);
             createSampleDb(createRunner(), sqliteDbFile);
-            Sqlite3Runner.Sqlite3GenericImporter importer = new Sqlite3Runner.Sqlite3GenericImporter(createConfig());
+            Sqlite3GenericImporter importer = new Sqlite3GenericImporter();
             populateSampleDb(importer, idToValue, sqliteDbFile);
-            Sqlite3Runner.Sqlite3GenericExporter exporter = new Sqlite3Runner.Sqlite3GenericExporter(createConfig());
+            Sqlite3GenericExporter exporter = new Sqlite3GenericExporter(createRunner());
             List<Map<String, String>> rows = exporter.dumpRows(SAMPLE_DB_TABLE_NAME, sqliteDbFile);
             // System.out.format("rows: %s%n", rows);
             Map<Integer, String> exported = rows.stream().collect(Collectors.toMap(row -> Integer.valueOf(row.get("id")), row -> row.get("value")));
@@ -75,18 +76,18 @@ public class Sqlite3RunnerTest {
     }
 
     private static final String SAMPLE_DB_TABLE_NAME = "foo";
+    private static final String createTableSql = "CREATE TABLE " + SAMPLE_DB_TABLE_NAME + " (" +
+            "id INTEGER PRIMARY KEY, " +
+            "value TEXT" +
+            ");";
 
     @SuppressWarnings("UnusedReturnValue")
     private File createSampleDb(Sqlite3Runner runner, File sqliteDbFile) throws SQLException {
-        String createTableSql = "CREATE TABLE " + SAMPLE_DB_TABLE_NAME + " (" +
-                "id INTEGER PRIMARY KEY, " +
-                "value TEXT" +
-                ");";
         Subprocess createTableProgram = runner.getSqlite3Builder()
                 .arg(sqliteDbFile.getAbsolutePath())
                 .arg(createTableSql)
                 .build();
-        ProcessResult<String, String> createTableResult = Sqlite3Runner.executeOrPropagateInterruption(createTableProgram, null);
+        ProcessResult<String, String> createTableResult = Subprocesses.executeOrPropagateInterruption(createTableProgram, Charset.defaultCharset(), null);
         if (createTableResult.exitCode() != 0) {
             System.err.println(createTableResult.content().stderr());
             throw new SQLException("nonzero exit from sqlite3 " + createTableResult.exitCode());
@@ -94,9 +95,10 @@ public class Sqlite3RunnerTest {
         return sqliteDbFile;
     }
 
-    private void populateSampleDb(Sqlite3Runner.Sqlite3GenericImporter importer, Map<Integer, String> idToValue, File sqliteDbFile) throws IOException, SQLException {
+    private void populateSampleDb(Sqlite3GenericImporter importer, Map<Integer, String> idToValue, File sqliteDbFile) throws IOException, SQLException {
         List<Map<String, String>> rows = new ArrayList<>(idToValue.size());
         idToValue.forEach((id, value) -> rows.add(ImmutableMap.of("id", id.toString(), "value", value)));
-        importer.doImportRows(rows, Arrays.asList("id", "value"), sqliteDbFile, SAMPLE_DB_TABLE_NAME, tmp.getRoot().toPath(), "");
+        Sqlite3ImportInfo importInfo = Sqlite3ImportInfo.create(SAMPLE_DB_TABLE_NAME, Arrays.asList("id", "value"), createTableSql);
+        importer.doImportRows(createRunner(), rows, importInfo, sqliteDbFile, tmp.getRoot().toPath());
     }
 }
