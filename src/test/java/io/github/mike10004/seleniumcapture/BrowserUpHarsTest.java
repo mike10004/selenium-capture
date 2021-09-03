@@ -13,12 +13,12 @@ import com.github.mike10004.seleniumhelp.TrafficGenerator;
 import com.github.mike10004.seleniumhelp.WebDriverFactory;
 import com.google.common.net.MediaType;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import io.github.bonigarcia.wdm.WebDriverManager;
 import io.github.mike10004.nanochamp.server.NanoControl;
 import io.github.mike10004.nanochamp.server.NanoResponse;
 import io.github.mike10004.nanochamp.server.NanoServer;
-import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -32,9 +32,12 @@ import java.io.Writer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Objects;
 
 import static com.google.common.base.Preconditions.checkState;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 public class BrowserUpHarsTest {
 
@@ -116,10 +119,20 @@ public class BrowserUpHarsTest {
                 HarRequest dRequest = dEntry.getRequest();
                 HarResponse response = entry.getResponse();
                 HarResponse dResponse = dEntry.getResponse();
-                assertEquals(String.format("entry %s %s vs %s", i, BrowserUpHars.describe(request), BrowserUpHars.describe(dRequest)), request, dRequest);
-                assertEquals(String.format("entry %s %s vs %s", i, BrowserUpHars.describe(response), BrowserUpHars.describe(dResponse)), response, dResponse);
+
+                doAssertEquals(String.format("entry %s %s vs %s", i, BrowserUpHars.describe(request), BrowserUpHars.describe(dRequest)), request, dRequest);
+                doAssertEquals(String.format("entry %s %s vs %s", i, BrowserUpHars.describe(response), BrowserUpHars.describe(dResponse)), response, dResponse);
             }
         }
+    }
+
+    private static <T> void doAssertEquals(String message, T a, T b) {
+        Gson gson = new GsonBuilder().setPrettyPrinting().create();
+        if (!Objects.equals(a, b)) {
+            System.out.format("expected:%n%s%n", gson.toJson(a));
+            System.out.format("  actual:%n%s%n", gson.toJson(b));
+        }
+        assertEquals(message, a, b);
     }
 
     private static final String TRANSPARENT_FAVICON_ICO_BASE64 =
