@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
 
-@SuppressWarnings("Convert2Lambda")
+@SuppressWarnings({"Convert2Lambda", "HttpUrlsUsage"})
 public class TrafficMonitoringTest {
 
     @Rule
@@ -64,7 +64,9 @@ public class TrafficMonitoringTest {
     }
 
     private static WebDriverFactory createWebDriverFactory(boolean acceptInsecureCerts) {
-        return UnitTests.headlessWebDriverFactory(acceptInsecureCerts);
+        return UnitTests.headlessWebDriverFactoryBuilder(acceptInsecureCerts)
+                .disableRemoteSettings()
+                .build();
     }
 
     @Test
