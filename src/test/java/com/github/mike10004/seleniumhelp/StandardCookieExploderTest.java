@@ -2,58 +2,35 @@ package com.github.mike10004.seleniumhelp;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import org.apache.commons.lang3.time.DateUtils;
+import org.hamcrest.MatcherAssert;
 import org.junit.Test;
 
 import java.time.Duration;
 import java.time.Instant;
 import java.util.AbstractMap.SimpleImmutableEntry;
-import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.*;
 
-public class Firefox68ExplodedCookieConverterTest {
-
-    private static Date truncateToSeconds(long millisSinceEpoch) {
-        return DateUtils.truncate(new Date(millisSinceEpoch), Calendar.SECOND);
-    }
+public class StandardCookieExploderTest {
 
     @Test
-    public void doForward() throws Exception {
-        ExplodedCookieConverter c = new Firefox68ExplodedCookieConverter();
-        Map<String, Object> mapRep = ExampleCookieSource.asExplodedCookie();
-        DeserializableCookie cookie = c.reassemble(mapRep);
-        assertNotNull("cookie", cookie);
-        assertEquals("name", ExampleCookieSource.name, cookie.getName());
-        assertEquals("domain", ExampleCookieSource.originHost, cookie.getDomain());
-        assertEquals("attribs", ExampleCookieSource.attribs, cookie.copyAttributes()); // not sure how to test this
-        assertEquals("expiry", truncateToSeconds(ExampleCookieSource.expiryDateMillisSinceEpoch), truncateToSeconds(cookie.getExpiryInstant().toEpochMilli()));
-        assertEquals("created", truncateToSeconds(ExampleCookieSource.createdDateMillisSinceEpoch), truncateToSeconds(cookie.getCreationInstant().toEpochMilli()));
-        assertEquals("accessed", truncateToSeconds(ExampleCookieSource.accessDateMillisSinceEpoch), truncateToSeconds(cookie.getLastAccessedInstant().toEpochMilli()));
-        assertEquals("path", ExampleCookieSource.path, cookie.getPath());
-        assertEquals("comment", null, cookie.getComment());
-        assertEquals("value", ExampleCookieSource.value, cookie.getValue());
-        assertEquals("secure", ExampleCookieSource.secure, cookie.isSecure());
-        assertEquals("httpOnly", ExampleCookieSource.httpOnly, cookie.isHttpOnly());
-    }
-
-    @Test
-    public void doBackward() throws Exception {
-        ExplodedCookieConverter conv = new Firefox68ExplodedCookieConverter();
+    public void explode() throws Exception {
+        ExplodedCookieConverter conv = new StandardCookieExploder();
         DeserializableCookie c = ExampleCookieSource.asDeserializableCookie();
         Map<String, Object> exploded = conv.explode(c);
         assertNotNull(exploded);
         assertEquals("should not have any Date values", ImmutableSet.of(), exploded.entrySet().stream().filter(entry -> entry.getValue() instanceof Date).map(Map.Entry::getKey).collect(Collectors.toSet()));
         ImmutableMap<String, Object> expected = ExampleCookieSource.asExplodedCookie();
-        assertThat("exploded", exploded, MapMatcher.expectingWithTruncatedMillis(expected));
+        MatcherAssert.assertThat("exploded", exploded, MapMatcher.expectingWithTruncatedMillis(expected));
     }
 
     @Test
-    public void doBackward_almostEmpty() throws Exception {
-        ExplodedCookieConverter conv = new Firefox68ExplodedCookieConverter();
+    public void explode_almostEmpty() throws Exception {
+        ExplodedCookieConverter conv = new StandardCookieExploder();
         DeserializableCookie cookie = DeserializableCookie.builder("x", null).build();
         Map<String, Object> exploded = conv.explode(cookie);
         assertNotNull(exploded);
@@ -62,8 +39,8 @@ public class Firefox68ExplodedCookieConverterTest {
     }
 
     @Test
-    public void doBackward_cookieMissingSomeStuff() throws Exception {
-        ExplodedCookieConverter conv = new Firefox68ExplodedCookieConverter();
+    public void explode_cookieMissingSomeStuff() throws Exception {
+        ExplodedCookieConverter conv = new StandardCookieExploder();
         DeserializableCookie cookie = DeserializableCookie.builder("foo", "bar").domain(".example.com").path("/").build();
         Map<String, Object> exploded = conv.explode(cookie);
         assertNotNull(exploded);
@@ -72,8 +49,8 @@ public class Firefox68ExplodedCookieConverterTest {
     }
 
     @Test
-    public void doBackward_dates() throws Exception {
-        Firefox68ExplodedCookieConverter d2m = new Firefox68ExplodedCookieConverter();
+    public void explode_dates() throws Exception {
+        StandardCookieExploder d2m = new StandardCookieExploder();
         DeserializableCookie d = ExampleCookieSource.asDeserializableCookie();
         Map<String, Object> map = d2m.explode(d);
         assertNotNull(map);
@@ -83,12 +60,57 @@ public class Firefox68ExplodedCookieConverterTest {
     }
 
     @Test
+    public void explode_httpOnly() throws Exception {
+        StandardCookieExploder d2m = new StandardCookieExploder();
+        DeserializableCookie d = DeserializableCookie.builder("foo", "bar")
+                .domain("example.com")
+                .httpOnly(true)
+                .build();
+        Map<String, Object> map = d2m.explode(d);
+        assertNotNull(map);
+        assertEquals("httpOnly", map.get(DeserializableCookie.FIELD_HTTP_ONLY), Boolean.TRUE);
+    }
+
+    @Test
+    public void explode_isSecure() throws Exception {
+        StandardCookieExploder d2m = new StandardCookieExploder();
+        DeserializableCookie d = DeserializableCookie.builder("foo", "bar")
+                .domain("example.com")
+                .secure(true)
+                .build();
+        Map<String, Object> map = d2m.explode(d);
+        assertNotNull(map);
+        assertEquals("isSecure", map.get(DeserializableCookie.FIELD_IS_SECURE), Boolean.TRUE);
+    }
+
+    @Test
     public void retainNameAndValue() throws Exception {
-        ExplodedCookieConverter explodedCookieConverter = new Firefox68ExplodedCookieConverter();
+        ExplodedCookieConverter explodedCookieConverter = new StandardCookieExploder();
         DeserializableCookie cookie = DeserializableCookie.builder("foo", "bar").domain("example.com").expiry(Instant.now().plus(Duration.ofHours(24))).build();
         Map<String, Object> explosion = explodedCookieConverter.explode(cookie);
         assertNotNull(explosion);
         assertEquals("name in " + explosion, "foo", explosion.get("name"));
         assertEquals("value in " + explosion, "bar", explosion.get("value"));
+    }
+
+    @Test
+    public void attributesMapIsStringStringMap() {
+        DeserializableCookie c = DeserializableCookie.builder("foo", "bar")
+                .domain("example.com")
+                .attribute("baz", "gaw")
+                .build();
+        @SuppressWarnings("unchecked")
+        Map<String, String> attribs = (Map<String, String>) new StandardCookieExploder().explode(c).get(DeserializableCookie.FIELD_ATTRIBUTES);
+        assertEquals("attribs", ImmutableMap.of("baz", "gaw"), attribs);
+    }
+
+    @Test
+    public void attributesMapNullIfEmpty() {
+        DeserializableCookie c = DeserializableCookie.builder("foo", "bar")
+                .domain("example.com")
+                .build();
+        @SuppressWarnings("unchecked")
+        Map<String, String> attribs = (Map<String, String>) new StandardCookieExploder().explode(c).get(DeserializableCookie.FIELD_ATTRIBUTES);
+        assertNull("attribs", attribs);
     }
 }

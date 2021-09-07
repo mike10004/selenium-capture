@@ -20,17 +20,17 @@ public class Sqlite3GenericImporterTest {
 
     @Test
     public void importRows() throws Exception {
-        Map<String, String> cookieFieldMap = Iterables.getOnlyElement(Csvs.readRowMaps(CharSource.wrap(ExampleCookieSource.csvText), Csvs.headersFromFirstRow()));
-        Map<String, String> export1 = importAndCheck(cookieFieldMap);
-        Map<String, String> export2 = importAndCheck(export1);
+        Map<String, String> cookieFieldMap = Iterables.getOnlyElement(Csvs.readRowMaps(CharSource.wrap(ExampleCookieSource.getCsvText_FF68()), Csvs.headersFromFirstRow()));
+        Map<String, String> export1 = importAndCheck(Firefox68CookieImporter.getImportInfo(), cookieFieldMap);
+        Map<String, String> export2 = importAndCheck(Firefox68CookieImporter.getImportInfo(), export1);
         System.out.format("re-exported: %s%n", export2);
     }
 
-    private Map<String, String> importAndCheck(Map<String, String> cookieFieldMap) throws IOException, SQLException {
+    private Map<String, String> importAndCheck(Sqlite3ImportInfo importInfo, Map<String, String> cookieFieldMap) throws IOException, SQLException {
         ExecutableConfig config = Sqlite3Runner.createDefaultSqlite3Config();
         Sqlite3GenericImporter importer = new Sqlite3GenericImporter();
         File dbFile = tmp.newFile();
-        importer.doImportRows(new Sqlite3Runner(config), ImmutableList.of(cookieFieldMap), Firefox68CookieImporter.getImportInfo(), dbFile, tmp.getRoot().toPath());
+        importer.doImportRows(new Sqlite3Runner(config), ImmutableList.of(cookieFieldMap), importInfo, dbFile, tmp.getRoot().toPath());
         Map<String, String> exportedCookieFieldMap = Iterables.getOnlyElement(
                 new Sqlite3GenericExporter(new Sqlite3Runner(config)).dumpRows("moz_cookies", dbFile));
         MatcherAssert.assertThat("field map", exportedCookieFieldMap, new MapMatcher<String, String>(cookieFieldMap) {

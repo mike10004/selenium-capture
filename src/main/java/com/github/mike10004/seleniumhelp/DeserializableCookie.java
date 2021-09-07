@@ -39,10 +39,11 @@ public class DeserializableCookie implements ClientCookie {
 
     static final String FIELD_ATTRIBUTES = "attribs";
     static final String FIELD_DOMAIN = "cookieDomain";
+    static final String FIELD_PATH = "cookiePath";
     static final String ATTR_DOMAIN = "Domain";
     static final String ATTR_MAX_AGE = "max-age";
-    @SuppressWarnings("unused")
     static final String FIELD_HTTP_ONLY = "httpOnly";
+    static final String FIELD_IS_SECURE = "isSecure";
     static final String FIELD_LAST_ACCESSED = "lastAccessed";
     static final String FIELD_CREATION_DATE = "creationDate";
     static final String FIELD_EXPIRY_DATE = "cookieExpiryDate";
@@ -284,19 +285,19 @@ public class DeserializableCookie implements ClientCookie {
 
     @Override
     public String toString() {
-        MoreObjects.ToStringHelper h = MoreObjects.toStringHelper(this);
+        MoreObjects.ToStringHelper h = MoreObjects.toStringHelper(this).omitNullValues();
         h.add("name", name);
         h.add("path", cookiePath);
-        if (value != null) h.add("value", StringUtils.abbreviate(value, 36));
-        if (attribs != null) h.add("attribs", attribs);
-        if (cookieComment != null) h.add("cookieComment", cookieComment);
-        if (cookieDomain != null) h.add("cookieDomain", cookieDomain);
-        if (cookieExpiryDate != null) h.add("cookieExpiryDate", cookieExpiryDate);
-        if (isSecure != null) h.add("isSecure", isSecure);
-        if (cookieVersion != null) h.add("cookieVersion", cookieVersion);
-        if (creationDate != null) h.add("creationDate", creationDate);
-        if (lastAccessed != null) h.add("lastAccessed", lastAccessed);
-        if (httpOnly != null) h.add("httpOnly", httpOnly);
+        h.add("value", StringUtils.abbreviate(value, 36));
+        h.add("attribs", attribs);
+        h.add("cookieComment", cookieComment);
+        h.add("cookieDomain", cookieDomain);
+        h.add("cookieExpiryDate", cookieExpiryDate);
+        h.add("isSecure", isSecure);
+        h.add("cookieVersion", cookieVersion);
+        h.add("creationDate", creationDate);
+        h.add("lastAccessed", lastAccessed);
+        h.add("httpOnly", httpOnly);
         return h.toString();
     }
 

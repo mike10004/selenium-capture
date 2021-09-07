@@ -10,6 +10,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.io.Resources;
 import io.github.bonigarcia.wdm.config.DriverManagerType;
 import io.github.mike10004.nitsick.SettingSet;
+import org.apache.commons.lang3.time.DateUtils;
 import org.apache.commons.text.StringEscapeUtils;
 import org.jsoup.Jsoup;
 import org.openqa.selenium.JavascriptExecutor;
@@ -25,6 +26,8 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -396,5 +399,9 @@ public class UnitTests {
         err.println("============== +PAGE DOM ============");
         err.println(getDomOrNull(driver));
         err.println("============== -PAGE DOM ============");
+    }
+
+    public static Date truncateToSeconds(long millisSinceEpoch) {
+        return DateUtils.truncate(new Date(millisSinceEpoch), Calendar.SECOND);
     }
 }

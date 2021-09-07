@@ -5,6 +5,8 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.io.CharSource;
+import org.hamcrest.CoreMatchers;
+import org.hamcrest.MatcherAssert;
 import org.junit.Test;
 
 import java.math.BigInteger;
@@ -12,22 +14,25 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
 import static org.junit.Assert.*;
 
-public class FirefoxCookieRowTransformTest {
+public class Firefox68CookieRowTransformTest {
 
     @Test
     public void apply() throws Exception {
         FirefoxCookieRowTransform conv = new Firefox68CookieRowTransform();
-        Map<String, Object> input = ExampleCookieSource.asExplodedCookie();
-        Map<String, String> expected = Iterables.getOnlyElement(Csvs.readRowMaps(CharSource.wrap(ExampleCookieSource.csvText), Csvs.headersFromFirstRow()));
-        Map<String, String> actual = conv.apply(Firefox68CookieImporter.getImportInfo().columnNames(), input);
+        Map<String, Object> input = new HashMap<>(ExampleCookieSource.asExplodedCookie());
+        input.remove("id");
+        Map<String, String> expected = new HashMap<>(ExampleCookieSource.raw_ff68());
+        expected.remove("id");
+        Map<String, String> actual = conv.apply(input);
         final Set<String> ignores = ImmutableSet.of("originAttributes");
-        assertThat("imploded", actual, new MapMatcher.DateTruncatingMapMatcher<String, String>(expected, Calendar.SECOND) {
+        MatcherAssert.assertThat("expected equal to raw cookie source", actual, new MapMatcher.DateTruncatingMapMatcher<String, String>(expected, Calendar.SECOND) {
             @Override
             protected Object transformValue(Object key, Object value) {
                 if (value != null && ("lastAccessed".equals(key) || "creationTime".equals(key))) {
@@ -62,7 +67,7 @@ public class FirefoxCookieRowTransformTest {
                 .put("name", "foo")
                 .put("value", "bar")
                 .build();
-        Map<String, String> row = new Firefox68CookieRowTransform().apply(Firefox68CookieImporter.getImportInfo().columnNames(), explosion);
+        Map<String, String> row = new Firefox68CookieRowTransform().apply(explosion);
         assertNotNull(row);
         assertEquals("name in " + row, "foo", row.get("name"));
         assertEquals("value in " + row, "bar", row.get("value"));
