@@ -20,9 +20,9 @@ public class Sqlite3GenericImporterTest {
 
     @Test
     public void importRows() throws Exception {
-        Map<String, String> cookieFieldMap = Iterables.getOnlyElement(Csvs.readRowMaps(CharSource.wrap(ExampleCookieSource.getCsvText_FF68()), Csvs.headersFromFirstRow()));
-        Map<String, String> export1 = importAndCheck(Firefox68CookieImporter.getImportInfo(), cookieFieldMap);
-        Map<String, String> export2 = importAndCheck(Firefox68CookieImporter.getImportInfo(), export1);
+        Map<String, String> cookieFieldMap = Iterables.getOnlyElement(Csvs.readRowMaps(CharSource.wrap(ExampleCookieSource.getCsvText_FF91()), Csvs.headersFromFirstRow()));
+        Map<String, String> export1 = importAndCheck(Firefox91CookieImporter.getImportInfo(), cookieFieldMap);
+        Map<String, String> export2 = importAndCheck(Firefox91CookieImporter.getImportInfo(), export1);
         System.out.format("re-exported: %s%n", export2);
     }
 

@@ -81,11 +81,6 @@ public class Firefox91CookieImporter extends FirefoxCookieImporterBase {
     }
 
     @Override
-    public void importCookies(Iterable<DeserializableCookie> cookies, File sqliteDbFile, Path scratchDir) throws SQLException, IOException {
-        throw new UnsupportedOperationException("not yet implemented");
-    }
-
-    @Override
     public String getEmptyDbResourcePath() {
         return "/selenium-capture/firefox/empty-cookies-db-ff91.sqlite";
     }

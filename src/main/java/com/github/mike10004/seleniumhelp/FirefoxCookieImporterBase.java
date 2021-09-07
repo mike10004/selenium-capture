@@ -23,7 +23,7 @@ import static java.util.Objects.requireNonNull;
 
 public abstract class FirefoxCookieImporterBase implements FirefoxCookieImporter {
 
-    private static final Logger log = LoggerFactory.getLogger(Firefox68CookieImporter.class);
+    private static final Logger log = LoggerFactory.getLogger(FirefoxCookieImporterBase.class);
 
     private final Sqlite3Runner sqliteRunner;
     private final Sqlite3GenericImporter genericImporter;

@@ -43,7 +43,8 @@ public class FirefoxCookieUsageTest extends CookieUsageTestBase {
     }
 
     @Override
-    protected WebDriverFactory createCookiefulWebDriverFactory(XvfbController xvfbController, List<DeserializableCookie> cookiesSetByServer) throws IOException {
+    protected WebDriverFactory createCookiefulWebDriverFactory(XvfbController xvfbController,
+                                                               List<DeserializableCookie> cookiesSetByServer) throws IOException {
         return FirefoxWebDriverFactory.builder()
                 .binary(UnitTests.createFirefoxBinarySupplier())
                 .environment(xvfbController::newEnvironment)
@@ -72,9 +73,9 @@ public class FirefoxCookieUsageTest extends CookieUsageTestBase {
 
     @Override
     protected void browsingFinished(Multimap<String, String> cookieHeaderValues, URL cookieGetUrl, Har har, List<DeserializableCookie> cookiesSetByServer) {
-        // // In theory, FirefoxProfile.layoutOnDisk is only invoked once per FirefoxDriver instantiation.
-        // // In practice it gets invoked once when cleaning the options object and once when starting
-        // // the selenium wire session.
+        // In theory, FirefoxProfile.layoutOnDisk is only invoked once per FirefoxDriver instantiation.
+        // In practice it gets invoked once when cleaning the options object and once when starting
+        // the selenium wire session.
         // assertEquals("num ProfileFolderTracker.perform invocations", 2, tracker.invocations.get());
         super.browsingFinished(cookieHeaderValues, cookieGetUrl, har, cookiesSetByServer);
     }

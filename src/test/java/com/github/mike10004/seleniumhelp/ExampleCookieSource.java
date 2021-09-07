@@ -65,6 +65,7 @@ public class ExampleCookieSource {
 
     public static Map<String, String> raw_ff91() {
         return ImmutableMap.<String, String>builder()
+                .put("id", "1324")
                 .put("originAttributes", "^appId=4294967294")
                 .put("name", name)
                 .put("value", value)
@@ -83,11 +84,11 @@ public class ExampleCookieSource {
     }
 
     public static String getCsvText_FF91() {
-//        Map<String, String> raw = raw_ff91();
-//        List<Map.Entry<String, String>> entries = ImmutableList.copyOf(raw.entrySet());
-//        List<String> headers = entries.stream().map(Map.Entry::getKey).collect(Collectors.toList());
-//        List<String> values = entries.stream().map(Map.Entry::getValue).collect(Collectors.toList());
-        throw new UnsupportedOperationException("not yet implemented");
+        Map<String, String> raw = raw_ff91();
+        List<Map.Entry<String, String>> entries = ImmutableList.copyOf(raw.entrySet());
+        List<String> headers = entries.stream().map(Map.Entry::getKey).collect(Collectors.toList());
+        List<String> values = entries.stream().map(Map.Entry::getValue).collect(Collectors.toList());
+        return String.join(",", headers) + System.lineSeparator() + String.join(",", values) + System.lineSeparator();
     }
 
     public static ImmutableMap<String, Object> asExplodedCookie() {
