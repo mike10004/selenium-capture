@@ -13,13 +13,15 @@ import static org.junit.Assert.assertEquals;
 
 public class UnitTestsTest {
 
+    @org.junit.Ignore("not yet sure how ini impl works")
     @Test
     public void getIniSetting() throws Exception {
         Ini ini = new Ini();
-//        org.ini4j.Config c = new Config();
-//        c.setEmptyOption(true);
-//        ini.setConfig(c);
-        ini.load(new StringReader("foo = bar\n" +
+        org.ini4j.Config c = new Config();
+        c.setGlobalSection(true);
+        c.setGlobalSectionName("default");
+        ini.setConfig(c);
+        ini.load(new StringReader("[default]\nfoo = bar\n" +
                 "gaw = haw\n" +
                 "\n" +
                 "[section]\n" +
