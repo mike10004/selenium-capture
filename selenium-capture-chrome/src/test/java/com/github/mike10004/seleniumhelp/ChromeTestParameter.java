@@ -7,6 +7,10 @@ public class ChromeTestParameter implements WebDriverTestParameter {
 
     private final boolean acceptInsecureCerts;
 
+    public ChromeTestParameter() {
+        this(false);
+    }
+
     public ChromeTestParameter(boolean acceptInsecureCerts) {
         this.acceptInsecureCerts = acceptInsecureCerts;
     }

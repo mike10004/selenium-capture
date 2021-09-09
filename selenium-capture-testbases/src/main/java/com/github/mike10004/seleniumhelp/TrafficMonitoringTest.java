@@ -2,10 +2,12 @@ package com.github.mike10004.seleniumhelp;
 
 import com.google.common.base.Joiner;
 import com.google.common.io.Files;
+import io.github.bonigarcia.wdm.config.DriverManagerType;
 import io.github.mike10004.nitsick.junit.TimeoutRules;
 import io.netty.handler.codec.http.HttpObject;
 import io.netty.handler.codec.http.HttpRequest;
 import org.apache.http.HttpStatus;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
@@ -22,7 +24,7 @@ import java.util.stream.Collectors;
 import static org.junit.Assert.assertEquals;
 
 @SuppressWarnings({"Convert2Lambda", "HttpUrlsUsage"})
-public class TrafficMonitoringTest {
+public abstract class TrafficMonitoringTest {
 
     @Rule
     public Timeout timeout = TimeoutRules.from(UnitTests.Settings).getLongRule();
@@ -30,9 +32,15 @@ public class TrafficMonitoringTest {
     @Rule
     public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
-    @BeforeClass
-    public static void setUpWebdriver() {
-        UnitTests.setupRecommendedChromeDriver();
+    private final DriverManagerType driverManagerType;
+
+    public TrafficMonitoringTest(DriverManagerType driverManagerType) {
+        this.driverManagerType = driverManagerType;
+    }
+
+    @Before
+    public void setUpWebdriver() {
+        TestBases.setupWebDriver(driverManagerType);
     }
 
     @Test
@@ -63,11 +71,7 @@ public class TrafficMonitoringTest {
         assertEquals("expect 500 error", 500, monitor.interactions.get(0).response.status);
     }
 
-    private static WebDriverFactory createWebDriverFactory(boolean acceptInsecureCerts) {
-        return UnitTests.headlessWebDriverFactoryBuilder(acceptInsecureCerts)
-                .disableRemoteSettings()
-                .build();
-    }
+    protected abstract WebDriverFactory createWebDriverFactory(boolean acceptInsecureCerts);
 
     @Test
     public void monitoring_http() throws Exception {

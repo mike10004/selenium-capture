@@ -30,8 +30,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 
-@RunWith(Parameterized.class)
-public class DuplicateHeaderBugTest {
+public abstract class DuplicateHeaderBugTest {
 
     @Rule
     public final Timeout timeout = TimeoutRules.from(UnitTests.Settings).getLongRule();
@@ -43,11 +42,6 @@ public class DuplicateHeaderBugTest {
 
     public DuplicateHeaderBugTest(WebDriverTestParameter testParameter) {
         this.testParameter = testParameter;
-    }
-
-    @Parameterized.Parameters
-    public static List<WebDriverTestParameter> testParameters() {
-        return WebDriverTestParameter.all();
     }
 
     @Before

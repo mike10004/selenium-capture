@@ -13,6 +13,10 @@ public     class FirefoxTestParameter implements WebDriverTestParameter {
 
     private final boolean acceptInsecureCerts;
 
+    public FirefoxTestParameter() {
+        this(false);
+    }
+
     public FirefoxTestParameter(boolean acceptInsecureCerts) {
         this.acceptInsecureCerts = acceptInsecureCerts;
     }

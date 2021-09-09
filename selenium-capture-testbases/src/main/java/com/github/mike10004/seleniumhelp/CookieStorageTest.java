@@ -12,32 +12,23 @@ import java.util.List;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
-public class CookieStorageTest {
+public abstract class CookieStorageTest {
 
     @Rule
     public XvfbRule xvfb = UnitTests.xvfbRuleBuilder().build();
 
-    @Test
-    public void testFirefox() throws Exception {
-        UnitTests.setupRecommendedGeckoDriver();
-        testWithDriverFactory(FirefoxWebDriverFactory.builder()
-                .binary(UnitTests.createFirefoxBinarySupplier())
-                .acceptInsecureCerts()
-                .environment(xvfb.getController().newEnvironment())
-                .build());
+    private final WebDriverTestParameter webDriverTestParameter;
+
+    public CookieStorageTest(WebDriverTestParameter webDriverTestParameter) {
+        this.webDriverTestParameter = webDriverTestParameter;
     }
 
     @Test
-    public void testChrome() throws Exception {
-        UnitTests.setupRecommendedChromeDriver();
-        ChromeWebDriverFactory factory = ChromeWebDriverFactory.builder()
-                .configure(UnitTests.createChromeOptions())
-                .acceptInsecureCerts()
-                .environment(xvfb.getController()::newEnvironment)
-                .build();
+    public void testCookieStorage() throws Exception {
+        webDriverTestParameter.doDriverManagerSetup();
+        WebDriverFactory factory = webDriverTestParameter.createWebDriverFactory(xvfb);
         testWithDriverFactory(factory);
     }
-
     private void testWithDriverFactory(WebDriverFactory factory) throws IOException, MalformedCookieException {
         HarPlus<Void> collection = HttpsTestTrafficCollector.build(factory).collect(driver -> {
             driver.get("https://httprequestecho.appspot.com/cookies/set");

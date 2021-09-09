@@ -50,8 +50,7 @@ import java.util.stream.Stream;
 
 import static org.junit.Assert.assertEquals;
 
-@RunWith(Parameterized.class)
-public class ProxyBypassTest {
+public abstract class ProxyBypassTest {
 
     private final WebDriverTestParameter testParameter;
 
@@ -61,11 +60,6 @@ public class ProxyBypassTest {
 
     @ClassRule
     public static final XvfbRule xvfbRule = UnitTests.xvfbRuleBuilder().build();
-
-    @Parameterized.Parameters
-    public static List<WebDriverTestParameter> testCases() {
-        return WebDriverTestParameter.all();
-    }
 
     @Before
     public void setUpWebdriver() {

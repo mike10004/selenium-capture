@@ -10,7 +10,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.chrome.ChromeOptions;
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -18,7 +17,7 @@ import java.net.URI;
 
 import static org.junit.Assert.assertEquals;
 
-public class UnproxiedWebDriverTest {
+public abstract class UnproxiedWebDriverTest {
 
     private NanoHTTPD nano;
 
@@ -53,26 +52,15 @@ public class UnproxiedWebDriverTest {
     }
 
     @Test
-    public void testChrome() throws Exception {
-        UnitTests.setupRecommendedChromeDriver();
-        ChromeWebDriverFactory factory = ChromeWebDriverFactory.builder()
-                .configure(UnitTests.createChromeOptions())
-                .configure(o -> o.setHeadless(true))
-                .build();
+    public void testBrowser() throws Exception {
+        setupWebdriver();
+        WebDriverFactory factory = buildWebDriverFactory();
         testUnproxied(() -> factory.startWebdriving(EMPTY_WEBDRIVER_CONFIG));
     }
 
     private static final WebdrivingConfig EMPTY_WEBDRIVER_CONFIG = WebdrivingConfig.nonCapturing();
 
-    @Test
-    public void testFirefox() throws Exception {
-        UnitTests.setupRecommendedGeckoDriver();
-        FirefoxWebDriverFactory factory = FirefoxWebDriverFactory.builder()
-                .binary(UnitTests.createFirefoxBinarySupplier())
-                .environment(xvfbRule.getController().newEnvironment())
-                .build();
-        testUnproxied(() -> factory.startWebdriving(EMPTY_WEBDRIVER_CONFIG));
-    }
+    protected abstract WebDriverFactory buildWebDriverFactory();
 
     private interface ExceptingSupplier<T, X extends Throwable> {
         T get() throws X;
@@ -87,4 +75,6 @@ public class UnproxiedWebDriverTest {
             assertEquals("body text", "hello", bodyText);
         }
     }
+
+    protected abstract void setupWebdriver();
 }

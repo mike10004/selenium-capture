@@ -47,7 +47,7 @@ public class UnitTests {
 
     private static final String SETTING_DEBUG_ENVIRONMENT = "environment.debug";
     private static final String SETTING_OPENSSL_TESTS_SKIP = "openssl.skip";
-    private static final String SETTING_OPENSSL_EXECUTABLE_PATH = "openssl.executable.path";
+    public static final String SETTING_OPENSSL_EXECUTABLE_PATH = "openssl.executable.path";
 
     private UnitTests() {}
 

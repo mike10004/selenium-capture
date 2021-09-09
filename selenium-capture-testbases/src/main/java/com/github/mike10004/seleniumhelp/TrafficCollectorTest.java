@@ -1,7 +1,10 @@
 package com.github.mike10004.seleniumhelp;
 
+import com.browserup.bup.mitm.CertificateAndKeySource;
+import com.browserup.bup.mitm.manager.ImpersonatingMitmManager;
+import com.browserup.harreader.model.HarEntry;
+import com.browserup.harreader.model.HarRequest;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.Iterables;
@@ -15,10 +18,6 @@ import io.netty.handler.codec.http.DefaultFullHttpRequest;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpObject;
 import io.netty.handler.codec.http.HttpRequest;
-import com.browserup.harreader.model.HarEntry;
-import com.browserup.harreader.model.HarRequest;
-import com.browserup.bup.mitm.CertificateAndKeySource;
-import com.browserup.bup.mitm.manager.ImpersonatingMitmManager;
 import org.apache.http.client.utils.URIBuilder;
 import org.junit.Rule;
 import org.junit.Test;
@@ -30,7 +29,6 @@ import org.openqa.selenium.WebDriver;
 import javax.net.ssl.SSLEngine;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
@@ -44,7 +42,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 @SuppressWarnings("HttpUrlsUsage")
-public class TrafficCollectorTest {
+public abstract class TrafficCollectorTest {
 
     @Rule
     public Timeout timeout = TimeoutRules.from(UnitTests.Settings).getLongRule();
@@ -59,6 +57,8 @@ public class TrafficCollectorTest {
         System.out.format("sslEngine=%s%n", sslEngine);
         assertNotNull(sslEngine);
     }
+
+    protected abstract WebDriverFactory createHeadlessFactory();
 
     @Test
     public void collectHarWithFilterCausingServerErrors() throws Exception {
@@ -83,10 +83,7 @@ public class TrafficCollectorTest {
             }
 
         };
-        FirefoxWebDriverFactory webDriverFactory = UnitTests.headlessWebDriverFactoryBuilder()
-                .disableTrackingProtection()
-                .disableRemoteSettings()
-                .build();
+        WebDriverFactory webDriverFactory = createHeadlessFactory();
         TrafficCollector collector = TrafficCollector.builder(webDriverFactory)
                 .filter(rejectingFiltersSource)
                 .build();
@@ -143,7 +140,7 @@ public class TrafficCollectorTest {
         NanoServer nano = NanoServer.builder().getPath("/hello", session -> NanoResponse.status(200).plainTextUtf8(expected)).build();
         String bodyText;
         try (NanoControl ctrl = nano.startServer()) {
-            TrafficCollector collector = TrafficCollector.builder(UnitTests.headlessWebDriverFactory()).build();
+            TrafficCollector collector = TrafficCollector.builder(createHeadlessFactory()).build();
             bodyText = collector.drive(driver -> {
                 try {
                     driver.get(new URIBuilder(ctrl.baseUri()).setPath("/hello").build().toString());

@@ -36,7 +36,6 @@ import static org.junit.Assert.assertTrue;
 /**
  * Test for the brotli-aware filter. Tests with Firefox and Chrome.
  */
-@RunWith(Enclosed.class)
 public abstract class BrAwareServerResponseCaptureFilterTest {
 
     public static abstract class ThisTestBase {
@@ -80,33 +79,7 @@ public abstract class BrAwareServerResponseCaptureFilterTest {
         }
     }
 
-    public static class FirefoxLocalTest extends LocalTestBase {
 
-        public FirefoxLocalTest() {
-            super(new WebDriverTestParameter.FirefoxTestParameter(false));
-        }
-    }
-
-    public static class FirefoxRemoteTest extends RemoteTestBase {
-
-        public FirefoxRemoteTest() {
-            super(new WebDriverTestParameter.FirefoxTestParameter(true));
-        }
-    }
-
-    public static class ChromeLocalTest extends LocalTestBase {
-
-        public ChromeLocalTest() {
-            super(new WebDriverTestParameter.ChromeTestParameter(false));
-        }
-    }
-
-    public static class ChromeRemoteTest extends RemoteTestBase {
-
-        public ChromeRemoteTest() {
-            super(new WebDriverTestParameter.ChromeTestParameter(true));
-        }
-    }
 
     public static abstract class LocalTestBase extends ThisTestBase {
 
@@ -117,8 +90,8 @@ public abstract class BrAwareServerResponseCaptureFilterTest {
 
         @Test
         public void testMonitorCapturesBrotliResponses_local() throws Exception {
-            byte[] brotliBytes = UnitTests.loadBrotliCompressedSample();
-            byte[] decompressedBytes = UnitTests.loadBrotliUncompressedSample();
+            byte[] brotliBytes = TestBases.loadBrotliCompressedSample();
+            byte[] decompressedBytes = TestBases.loadBrotliUncompressedSample();
             String decompressedText = new String(decompressedBytes, UTF_8);
             WebDriverFactory webDriverFactory = testParameter.createWebDriverFactory(xvfb);
             TrafficCollector collector = TrafficCollector.builder(webDriverFactory)

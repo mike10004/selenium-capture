@@ -131,14 +131,6 @@ public static ExecutableConfig makeOpensslConfig() {
 //                .disabled(com.github.mike10004.seleniumhelp.UnitTests::isShowBrowserWindowEnabled);
 //    }
 //
-//    static byte[] loadBrotliUncompressedSample() throws IOException {
-//        return Resources.toByteArray(BrAwareServerResponseCaptureFilterTest.class.getResource("/brotli/a100.txt"));
-//    }
-//
-//    static byte[] loadBrotliCompressedSample() throws IOException {
-//        return Resources.toByteArray(BrAwareServerResponseCaptureFilterTest.class.getResource("/brotli/a100.txt.br"));
-//    }
-//
 //    @Nullable
 //    public static String getPageSourceOrNull(WebDriver driver) {
 //        return tryGet(driver::getPageSource, null, ignore ->{});

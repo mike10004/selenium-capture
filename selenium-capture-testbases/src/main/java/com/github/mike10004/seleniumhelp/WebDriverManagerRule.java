@@ -2,6 +2,7 @@ package com.github.mike10004.seleniumhelp;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import io.github.bonigarcia.wdm.config.DriverManagerType;
 import org.junit.rules.ExternalResource;
 
 import java.util.concurrent.Callable;
@@ -36,9 +37,9 @@ public class WebDriverManagerRule extends ExternalResource {
         });
     }
 
-    private static final WebDriverManagerRule geckodriverSetupRule = new WebDriverManagerRule(UnitTests::setupRecommendedGeckoDriver, "gecko");
+    private static final WebDriverManagerRule geckodriverSetupRule = new WebDriverManagerRule(() -> TestBases.setupWebDriver(DriverManagerType.FIREFOX), "gecko");
 
-    private static final WebDriverManagerRule chromedriverSetupRule = new WebDriverManagerRule(UnitTests::setupRecommendedChromeDriver, "chrome");
+    private static final WebDriverManagerRule chromedriverSetupRule = new WebDriverManagerRule(() -> TestBases.setupWebDriver(DriverManagerType.CHROME), "chrome");
 
     public static WebDriverManagerRule chromedriver() {
         return chromedriverSetupRule;

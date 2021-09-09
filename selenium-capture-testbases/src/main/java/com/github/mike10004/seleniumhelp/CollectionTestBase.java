@@ -40,7 +40,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 
-public class CollectionTestBase {
+public abstract class CollectionTestBase {
 
     public static final String SYSPROP_TEST_PROXY = "selenium-help.test.proxy.http";
 

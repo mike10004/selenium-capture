@@ -20,10 +20,14 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
-public class AutoCertificateAndKeySourceTest {
+public abstract class AutoCertificateAndKeySourceTest {
 
     @Rule
     public TemporaryFolder temporaryFolder = new TemporaryFolder();
+
+    protected abstract void setupWebDriver();
+
+    protected abstract WebDriverFactory buildHeadlessFactory();
 
     @Test
     public void generateAndUseCertificate() throws Exception {
@@ -75,7 +79,8 @@ public class AutoCertificateAndKeySourceTest {
             SerializableForm serializableForm = certificateAndKeySource.createSerializableForm();
             File keystoreFile = createTempPathname(scratchDir, ".keystore");
             File pkcs12File = createTempPathname(scratchDir, ".p12");
-            KeystoreFileCreator keystoreFileCreator = new OpensslKeystoreFileCreator(UnitTests.makeKeytoolConfig(), UnitTests.makeOpensslConfig());
+            KeystoreFileCreator keystoreFileCreator = new OpensslKeystoreFileCreator(
+                    TestBases.makeKeytoolConfig(), TestBases.makeOpensslConfig());
             keystoreFileCreator.createPKCS12File(keystoreInput, pkcs12File);
             File pemFile = File.createTempFile("certificate", ".pem", scratchDir.toFile());
             assumeOpensslNotSkipped();
@@ -86,7 +91,7 @@ public class AutoCertificateAndKeySourceTest {
                 throw e;
             }
             Files.write(Base64.getDecoder().decode(serializableForm.keystoreBase64), keystoreFile);
-            TrafficCollector collector = TrafficCollector.builder(UnitTests.headlessWebDriverFactory(true))
+            TrafficCollector collector = TrafficCollector.builder(buildHeadlessFactory())
                     .collectHttps(certificateAndKeySource)
                     .build();
             String url = "https://example.com/";

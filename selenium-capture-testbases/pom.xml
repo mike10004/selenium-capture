@@ -18,10 +18,12 @@
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>selenium-capture-core</artifactId>
+            <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>selenium-capture-testing</artifactId>
+            <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>com.browserup</groupId>
@@ -42,6 +44,19 @@
         <dependency>
             <groupId>com.github.mike10004</groupId>
             <artifactId>xvfb-testing</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.github.mike10004</groupId>
+            <artifactId>nitsick-junit</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>commons-validator</groupId>
+            <artifactId>commons-validator</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.github.mike10004</groupId>
+            <artifactId>nanohttpd-server</artifactId>
+            <scope>compile</scope>
         </dependency>
     </dependencies>
 </project>
