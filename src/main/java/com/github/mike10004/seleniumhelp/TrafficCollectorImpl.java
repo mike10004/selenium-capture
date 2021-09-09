@@ -201,18 +201,16 @@ public class TrafficCollectorImpl implements TrafficCollector {
 
     @Override
     public String toString() {
-        MoreObjects.ToStringHelper h = MoreObjects.toStringHelper(this);
+        MoreObjects.ToStringHelper h = MoreObjects.toStringHelper(this).omitNullValues();
         h.add("webDriverFactory", webDriverFactory);
-        if (certificateAndKeySource != null) h.add("certificateAndKeySource", certificateAndKeySource);
+        h.add("certificateAndKeySource", certificateAndKeySource);
         if (!httpFiltersSources.isEmpty()) {
             h.add("httpFiltersSources", httpFiltersSources);
         }
         h.add("upstreamConfigurator", upstreamConfigurator);
-        if (interceptingProxyInstantiator != null) {
-            h.add("interceptingProxyInstantiator", interceptingProxyInstantiator);
-        }
-        if (harPostProcessors != null) h.add("harPostProcessors.size", harPostProcessors.size());
-        if (exceptionReactor != null) h.add("exceptionReactor", exceptionReactor);
+        h.add("interceptingProxyInstantiator", interceptingProxyInstantiator);
+        h.add("harPostProcessors.size", harPostProcessors.size());
+        h.add("exceptionReactor", exceptionReactor);
         return h.toString();
     }
 }

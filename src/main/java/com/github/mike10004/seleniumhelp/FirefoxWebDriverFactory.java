@@ -702,4 +702,24 @@ public class FirefoxWebDriverFactory extends CapableWebDriverFactory<FirefoxOpti
         }
     }
 
+    public enum XpinstallSetting implements FirefoxProfileAction {
+        NOT_MODIFIED,
+        SIGNATURE_REQUIRED_TRUE,
+        SIGNATURE_REQUIRED_FALSE;
+
+        private static final String PREF_KEY = "xpinstall.signatures.required";
+
+        @Override
+        public void perform(FirefoxProfile profile) {
+            switch (this) {
+                case NOT_MODIFIED:
+                    break;
+                case SIGNATURE_REQUIRED_FALSE:
+                    profile.setPreference(PREF_KEY, false);
+                case SIGNATURE_REQUIRED_TRUE:
+                    profile.setPreference(PREF_KEY, true);
+            }
+        }
+
+    }
 }

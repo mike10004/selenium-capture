@@ -36,7 +36,7 @@
         <slf4j.version>1.7.32</slf4j.version>
         <xvfb-manager.version>0.19</xvfb-manager.version>
         <test.log.level>info</test.log.level>
-        <selenium.version>3.141.59</selenium.version>
+        <selenium.version>4.0.0-rc-1</selenium.version>
         <chrome-cookie-implant.version>1.5.16</chrome-cookie-implant.version>
         <guava.version>28.2-jre</guava.version>
         <antiprint.version>0.16</antiprint.version>
@@ -481,6 +481,18 @@
             <groupId>com.github.mike10004</groupId>
             <artifactId>nitsick-junit</artifactId>
             <version>0.4</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.hamcrest</groupId>
+            <artifactId>hamcrest-junit</artifactId>
+            <version>2.0.0.0</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.ini4j</groupId>
+            <artifactId>ini4j</artifactId>
+            <version>0.5.4</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
