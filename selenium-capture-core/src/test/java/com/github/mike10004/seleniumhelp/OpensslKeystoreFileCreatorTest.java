@@ -27,7 +27,7 @@ public class OpensslKeystoreFileCreatorTest {
             AutoCertificateAndKeySource.MemoryKeyStoreCertificateSource m = certificateAndKeySource.generate(password);
             keystoreInput = KeystoreInput.wrap(m.keystoreBytes, m.keystorePassword).copyFrozen();
         }
-        keystoreFileCreator = new OpensslKeystoreFileCreator(UnitTests.makeKeytoolConfig(), UnitTests.makeOpensslConfig());
+        keystoreFileCreator = new OpensslKeystoreFileCreator(CoreUnitTests.makeKeytoolConfig(), CoreUnitTests.makeOpensslConfig());
     }
 
     @Test

@@ -61,7 +61,7 @@ public class CoreUnitTests {
 //                    "that; in some cases, HTTP connections can only be tested " +
 //                    "locally (on localhost)";
 //    private static final String SETTING_OPENSSL_TESTS_SKIP = "openssl.skip";
-//    private static final String SETTING_OPENSSL_EXECUTABLE_PATH = "openssl.executable.path";
+    private static final String SETTING_OPENSSL_EXECUTABLE_PATH = "openssl.executable.path";
 //    private static final String SETTING_DEBUG_ENVIRONMENT = "environment.debug";
 //
 //    private CoreUnitTests() {}
@@ -70,19 +70,19 @@ public class CoreUnitTests {
 //    private static final SettingSet Settings = UnitTests.Settings;
 //
 //
-//    public static ExecutableConfig makeOpensslConfig() {
-//        String path = Settings.get(SETTING_OPENSSL_EXECUTABLE_PATH);
-//        if (path != null) {
-//            File file = new File(path);
-//            System.out.format("using openssl executable at %s%n", file);
-//            return ExecutableConfig.byPathOnly(file);
-//        }
-//        return ExecutableConfig.byNameOnly("openssl");
-//    }
-//
-//    public static ExecutableConfig makeKeytoolConfig() {
-//        return ExecutableConfig.byNameOnly("keytool");
-//    }
+public static ExecutableConfig makeOpensslConfig() {
+    String path = UnitTests.Settings.get(SETTING_OPENSSL_EXECUTABLE_PATH);
+    if (path != null) {
+        File file = new File(path);
+        System.out.format("using openssl executable at %s%n", file);
+        return ExecutableConfig.byPathOnly(file);
+    }
+    return ExecutableConfig.byNameOnly("openssl");
+}
+
+    public static ExecutableConfig makeKeytoolConfig() {
+        return ExecutableConfig.byNameOnly("keytool");
+    }
 //
 //    public static boolean isSkipOpensslTests() {
 //        return Settings.get(SETTING_OPENSSL_TESTS_SKIP, false);

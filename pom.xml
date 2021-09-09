@@ -14,6 +14,7 @@
         <module>selenium-capture-chrome</module>
         <module>selenium-capture-testing</module>
         <module>selenium-capture-firefox</module>
+        <module>selenium-capture-testbases</module>
     </modules>
     <url>https://github.com/mike10004/selenium-capture</url>
     <inceptionYear>2016</inceptionYear>

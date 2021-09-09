@@ -7,8 +7,9 @@ class HttpsTestTrafficCollector {
     }
 
     public static TrafficCollector.Builder builder(WebDriverFactory webDriverFactory) {
-        return TrafficCollector.builder(webDriverFactory)
-                .collectHttps(TestCertificateAndKeySource.create());
+//        return TrafficCollector.builder(webDriverFactory)
+//                .collectHttps(TestCertificateAndKeySource.create());
+        throw new UnsupportedOperationException("just invoke return TrafficCollector.builder(webDriverFactory).collectHttps(TestCertificateAndKeySource.create()) directly");
     }
 
 }

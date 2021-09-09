@@ -30,7 +30,7 @@ public class BrAwareBrowserMobProxyServerTest {
         TrafficCollector collector = TrafficCollector.builder(webDriverFactory)
                 // the collector uses the BrAwareBrowserUpProxyServer by default, so there is no need to specify it here
                 .build();
-        // TODO set up a local webserver that servers a brotli page instead of hitting this external one
+        // TODO set up a local webserver that serves a brotli page instead of hitting this external one
         String brotliUrl = "https://httpbin.org/brotli";
         HarPlus<String> collection = collector.collect(driver -> {
             driver.get(brotliUrl);

@@ -162,7 +162,7 @@ public class FirefoxUnitTests {
      * Downloads and configures the JVM for use of a recommended version of GeckoDriver.
      */
     public static void setupRecommendedGeckoDriver() {
-        WebDriverTestParameter.DriverManagerSetupCache.doSetup(DriverManagerType.FIREFOX);
+        DriverManagerSetupCache.doSetup(DriverManagerType.FIREFOX);
     }
 
     public static WebDriverFactory headlessWebDriverFactory() {
@@ -178,7 +178,7 @@ public class FirefoxUnitTests {
     }
 
     public static FirefoxWebDriverFactory.Builder headlessWebDriverFactoryBuilder(boolean acceptInsecureCerts) {
-        WebDriverTestParameter.DriverManagerSetupCache.doSetup(DriverManagerType.FIREFOX);
+        DriverManagerSetupCache.doSetup(DriverManagerType.FIREFOX);
         return FirefoxWebDriverFactory.builder()
                 .binary(createFirefoxBinarySupplier())
                 .configure(o -> o.setHeadless(!isShowBrowserWindowEnabled()))

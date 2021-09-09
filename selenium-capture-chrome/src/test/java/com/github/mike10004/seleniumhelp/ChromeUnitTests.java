@@ -22,7 +22,7 @@ public class ChromeUnitTests {
      * Downloads and configures the JVM for use of a recommended version of ChromeDriver.
      */
     public static void setupRecommendedChromeDriver() {
-        WebDriverTestParameter.DriverManagerSetupCache.doSetup(DriverManagerType.CHROME);
+        DriverManagerSetupCache.doSetup(DriverManagerType.CHROME);
     }
 
     public static boolean isHeadlessChromeTestsDisabled() {

@@ -6,7 +6,6 @@ import com.browserup.harreader.model.HarEntry;
 import com.browserup.harreader.model.HarLog;
 import com.browserup.harreader.model.HarRequest;
 import com.browserup.harreader.model.HarResponse;
-import com.github.mike10004.seleniumhelp.FirefoxWebDriverFactory;
 import com.github.mike10004.seleniumhelp.HarPlus;
 import com.github.mike10004.seleniumhelp.TrafficCollector;
 import com.github.mike10004.seleniumhelp.TrafficGenerator;
