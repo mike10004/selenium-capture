@@ -12,3 +12,8 @@ buildNumber.properties
 /*.log
 /*.json
 /.show-browser-window
+/.classpath
+/.factorypath
+/.project
+/.settings/
+/.vscode/
