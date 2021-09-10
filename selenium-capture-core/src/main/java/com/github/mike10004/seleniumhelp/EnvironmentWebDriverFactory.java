@@ -1,6 +1,9 @@
 package com.github.mike10004.seleniumhelp;
 
+import com.google.common.base.MoreObjects;
+import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableMap;
+import org.apache.commons.lang3.StringUtils;
 import org.openqa.selenium.MutableCapabilities;
 
 import javax.annotation.Nullable;
@@ -35,11 +38,36 @@ public abstract class EnvironmentWebDriverFactory implements WebDriverFactory {
         }
     }
 
+    private static class EmptyEnvironmentSupplier implements Supplier<Map<String, String>> {
+
+        public EmptyEnvironmentSupplier() {}
+
+        @Override
+        public Map<String, String> get() {
+            return ImmutableMap.of();
+        }
+
+        @Override
+        public String toString() {
+            return "EmptyEnvironment{}";
+        }
+    }
+
     static Supplier<Map<String, String>> createEnvironmentSupplierForDisplay(@Nullable String display) {
         if (display == null) {
-            return ImmutableMap::of;
+            return new EmptyEnvironmentSupplier();
         } else {
-            return () -> (ImmutableMap.of("DISPLAY", display));
+            return new Supplier<Map<String, String>>() {
+                @Override
+                public Map<String, String> get() {
+                    return ImmutableMap.of("DISPLAY", display);
+                }
+
+                @Override
+                public String toString() {
+                    return String.format("Environment{DISPLAY=%s}", StringUtils.abbreviate(display, 16));
+                }
+            };
         }
     }
 
@@ -67,15 +95,26 @@ public abstract class EnvironmentWebDriverFactory implements WebDriverFactory {
         }
 
         public final B environment(Map<String, String> environment) {
-            this.environmentSupplier = () -> environment;
+            this.environmentSupplier = Suppliers.ofInstance(environment);
             return (B) this;
         }
 
         private Supplier<Map<String, String>> mergedEnvironment() {
-            return () -> {
-                Map<String, String> merged = new LinkedHashMap<>(hiddenEnvironment);
-                merged.putAll(environmentSupplier.get());
-                return merged;
+            return new Supplier<Map<String, String>>() {
+                @Override
+                public Map<String, String> get() {
+                    Map<String, String> merged = new LinkedHashMap<>(hiddenEnvironment);
+                    merged.putAll(environmentSupplier.get());
+                    return merged;
+                }
+
+                @Override
+                public String toString() {
+                    return MoreObjects.toStringHelper("MergedEnvironment")
+                            .add("hidden", hiddenEnvironment)
+                            .add("overrides", environmentSupplier)
+                            .toString();
+                }
             };
         }
     }

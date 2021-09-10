@@ -60,7 +60,8 @@ public class UriProxySpecification {
         return new String[]{null, null};
     }
 
-    private class WebdrivingProxyProvider extends SeleniumProxyCreationAssistant implements WebdrivingProxyDefinition, UpstreamProxyDefinition {
+    private class WebdrivingProxyProvider extends SeleniumProxyCreationAssistant
+            implements WebdrivingProxyDefinition, UpstreamProxyDefinition {
 
         public WebdrivingProxyProvider() {
         }
@@ -185,8 +186,7 @@ public class UriProxySpecification {
         @Nullable
         protected abstract FullSocketAddress getSocketAddress();
 
-        @Nullable
-        protected Proxy createSeleniumProxy() {
+        protected final Proxy createSeleniumProxy() {
             @Nullable FullSocketAddress hostAndPort = getSocketAddress();
             if (hostAndPort == null) {
                 return null;

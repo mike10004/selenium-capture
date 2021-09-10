@@ -1,6 +1,7 @@
 package com.github.mike10004.seleniumhelp;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.MoreObjects;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -9,6 +10,7 @@ import com.google.common.io.Files;
 import com.google.common.io.Resources;
 import com.google.common.primitives.Ints;
 import org.apache.commons.io.FileUtils;
+import org.openqa.selenium.Proxy;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.firefox.FirefoxBinary;
 import org.openqa.selenium.firefox.FirefoxDriver;
@@ -55,6 +57,23 @@ public class FirefoxWebDriverFactory extends CapableWebDriverFactory<FirefoxOpti
     private final java.util.logging.Level webdriverLogLevel;
     private final GeckoServiceConstructor geckoServiceConstructor;
     private final FirefoxCookieImporter cookieDbImporter;
+
+    @Override
+    public String toString() {
+        return MoreObjects.toStringHelper(this)
+                .omitNullValues()
+                .add("binary", binarySupplier)
+                .add("profilePreferences.size", profilePreferences.size())
+                .add("profileActions.size", profileActions.size())
+                .add("profileActions", profileActions)
+                .add("profileFolderActions.size", profileFolderActions.size())
+                .add("profileFolderActions", profileFolderActions)
+                .add("cookies.size", cookies.size())
+                .add("scratchDir", scratchDir)
+                .add("webdriverLogLevel", webdriverLogLevel)
+                .add("environmentSupplier", environmentSupplier)
+                .toString();
+    }
 
     protected FirefoxWebDriverFactory(Builder builder) {
         super(builder);
@@ -170,10 +189,11 @@ public class FirefoxWebDriverFactory extends CapableWebDriverFactory<FirefoxOpti
     @VisibleForTesting
     static class FirefoxOptionsProxyConfigurator {
 
-        public void configureProxy(FirefoxOptions options, FirefoxProfile profile, @Nullable WebdrivingProxyDefinition proxySpecification) {
-            @Nullable org.openqa.selenium.Proxy seleniumProxy = null;
+        public void configureProxy(FirefoxOptions options,
+                                   FirefoxProfile profile,
+                                   @Nullable WebdrivingProxyDefinition proxySpecification) {
             if (proxySpecification != null) {
-                seleniumProxy = proxySpecification.createWebdrivingProxy();
+                org.openqa.selenium.Proxy seleniumProxy = proxySpecification.createWebdrivingProxy();
                 /*
                  * As of 2018-09-17, if you don't override this setting, Firefox defaults to
                  * bypassing the proxy for loopback addresses (or anyway, that's the behavior
@@ -183,8 +203,10 @@ public class FirefoxWebDriverFactory extends CapableWebDriverFactory<FirefoxOpti
                  */
                 List<String> proxyBypasses = SeleniumProxies.getProxyBypasses(seleniumProxy);
                 overrideProxyBypasses(proxyBypasses, profile);
+                options.setProxy(seleniumProxy);
+            } else {
+                options.setProxy(new org.openqa.selenium.Proxy().setProxyType(org.openqa.selenium.Proxy.ProxyType.DIRECT));
             }
-            options.setProxy(seleniumProxy);
         }
 
         /**

@@ -36,12 +36,12 @@ final class NoProxySpecification {
         @Nullable
         @Override
         public Proxy createWebdrivingProxy() {
-            return null;
+            return new org.openqa.selenium.Proxy().setProxyType(org.openqa.selenium.Proxy.ProxyType.DIRECT);
         }
 
         @Override
         public String toString() {
-            return "WebdrivingProxyDefinition{NO_PROXY}";
+            return "WebdrivingProxyDefinition{DIRECT}";
         }
     }
 
