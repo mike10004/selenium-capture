@@ -14,4 +14,5 @@ public class FirefoxUnitTestsTest {
         assertTrue("exists", b.getFile().isFile());
         assertTrue("canExecute", b.getFile().canExecute());
     }
+
 }

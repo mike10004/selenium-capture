@@ -16,6 +16,8 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import static java.util.Objects.requireNonNull;
+
 public class SimpleWebdrivingSession implements WebdrivingSession {
 
     private static final Logger log = LoggerFactory.getLogger(SimpleWebdrivingSession.class);
@@ -23,7 +25,7 @@ public class SimpleWebdrivingSession implements WebdrivingSession {
     private final WebDriver driver;
 
     public SimpleWebdrivingSession(WebDriver driver) {
-        this.driver = driver;
+        this.driver = requireNonNull(driver);
     }
 
     @Override

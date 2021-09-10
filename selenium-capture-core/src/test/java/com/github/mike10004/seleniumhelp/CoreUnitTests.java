@@ -1,54 +1,6 @@
 package com.github.mike10004.seleniumhelp;
 
-import com.github.mike10004.nativehelper.Platforms;
-import com.github.mike10004.xvfbtesting.XvfbRule;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.CharMatcher;
-import com.google.common.base.Splitter;
-import com.google.common.base.Strings;
-import com.google.common.collect.ImmutableList;
-import com.google.common.io.Resources;
-import io.github.bonigarcia.wdm.config.DriverManagerType;
-import io.github.mike10004.nitsick.SettingSet;
-import io.github.mike10004.subprocess.ProcessResult;
-import io.github.mike10004.subprocess.Subprocess;
-import org.apache.commons.lang3.time.DateUtils;
-import org.apache.commons.text.StringEscapeUtils;
-import org.jsoup.Jsoup;
-import org.junit.Assume;
-import org.openqa.selenium.JavascriptExecutor;
-import org.openqa.selenium.Platform;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.chrome.ChromeOptions;
-import org.openqa.selenium.firefox.FirefoxBinary;
-import org.openqa.selenium.os.ExecutableFinder;
-
-import javax.annotation.Nullable;
 import java.io.File;
-import java.io.IOException;
-import java.io.PrintStream;
-import java.nio.charset.Charset;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.attribute.BasicFileAttributeView;
-import java.nio.file.attribute.BasicFileAttributes;
-import java.nio.file.attribute.FileTime;
-import java.time.Duration;
-import java.time.Instant;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.function.Consumer;
-import java.util.function.Supplier;
-import java.util.stream.Stream;
-
-import static com.google.common.base.Preconditions.checkState;
-import static java.util.stream.Collectors.toList;
-import static org.openqa.selenium.Platform.MAC;
-import static org.openqa.selenium.Platform.UNIX;
-import static org.openqa.selenium.Platform.WINDOWS;
 
 /**
  * Static constants and utility methods to assist with tests.

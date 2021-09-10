@@ -11,38 +11,33 @@ import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebDriverException;
 import org.openqa.selenium.WebElement;
-import org.openqa.selenium.chrome.ChromeDriver;
-import org.openqa.selenium.chrome.ChromeDriverService;
-import org.openqa.selenium.chrome.ChromeOptions;
 
 import java.net.URL;
 import java.util.List;
 
+import static java.util.Objects.requireNonNull;
 import static org.junit.Assert.assertEquals;
 
 public class BysTest {
 
     @ClassRule
-    public static XvfbRule xvfb = UnitTests.xvfbRuleBuilder().build();
-
-    @ClassRule
-    public static WebDriverManagerRule chromedriverSetupRule = WebDriverManagerRule.chromedriver();
+    public static XvfbRule xvfb = UnitTests.xvfbRuleBuilder()
+            .build();
 
     @BeforeClass
     public static void setUpClass() throws Exception {
-        ChromeOptions options = new ChromeOptions();
-        ChromeDriverService driverService = new ChromeDriverService.Builder()
-                .withEnvironment(xvfb.getController().newEnvironment())
-                .build();
-        UnitTests.createChromeOptions().accept(options);
-        driver = new ChromeDriver(driverService, options);
+        WebDriverTestParameter ffp = new FirefoxTestParameter();
+        ffp.doDriverManagerSetup();
+        webdrivingSession = ffp.createWebDriverFactory(xvfb).startWebdriving(WebdrivingConfig.nonCapturing());
+        System.out.println("setUpClass: " +webdrivingSession);
     }
 
-    private static WebDriver driver;
+    private static WebdrivingSession webdrivingSession;
 
     @AfterClass
     public static void killDriver() {
-        if (driver != null) {
+        if (webdrivingSession != null) {
+            WebDriver driver = webdrivingSession.getWebDriver();
             driver.quit();
         }
     }
@@ -75,7 +70,8 @@ public class BysTest {
     }
 
     private void testFindElements(By by, int numExpectedElements) {
-        URL url = getClass().getResource("/BysTest-1.html");
+        URL url = requireNonNull(getClass().getResource("/BysTest-1.html"));
+        WebDriver driver = webdrivingSession.getWebDriver();
         driver.get(url.toString());
         List<WebElement> found = by.findElements(driver);
         assertEquals("num elements found", numExpectedElements, found.size());

@@ -34,13 +34,13 @@ public class ChromeCookieUsageTest extends CookieUsageTestBase {
 
     @BeforeClass
     public static void setupChromeDriver() {
-        UnitTests.setupRecommendedChromeDriver();
+        ChromeUnitTests.setupRecommendedChromeDriver();
     }
 
     @Override
     protected WebDriverFactory createCookielessWebDriverFactory(XvfbController xvfbController) {
         return ChromeWebDriverFactory.builder()
-                .configure(UnitTests.createChromeOptions())
+                .configure(ChromeUnitTests.createChromeOptions())
                 .environment(xvfbController::newEnvironment)
                 .acceptInsecureCerts()
                 .build();
@@ -52,7 +52,7 @@ public class ChromeCookieUsageTest extends CookieUsageTestBase {
         ChromeCookieImplanter implanter = new CustomCookieImplanter(Ints.checkedCast(cookieImplantTimeout.getSeconds()), new Gson());
         CookiePreparer cookiePreparer = new ChromeCookiePreparer(tmp.getRoot().toPath(), () -> cookiesSetByServer, implanter);
         return ChromeWebDriverFactory.builder()
-                .configure(UnitTests.createChromeOptions())
+                .configure(ChromeUnitTests.createChromeOptions())
                 .environment(xvfbController::newEnvironment)
                 .cookiePreparer(cookiePreparer)
                 .acceptInsecureCerts()

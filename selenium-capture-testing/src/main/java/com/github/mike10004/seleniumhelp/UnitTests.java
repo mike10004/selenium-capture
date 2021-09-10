@@ -142,7 +142,7 @@ public class UnitTests {
     private static final Duration SHOW_BROWSER_FLAG_FILE_LIFETIME = Duration.ofHours(24);
 
     private static boolean isShowBrowserFlagFilePresentAndNotExpired() {
-        File flagFile = new File(System.getProperty("user.dir"), ".show-browser-window");
+        File flagFile = resolveRepoRoot().resolve(".show-browser-window").toFile();
         if (flagFile.isFile()) {
             @Nullable Instant lastModified = null;
             try {
