@@ -1,5 +1,8 @@
-package com.github.mike10004.seleniumhelp;
+package io.github.mike10004.seleniumcapture.testbases;
 
+import com.github.mike10004.seleniumhelp.TrafficCollector;
+import com.github.mike10004.seleniumhelp.TrafficGenerator;
+import com.github.mike10004.seleniumhelp.WebDriverFactory;
 import com.google.common.base.Joiner;
 import com.google.common.io.Files;
 import io.github.bonigarcia.wdm.config.DriverManagerType;

@@ -1,11 +1,8 @@
 package com.github.mike10004.seleniumhelp;
 
 import com.github.mike10004.xvfbtesting.XvfbRule;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
-import io.github.bonigarcia.wdm.WebDriverManager;
 import io.github.bonigarcia.wdm.config.DriverManagerType;
+import io.github.mike10004.seleniumcapture.testbases.WebDriverTestParameter;
 
 import java.net.URI;
 

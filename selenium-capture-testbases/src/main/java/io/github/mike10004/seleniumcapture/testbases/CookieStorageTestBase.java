@@ -1,5 +1,11 @@
-package com.github.mike10004.seleniumhelp;
+package io.github.mike10004.seleniumcapture.testbases;
 
+import com.github.mike10004.seleniumhelp.DeserializableCookie;
+import com.github.mike10004.seleniumhelp.HarAnalysis;
+import com.github.mike10004.seleniumhelp.HarPlus;
+import com.github.mike10004.seleniumhelp.SetCookieHeaderParser;
+import com.github.mike10004.seleniumhelp.TrafficCollector;
+import com.github.mike10004.seleniumhelp.WebDriverFactory;
 import com.github.mike10004.xvfbtesting.XvfbRule;
 import com.browserup.harreader.model.Har;
 import io.github.mike10004.seleniumcapture.testing.UnitTests;

@@ -1,17 +1,19 @@
-package com.github.mike10004.seleniumhelp;
+package io.github.mike10004.seleniumcapture.testbases;
 
+import com.github.mike10004.seleniumhelp.ImmutableHttpRequest;
+import com.github.mike10004.seleniumhelp.ImmutableHttpResponse;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Suppliers;
 
 import java.util.function.Supplier;
 
-class HttpInteraction {
+public class HttpInteraction {
 
     public final ImmutableHttpRequest request;
     public final ImmutableHttpResponse response;
     private final Supplier<String> stringRepresentation;
 
-    HttpInteraction(ImmutableHttpRequest request, ImmutableHttpResponse response) {
+    public HttpInteraction(ImmutableHttpRequest request, ImmutableHttpResponse response) {
         this.request = request;
         this.response = response;
         stringRepresentation = Suppliers.memoize(() -> {

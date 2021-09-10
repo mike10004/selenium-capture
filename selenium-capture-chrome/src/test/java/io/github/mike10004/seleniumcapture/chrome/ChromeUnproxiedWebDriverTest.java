@@ -1,6 +1,6 @@
 package io.github.mike10004.seleniumcapture.chrome;
 
-import com.github.mike10004.seleniumhelp.UnproxiedWebDriverTest;
+import io.github.mike10004.seleniumcapture.testbases.UnproxiedWebDriverTest;
 import com.github.mike10004.seleniumhelp.WebDriverFactory;
 
 public class ChromeUnproxiedWebDriverTest extends UnproxiedWebDriverTest {

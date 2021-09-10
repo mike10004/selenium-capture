@@ -1,6 +1,7 @@
 package com.github.mike10004.seleniumhelp;
 
 import io.github.bonigarcia.wdm.config.DriverManagerType;
+import io.github.mike10004.seleniumcapture.testbases.TrafficMonitoringTest;
 
 public class FirefoxTrafficMonitoringTest extends TrafficMonitoringTest {
 

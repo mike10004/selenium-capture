@@ -1,5 +1,6 @@
-package com.github.mike10004.seleniumhelp;
+package io.github.mike10004.seleniumcapture.testbases;
 
+import com.github.mike10004.seleniumhelp.ExecutableConfig;
 import com.google.common.io.Resources;
 import io.github.bonigarcia.wdm.config.DriverManagerType;
 import io.github.mike10004.seleniumcapture.testing.UnitTests;

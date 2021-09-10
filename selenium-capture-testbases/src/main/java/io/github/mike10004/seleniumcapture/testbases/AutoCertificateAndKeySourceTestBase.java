@@ -1,6 +1,13 @@
-package com.github.mike10004.seleniumhelp;
+package io.github.mike10004.seleniumcapture.testbases;
 
+import com.github.mike10004.seleniumhelp.AutoCertificateAndKeySource;
 import com.github.mike10004.seleniumhelp.AutoCertificateAndKeySource.SerializableForm;
+import com.github.mike10004.seleniumhelp.HarPlus;
+import com.github.mike10004.seleniumhelp.KeystoreFileCreator;
+import com.github.mike10004.seleniumhelp.KeystoreInput;
+import com.github.mike10004.seleniumhelp.OpensslKeystoreFileCreator;
+import com.github.mike10004.seleniumhelp.TrafficCollector;
+import com.github.mike10004.seleniumhelp.WebDriverFactory;
 import com.google.common.io.BaseEncoding;
 import com.google.common.io.Files;
 import com.browserup.harreader.model.HarEntry;

@@ -1,6 +1,6 @@
 package io.github.mike10004.seleniumcapture.chrome;
 
-import com.github.mike10004.seleniumhelp.CollectionTestBase;
+import io.github.mike10004.seleniumcapture.testbases.CollectionTestBase;
 import com.github.mike10004.seleniumhelp.WebDriverFactory;
 import org.junit.Assume;
 import org.junit.Test;

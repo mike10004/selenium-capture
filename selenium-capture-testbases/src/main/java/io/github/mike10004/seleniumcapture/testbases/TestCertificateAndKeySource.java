@@ -1,15 +1,13 @@
-package com.github.mike10004.seleniumhelp;
+package io.github.mike10004.seleniumcapture.testbases;
 
+import com.github.mike10004.seleniumhelp.KeyStoreStreamCertificateSource;
 import com.google.common.io.ByteSource;
-import com.google.common.io.ByteStreams;
 import com.google.common.io.Resources;
 import com.browserup.bup.mitm.CertificateAndKeySource;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;

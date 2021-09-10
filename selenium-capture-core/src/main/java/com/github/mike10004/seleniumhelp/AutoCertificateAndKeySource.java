@@ -40,7 +40,7 @@ public class AutoCertificateAndKeySource implements CertificateAndKeySource, jav
     }
 
     @VisibleForTesting
-    AutoCertificateAndKeySource(Path scratchDir, Random random) {
+    public AutoCertificateAndKeySource(Path scratchDir, Random random) {
         this.scratchDir = scratchDir;
         this.random = random;
     }

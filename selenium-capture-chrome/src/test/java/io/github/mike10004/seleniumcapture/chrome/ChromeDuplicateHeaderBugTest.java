@@ -1,6 +1,6 @@
 package io.github.mike10004.seleniumcapture.chrome;
 
-import com.github.mike10004.seleniumhelp.DuplicateHeaderBugTest;
+import io.github.mike10004.seleniumcapture.testbases.DuplicateHeaderBugTest;
 
 public class ChromeDuplicateHeaderBugTest extends DuplicateHeaderBugTest {
     public ChromeDuplicateHeaderBugTest() {

@@ -40,7 +40,7 @@ public class HarAnalysis {
         return findCookies(SetCookieHeaderParser.create());
     }
 
-    CookieCollection findCookies(final SetCookieHeaderParser cookieSpec) {
+    public CookieCollection findCookies(final SetCookieHeaderParser cookieSpec) {
         Stream<HarEntry> headerValues = findEntriesWithSetCookieHeaders();
         List<DeserializableCookie> cookies = new ArrayList<>();
         headerValues.forEach(entry -> {

@@ -1,4 +1,4 @@
-package io.github.mike10004.seleniumcapture;
+package io.github.mike10004.seleniumcapture.testbases;
 
 import com.browserup.harreader.HarReaderMode;
 import com.browserup.harreader.model.Har;
@@ -10,15 +10,14 @@ import com.github.mike10004.seleniumhelp.HarPlus;
 import com.github.mike10004.seleniumhelp.TrafficCollector;
 import com.github.mike10004.seleniumhelp.TrafficGenerator;
 import com.github.mike10004.seleniumhelp.WebDriverFactory;
-import com.github.mike10004.seleniumhelp.WebDriverTestParameter;
 import com.google.common.net.MediaType;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
-import io.github.bonigarcia.wdm.WebDriverManager;
 import io.github.mike10004.nanochamp.server.NanoControl;
 import io.github.mike10004.nanochamp.server.NanoResponse;
 import io.github.mike10004.nanochamp.server.NanoServer;
+import io.github.mike10004.seleniumcapture.BrowserUpHars;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -39,13 +38,13 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-public abstract class BrowserUpHarsTest {
+public abstract class BrowserUpHarsTestBase {
 
     private static final Charset HAR_CHARSET = StandardCharsets.UTF_8;
 
     private final WebDriverTestParameter webDriverTestParameter;
 
-    public BrowserUpHarsTest(WebDriverTestParameter webDriverTestParameter) {
+    public BrowserUpHarsTestBase(WebDriverTestParameter webDriverTestParameter) {
         this.webDriverTestParameter = webDriverTestParameter;
     }
 

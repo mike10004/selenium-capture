@@ -3,7 +3,7 @@ package io.github.mike10004.seleniumcapture.chrome;
 import com.github.mike10004.chromecookieimplant.ChromeCookieImplanter;
 import com.github.mike10004.chromecookieimplant.CookieImplantOutput;
 import com.github.mike10004.chromecookieimplant.CookieProcessingStatus;
-import com.github.mike10004.seleniumhelp.CookieUsageTestBase;
+import io.github.mike10004.seleniumcapture.testbases.CookieUsageTestBase;
 import com.github.mike10004.seleniumhelp.DeserializableCookie;
 import io.github.mike10004.seleniumcapture.testing.UnitTests;
 import com.github.mike10004.seleniumhelp.WebDriverFactory;

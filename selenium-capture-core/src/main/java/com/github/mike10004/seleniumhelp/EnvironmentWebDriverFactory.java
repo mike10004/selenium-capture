@@ -25,18 +25,6 @@ public abstract class EnvironmentWebDriverFactory implements WebDriverFactory {
         return environmentSupplier.get();
     }
 
-    static Map<String, String> createEnvironmentForDisplay(@Nullable String display) {
-        Map<String, String> env = new HashMap<>();
-        setDisplayEnvironmentVariable(env, display);
-        return env;
-    }
-
-    static void setDisplayEnvironmentVariable(Map<String, String> env, @Nullable String display) {
-        if (display != null) {
-            env.put("DISPLAY", display);
-        }
-    }
-
     private static class EmptyEnvironmentSupplier implements Supplier<Map<String, String>> {
 
         public EmptyEnvironmentSupplier() {}

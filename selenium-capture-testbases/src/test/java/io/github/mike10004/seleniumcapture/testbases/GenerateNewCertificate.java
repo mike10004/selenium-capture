@@ -1,5 +1,6 @@
-package com.github.mike10004.seleniumhelp;
+package io.github.mike10004.seleniumcapture.testbases;
 
+import com.github.mike10004.seleniumhelp.AutoCertificateAndKeySource;
 import com.google.common.collect.Iterables;
 import com.google.common.io.ByteSource;
 import com.google.common.io.Files;

@@ -1,4 +1,4 @@
-package com.github.mike10004.seleniumhelp;
+package io.github.mike10004.seleniumcapture.testbases;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;

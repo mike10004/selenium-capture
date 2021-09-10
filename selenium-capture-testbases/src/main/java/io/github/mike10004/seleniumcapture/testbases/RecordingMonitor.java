@@ -1,4 +1,8 @@
-package com.github.mike10004.seleniumhelp;
+package io.github.mike10004.seleniumcapture.testbases;
+
+import com.github.mike10004.seleniumhelp.ImmutableHttpRequest;
+import com.github.mike10004.seleniumhelp.ImmutableHttpResponse;
+import com.github.mike10004.seleniumhelp.TrafficMonitor;
 
 import java.util.ArrayList;
 import java.util.List;

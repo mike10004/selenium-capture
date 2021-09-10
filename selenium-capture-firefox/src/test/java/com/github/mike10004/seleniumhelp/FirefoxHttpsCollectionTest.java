@@ -1,5 +1,6 @@
 package com.github.mike10004.seleniumhelp;
 
+import io.github.mike10004.seleniumcapture.testbases.CollectionTestBase;
 import org.junit.Assume;
 import org.junit.Test;
 

@@ -1,5 +1,11 @@
-package com.github.mike10004.seleniumhelp;
+package io.github.mike10004.seleniumcapture.testbases;
 
+import com.github.mike10004.seleniumhelp.HarInteractions;
+import com.github.mike10004.seleniumhelp.HarPlus;
+import com.github.mike10004.seleniumhelp.ImmutableHttpResponse;
+import com.github.mike10004.seleniumhelp.TrafficCollector;
+import com.github.mike10004.seleniumhelp.TrafficGenerator;
+import com.github.mike10004.seleniumhelp.WebDriverFactory;
 import com.github.mike10004.xvfbtesting.XvfbRule;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.net.MediaType;

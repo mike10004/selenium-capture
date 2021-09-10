@@ -6,6 +6,7 @@ import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import io.github.bonigarcia.wdm.config.DriverManagerType;
+import io.github.mike10004.seleniumcapture.testbases.DriverManagerSetupCache;
 import io.github.mike10004.seleniumcapture.testing.UnitTests;
 import io.github.mike10004.seleniumcapture.testing.WindowsUtils;
 import io.github.mike10004.subprocess.ProcessResult;

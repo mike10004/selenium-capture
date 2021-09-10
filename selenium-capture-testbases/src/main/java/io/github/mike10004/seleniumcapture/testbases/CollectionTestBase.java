@@ -1,5 +1,10 @@
-package com.github.mike10004.seleniumhelp;
+package io.github.mike10004.seleniumcapture.testbases;
 
+import com.github.mike10004.seleniumhelp.HarPlus;
+import com.github.mike10004.seleniumhelp.TrafficCollector;
+import com.github.mike10004.seleniumhelp.TrafficGenerator;
+import com.github.mike10004.seleniumhelp.UriProxySpecification;
+import com.github.mike10004.seleniumhelp.WebDriverFactory;
 import com.github.mike10004.xvfbtesting.XvfbRule;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
@@ -47,6 +52,18 @@ public abstract class CollectionTestBase {
 
     @Nullable
     private final HostAndPort upstreamProxyHostAndPort;
+
+    static Map<String, String> createEnvironmentForDisplay(@Nullable String display) {
+        Map<String, String> env = new HashMap<>();
+        setDisplayEnvironmentVariable(env, display);
+        return env;
+    }
+
+    static void setDisplayEnvironmentVariable(Map<String, String> env, @Nullable String display) {
+        if (display != null) {
+            env.put("DISPLAY", display);
+        }
+    }
 
     @Before
     public void setUpDriver() {
@@ -120,7 +137,7 @@ public abstract class CollectionTestBase {
         } else {
             return () -> {
                 String display = xvfb.getController().getDisplay();
-                return EnvironmentWebDriverFactory.createEnvironmentForDisplay(display);
+                return createEnvironmentForDisplay(display);
             };
         }
     }
@@ -205,7 +222,7 @@ public abstract class CollectionTestBase {
     }
 
     public static <T> HarPlus<T> testTrafficCollector(WebDriverFactory webDriverFactory, TrafficGenerator<T> pageSourceTrafficGenerator, String protocol, Supplier<URI> proxySpecUriSupplier) throws IOException {
-        TrafficCollectorImpl.Builder tcBuilder = TrafficCollector.builder(webDriverFactory);
+        TrafficCollector.Builder tcBuilder = TrafficCollector.builder(webDriverFactory);
         URI upstreamProxy = proxySpecUriSupplier.get();
         if (upstreamProxy != null) {
             tcBuilder.upstreamProxy(UriProxySpecification.of(upstreamProxy).toUpstreamProxyDefinition());

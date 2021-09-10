@@ -12,7 +12,7 @@ import java.net.URL;
 import java.time.Instant;
 import java.util.List;
 
-interface SetCookieHeaderParser {
+public interface SetCookieHeaderParser {
 
     List<Cookie> parse(Header header, CookieOrigin origin, @Nullable Instant creationDate) throws MalformedCookieException;
 

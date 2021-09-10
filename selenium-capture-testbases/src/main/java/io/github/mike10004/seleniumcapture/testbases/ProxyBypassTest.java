@@ -1,5 +1,9 @@
-package com.github.mike10004.seleniumhelp;
+package io.github.mike10004.seleniumcapture.testbases;
 
+import com.github.mike10004.seleniumhelp.FullSocketAddress;
+import com.github.mike10004.seleniumhelp.ProxyDefinitionBuilder;
+import com.github.mike10004.seleniumhelp.WebdrivingConfig;
+import com.github.mike10004.seleniumhelp.WebdrivingSession;
 import com.github.mike10004.xvfbtesting.XvfbRule;
 import com.google.common.base.Strings;
 import com.google.common.net.HostAndPort;

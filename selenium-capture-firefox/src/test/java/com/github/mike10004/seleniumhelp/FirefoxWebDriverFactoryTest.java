@@ -2,20 +2,18 @@ package com.github.mike10004.seleniumhelp;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.net.HostAndPort;
+import io.github.mike10004.seleniumcapture.testbases.HttpInteraction;
+import io.github.mike10004.seleniumcapture.testbases.TestCertificateAndKeySource;
+import io.github.mike10004.seleniumcapture.testbases.WebDriverManagerRule;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.runners.Enclosed;
 import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.firefox.FirefoxOptions;
-import org.openqa.selenium.firefox.FirefoxProfile;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 

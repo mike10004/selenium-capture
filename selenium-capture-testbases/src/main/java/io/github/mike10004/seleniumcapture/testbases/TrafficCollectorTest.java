@@ -1,9 +1,13 @@
-package com.github.mike10004.seleniumhelp;
+package io.github.mike10004.seleniumcapture.testbases;
 
 import com.browserup.bup.mitm.CertificateAndKeySource;
 import com.browserup.bup.mitm.manager.ImpersonatingMitmManager;
 import com.browserup.harreader.model.HarEntry;
 import com.browserup.harreader.model.HarRequest;
+import com.github.mike10004.seleniumhelp.HarPlus;
+import com.github.mike10004.seleniumhelp.TrafficCollector;
+import com.github.mike10004.seleniumhelp.TrafficGenerator;
+import com.github.mike10004.seleniumhelp.WebDriverFactory;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSortedSet;

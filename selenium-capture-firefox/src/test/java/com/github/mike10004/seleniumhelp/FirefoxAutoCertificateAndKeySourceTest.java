@@ -1,5 +1,7 @@
 package com.github.mike10004.seleniumhelp;
 
+import io.github.mike10004.seleniumcapture.testbases.AutoCertificateAndKeySourceTestBase;
+
 public class FirefoxAutoCertificateAndKeySourceTest extends AutoCertificateAndKeySourceTestBase {
 
     public FirefoxAutoCertificateAndKeySourceTest() {

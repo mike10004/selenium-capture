@@ -5,6 +5,8 @@ import com.github.mike10004.xvfbmanager.XvfbController;
 import com.google.common.collect.Multimap;
 import com.google.gson.GsonBuilder;
 import com.browserup.harreader.model.Har;
+import io.github.mike10004.seleniumcapture.testbases.CookieUsageTestBase;
+import io.github.mike10004.seleniumcapture.testbases.WebDriverManagerRule;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;

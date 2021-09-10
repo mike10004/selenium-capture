@@ -27,7 +27,8 @@ import java.util.Collection;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-final class HarInteractions {
+public final class HarInteractions {
+    
     private HarInteractions() {}
 
     private static boolean isNullOrEmpty(@Nullable Collection<?> collection) {
