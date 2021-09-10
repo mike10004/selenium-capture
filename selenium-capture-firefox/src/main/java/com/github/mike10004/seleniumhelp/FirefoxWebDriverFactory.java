@@ -9,8 +9,6 @@ import com.google.common.collect.Iterables;
 import com.google.common.io.Files;
 import com.google.common.io.Resources;
 import com.google.common.primitives.Ints;
-import org.apache.commons.io.FileUtils;
-import org.openqa.selenium.Proxy;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.firefox.FirefoxBinary;
 import org.openqa.selenium.firefox.FirefoxDriver;
@@ -102,13 +100,13 @@ public class FirefoxWebDriverFactory extends CapableWebDriverFactory<FirefoxOpti
         return new SupplementingFirefoxProfile(actions);
     }
 
-    private ServicedSession createWebDriverMaybeWithProxy(WebdrivingConfig config) throws IOException {
+    private ServiceWebdrivingSession createWebDriverMaybeWithProxy(WebdrivingConfig config) throws IOException {
         FirefoxOptions options = populateOptions(config);
         FirefoxBinary binary = binarySupplier.get();
         Map<String, String> environment = environmentSupplier.get();
         GeckoDriverService service = geckoServiceConstructor.build(environment, binary);
         WebDriver driver = new FirefoxDriver(service, options);
-        return new ServicedSession(driver, service);
+        return new ServiceWebdrivingSession(driver, service);
     }
 
     /**

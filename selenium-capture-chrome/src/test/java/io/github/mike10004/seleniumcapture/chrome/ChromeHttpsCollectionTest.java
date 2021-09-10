@@ -1,7 +1,8 @@
-package com.github.mike10004.seleniumhelp;
+package io.github.mike10004.seleniumcapture.chrome;
 
+import com.github.mike10004.seleniumhelp.CollectionTestBase;
+import com.github.mike10004.seleniumhelp.WebDriverFactory;
 import org.junit.Assume;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class ChromeHttpsCollectionTest extends CollectionTestBase {

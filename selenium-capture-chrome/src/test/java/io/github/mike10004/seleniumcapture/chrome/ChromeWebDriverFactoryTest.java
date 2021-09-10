@@ -1,4 +1,4 @@
-package com.github.mike10004.seleniumhelp;
+package io.github.mike10004.seleniumcapture.chrome;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
@@ -20,7 +20,7 @@ public class ChromeWebDriverFactoryTest {
         ChromeWebDriverFactory factory = ChromeWebDriverFactory.builder()
                 .environment(expected)
                 .build();
-        Map<String, String> actual = factory.environmentSupplier.get();
+        Map<String, String> actual = factory.supplyEnvironment();
         assertEquals("environment", expected, actual);
     }
 

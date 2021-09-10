@@ -8,11 +8,15 @@ import javax.annotation.Nullable;
 
 import static java.util.Objects.requireNonNull;
 
-class ServicedSession extends SimpleWebdrivingSession {
+/**
+ * Value class that represents a webdriving session started using
+ * a driver service.
+ */
+public class ServiceWebdrivingSession extends SimpleWebdrivingSession {
 
     private final DriverService service;
 
-    ServicedSession(WebDriver driver, DriverService service) {
+    public ServiceWebdrivingSession(WebDriver driver, DriverService service) {
         super(driver);
         this.service = requireNonNull(service);
     }

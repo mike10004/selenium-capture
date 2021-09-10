@@ -1,5 +1,12 @@
-package com.github.mike10004.seleniumhelp;
+package io.github.mike10004.seleniumcapture.chrome;
 
+import com.github.mike10004.seleniumhelp.CapableWebDriverFactory;
+import com.github.mike10004.seleniumhelp.CapableWebDriverFactoryBuilder;
+import com.github.mike10004.seleniumhelp.DeserializableCookie;
+import com.github.mike10004.seleniumhelp.ServiceWebdrivingSession;
+import com.github.mike10004.seleniumhelp.WebdrivingConfig;
+import com.github.mike10004.seleniumhelp.WebdrivingProxyDefinition;
+import com.github.mike10004.seleniumhelp.WebdrivingSession;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import org.openqa.selenium.WebDriverException;
@@ -46,11 +53,11 @@ public class ChromeWebDriverFactory extends CapableWebDriverFactory<ChromeOption
 
     @Override
     public WebdrivingSession startWebdriving(WebdrivingConfig config) throws IOException {
-        ServicedSession session = createWebDriverMaybeWithProxy(config);
+        ServiceWebdrivingSession session = createWebDriverMaybeWithProxy(config);
         return session;
     }
 
-    private ServicedSession createWebDriverMaybeWithProxy(WebdrivingConfig config) throws IOException {
+    private ServiceWebdrivingSession createWebDriverMaybeWithProxy(WebdrivingConfig config) throws IOException {
         ChromeOptions chromeOptions = new ChromeOptions();
         configureProxy(chromeOptions, config);
         cookiePreparer.supplementOptions(chromeOptions);
@@ -74,7 +81,7 @@ public class ChromeWebDriverFactory extends CapableWebDriverFactory<ChromeOption
             throw e;
         }
         cookiePreparer.prepareCookies(driver);
-        return new ServicedSession(driver, service);
+        return new ServiceWebdrivingSession(driver, service);
     }
 
     protected ChromeDriverService.Builder createDriverServiceBuilder() {

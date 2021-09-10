@@ -129,20 +129,4 @@ public abstract class CookieUsageTestBase {
 
     protected abstract WebDriverFactory createCookiefulWebDriverFactory(XvfbController xvfbController, List<DeserializableCookie> cookiesSetByServer) throws IOException;
 
-    @SuppressWarnings("SameParameterValue")
-    static DeserializableCookie newCookie(String name, String value) {
-        DeserializableCookie.Builder cookie = DeserializableCookie.builder(name, value);
-        cookie.httpOnly(true);
-        Instant now = Instant.now();
-        Instant later = now.plus(Duration.ofDays(90));
-        cookie.creationDate(now);
-        cookie.lastAccessed(now);
-        cookie.expiry(later);
-        cookie.setSecure(true);
-        cookie.setDomain("localhost");
-        cookie.setPath("/");
-        return cookie.build();
-    }
-
-
 }

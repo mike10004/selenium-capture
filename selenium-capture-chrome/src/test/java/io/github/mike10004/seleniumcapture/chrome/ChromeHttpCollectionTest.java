@@ -1,7 +1,9 @@
-package com.github.mike10004.seleniumhelp;
+package io.github.mike10004.seleniumcapture.chrome;
 
 import com.browserup.harreader.model.HarContent;
 import com.browserup.harreader.model.HarResponse;
+import com.github.mike10004.seleniumhelp.CollectionTestBase;
+import com.github.mike10004.seleniumhelp.WebDriverFactory;
 import org.junit.Assume;
 import org.junit.Test;
 

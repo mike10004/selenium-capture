@@ -1,9 +1,13 @@
-package com.github.mike10004.seleniumhelp;
+package io.github.mike10004.seleniumcapture.chrome;
 
 import com.github.mike10004.chromecookieimplant.ChromeCookieImplanter;
 import com.github.mike10004.chromecookieimplant.CookieImplantOutput;
 import com.github.mike10004.chromecookieimplant.CookieProcessingStatus;
-import com.github.mike10004.seleniumhelp.ChromeWebDriverFactory.CookiePreparer;
+import com.github.mike10004.seleniumhelp.CookieUsageTestBase;
+import com.github.mike10004.seleniumhelp.DeserializableCookie;
+import com.github.mike10004.seleniumhelp.UnitTests;
+import com.github.mike10004.seleniumhelp.WebDriverFactory;
+import io.github.mike10004.seleniumcapture.chrome.ChromeWebDriverFactory.CookiePreparer;
 import com.github.mike10004.xvfbmanager.XvfbController;
 import com.google.common.io.Resources;
 import com.google.common.primitives.Ints;

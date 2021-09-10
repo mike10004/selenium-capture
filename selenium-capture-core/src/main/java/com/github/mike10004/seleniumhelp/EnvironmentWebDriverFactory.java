@@ -4,19 +4,14 @@ import com.google.common.base.MoreObjects;
 import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.StringUtils;
-import org.openqa.selenium.MutableCapabilities;
 
 import javax.annotation.Nullable;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static java.util.Objects.requireNonNull;
 
 public abstract class EnvironmentWebDriverFactory implements WebDriverFactory {
 
@@ -24,6 +19,10 @@ public abstract class EnvironmentWebDriverFactory implements WebDriverFactory {
 
     protected EnvironmentWebDriverFactory(Builder<?> builder) {
         this.environmentSupplier = checkNotNull(builder.mergedEnvironment());
+    }
+
+    public Map<String, String> supplyEnvironment() {
+        return environmentSupplier.get();
     }
 
     static Map<String, String> createEnvironmentForDisplay(@Nullable String display) {
@@ -71,7 +70,7 @@ public abstract class EnvironmentWebDriverFactory implements WebDriverFactory {
         }
     }
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "rawtypes"})
     public static abstract class Builder<B extends Builder> {
 
         private final Map<String, String> hiddenEnvironment;
@@ -81,6 +80,7 @@ public abstract class EnvironmentWebDriverFactory implements WebDriverFactory {
             hiddenEnvironment = new LinkedHashMap<>();
         }
 
+        @SuppressWarnings("SameParameterValue")
         protected void hiddenEnvironmentVariable(String name, @Nullable String value) {
             if (value == null) {
                 hiddenEnvironment.remove(name);

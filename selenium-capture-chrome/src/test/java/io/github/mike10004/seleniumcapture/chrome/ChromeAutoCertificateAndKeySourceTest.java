@@ -1,8 +1,6 @@
-package com.github.mike10004.seleniumhelp;
+package io.github.mike10004.seleniumcapture.chrome;
 
 import com.github.mike10004.seleniumhelp.AutoCertificateAndKeySourceTestBase;
-import com.github.mike10004.seleniumhelp.ChromeTestParameter;
-import com.github.mike10004.seleniumhelp.ChromeWebDriverFactory;
 import com.github.mike10004.seleniumhelp.UnitTests;
 import com.github.mike10004.seleniumhelp.WebDriverFactory;
 import com.github.mike10004.seleniumhelp.WebDriverTestParameter;

@@ -1,6 +1,7 @@
-package com.github.mike10004.seleniumhelp;
+package io.github.mike10004.seleniumcapture.chrome;
 
 import com.github.mike10004.chromecookieimplant.ChromeCookie;
+import com.github.mike10004.seleniumhelp.DeserializableCookie;
 import com.google.common.base.CharMatcher;
 import com.google.common.base.Strings;
 import org.slf4j.LoggerFactory;
@@ -8,7 +9,6 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.Nullable;
 import java.math.BigDecimal;
 import java.time.Instant;
-import java.util.Date;
 
 /**
  * Service class that transforms regular cookies into Chrome cookies.

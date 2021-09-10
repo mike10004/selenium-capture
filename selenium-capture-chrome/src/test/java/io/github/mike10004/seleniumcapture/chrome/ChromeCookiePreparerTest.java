@@ -1,15 +1,17 @@
-package com.github.mike10004.seleniumhelp;
+package io.github.mike10004.seleniumcapture.chrome;
 
 import com.github.mike10004.chromecookieimplant.ChromeCookie;
+import com.github.mike10004.seleniumhelp.DeserializableCookie;
 import com.google.common.collect.ImmutableList;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
+import java.time.Duration;
 import java.time.Instant;
-import java.util.Date;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 public class ChromeCookiePreparerTest {
 
@@ -18,7 +20,7 @@ public class ChromeCookiePreparerTest {
 
     @Test
     public void instantiate() {
-        DeserializableCookie c = CookieUsageTestBase.newCookie("foo", "bar");
+        DeserializableCookie c = newCookie("foo", "bar");
         ChromeCookiePreparer instance = new ChromeCookiePreparer(tmp.getRoot().toPath(), () -> ImmutableList.of(c));
         System.out.format("instance: " + instance);
     }
@@ -46,4 +48,21 @@ public class ChromeCookiePreparerTest {
         double expiryDateInSeconds = expiryDate.toEpochMilli() / 1000d;
         assertEquals("expirationDate", expiryDateInSeconds, c.expirationDate.doubleValue(), 0.0001);
     }
+
+    @SuppressWarnings("SameParameterValue")
+    public static DeserializableCookie newCookie(String name, String value) {
+        DeserializableCookie.Builder cookie = DeserializableCookie.builder(name, value);
+        cookie.httpOnly(true);
+        Instant now = Instant.now();
+        Instant later = now.plus(Duration.ofDays(90));
+        cookie.creationDate(now);
+        cookie.lastAccessed(now);
+        cookie.expiry(later);
+        cookie.setSecure(true);
+        cookie.setDomain("localhost");
+        cookie.setPath("/");
+        return cookie.build();
+    }
+
+
 }
