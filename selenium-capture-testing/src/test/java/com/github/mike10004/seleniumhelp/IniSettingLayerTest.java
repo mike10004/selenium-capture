@@ -1,24 +1,17 @@
 package com.github.mike10004.seleniumhelp;
 
-import com.google.common.collect.ImmutableList;
 import io.github.mike10004.nitsick.LayeredSettingSet;
 import io.github.mike10004.nitsick.SettingLayer;
 import io.github.mike10004.nitsick.SettingSet;
-import org.apache.commons.configuration2.INIConfiguration;
-import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 import javax.annotation.Nullable;
 import java.io.File;
-import java.io.IOException;
-import java.io.StringReader;
 import java.io.UncheckedIOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.util.List;
-import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
@@ -98,41 +91,6 @@ public class IniSettingLayerTest {
         assertNull(settings.get("section1.eenie"));
         assertEquals("a.b", "c", settings.get("a.b"));
         assertEquals("d.e", "f", settings.get("d.e"));
-    }
-
-    @SuppressWarnings("unused")
-    static class CommonsIniShim implements IniSettingLayer.IniShim<INIConfiguration> {
-
-        @Override
-        public INIConfiguration read(String iniText) throws IOException {
-            INIConfiguration ini = new INIConfiguration();
-            try {
-                ini.read(new StringReader(iniText));
-            } catch (ConfigurationException e) {
-                throw new RuntimeException(e);
-            }
-            return ini;
-        }
-
-        @Override
-        public Set<String> getSections(INIConfiguration ini) {
-            return ini.getSections();
-        }
-
-        @Override
-        public boolean isGlobalSection(INIConfiguration ini, String sectionName) {
-            return sectionName == null;
-        }
-
-        @Override
-        public String getValueInSection(INIConfiguration ini, String sectionName, String key) {
-            return ini.getSection(sectionName).getString(key);
-        }
-
-        @Override
-        public List<String> getKeysInSection(INIConfiguration ini, String sectionName) {
-            return ImmutableList.copyOf(ini.getSection(sectionName).getKeys());
-        }
     }
 
 }

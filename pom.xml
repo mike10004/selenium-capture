@@ -512,11 +512,6 @@
                 <artifactId>selenium-capture-core</artifactId>
                 <version>${project.version}</version>
             </dependency>
-            <dependency>
-                <groupId>org.apache.commons</groupId>
-                <artifactId>commons-configuration2</artifactId>
-                <version>2.7</version>
-            </dependency>
         </dependencies>
     </dependencyManagement>
 </project>
