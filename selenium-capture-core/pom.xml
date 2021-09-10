@@ -6,7 +6,7 @@
     <parent>
         <groupId>com.github.mike10004</groupId>
         <artifactId>selenium-capture</artifactId>
-        <version>0.57</version>
+        <version>0.58-SNAPSHOT</version>
     </parent>
     <artifactId>selenium-capture-core</artifactId>
     <name>selenium-capture-core</name>
