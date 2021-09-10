@@ -30,7 +30,7 @@ public abstract class CookieStorageTest {
         testWithDriverFactory(factory);
     }
     private void testWithDriverFactory(WebDriverFactory factory) throws IOException, MalformedCookieException {
-        HarPlus<Void> collection = HttpsTestTrafficCollector.build(factory).collect(driver -> {
+        HarPlus<Void> collection = TrafficCollector.builder(factory).collectHttps(TestCertificateAndKeySource.create()).build().collect(driver -> {
             driver.get("https://httprequestecho.appspot.com/cookies/set");
             return (Void) null;
         });

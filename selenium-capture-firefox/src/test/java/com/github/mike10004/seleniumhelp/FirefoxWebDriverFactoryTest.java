@@ -93,7 +93,7 @@ public abstract class FirefoxWebDriverFactoryTest {
                         profile.setPreference("browser.chrome.site_icons", false);
                     })
                     .build();
-            TrafficCollector collector = HttpsTestTrafficCollector.builder(factory).build();
+            TrafficCollector collector = TrafficCollector.builder(factory).collectHttps(TestCertificateAndKeySource.create()).build();
             List<HttpInteraction> responses = Collections.synchronizedList(new ArrayList<>());
             String url = "https://httpbin.org/get";
             collector.monitor(new TrafficGenerator<Void>() {

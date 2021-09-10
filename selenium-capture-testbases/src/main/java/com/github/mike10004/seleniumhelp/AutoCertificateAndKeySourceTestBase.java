@@ -20,7 +20,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
-public abstract class AutoCertificateAndKeySourceTest {
+public abstract class AutoCertificateAndKeySourceTestBase {
 
     @Rule
     public TemporaryFolder temporaryFolder = new TemporaryFolder();
@@ -35,17 +35,7 @@ public abstract class AutoCertificateAndKeySourceTest {
         testCertificateUsage(scratchDir.toPath());
     }
 
-    @Test
-    public void invokeLoadTwice() throws Exception {
-        Path scratchDir = temporaryFolder.getRoot().toPath();
-        try (CountingAutoCertificateAndKeySource certificateAndKeySource = new CountingAutoCertificateAndKeySource(scratchDir, random)) {
-            certificateAndKeySource.load();
-            certificateAndKeySource.load();
-            assertEquals("num generate invocations", 1, certificateAndKeySource.generateInvocations.get());
-        }
-    }
-
-    private static Random random = new Random(AutoCertificateAndKeySourceTest.class.getName().hashCode());
+    private static final Random random = new Random(AutoCertificateAndKeySourceTestBase.class.getName().hashCode());
 
     private File createTempPathname(Path scratchDir, String suffix) throws IOException {
         byte[] bytes = new byte[16];
@@ -58,23 +48,8 @@ public abstract class AutoCertificateAndKeySourceTest {
         return file;
     }
 
-    private static class CountingAutoCertificateAndKeySource extends AutoCertificateAndKeySource {
-
-        private final AtomicInteger generateInvocations = new AtomicInteger();
-
-        public CountingAutoCertificateAndKeySource(Path scratchDir, Random random) {
-            super(scratchDir, random);
-        }
-
-        @Override
-        protected MemoryKeyStoreCertificateSource generate(String keystorePassword) throws IOException {
-            generateInvocations.incrementAndGet();
-            return super.generate(keystorePassword);
-        }
-    }
-
     private void testCertificateUsage(Path scratchDir) throws IOException {
-        try (CountingAutoCertificateAndKeySource certificateAndKeySource = new CountingAutoCertificateAndKeySource(scratchDir, random)) {
+        try (AutoCertificateAndKeySource certificateAndKeySource = new AutoCertificateAndKeySource(scratchDir, random)) {
             KeystoreInput keystoreInput = certificateAndKeySource.acquireKeystoreInput();
             SerializableForm serializableForm = certificateAndKeySource.createSerializableForm();
             File keystoreFile = createTempPathname(scratchDir, ".keystore");

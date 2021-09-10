@@ -1,6 +1,6 @@
 package com.github.mike10004.seleniumhelp;
 
-public class FirefoxAutoCertificateAndKeySourceTest extends AutoCertificateAndKeySourceTest {
+public class FirefoxAutoCertificateAndKeySourceTest extends AutoCertificateAndKeySourceTestBase {
 
     public FirefoxAutoCertificateAndKeySourceTest() {
 
@@ -13,6 +13,6 @@ public class FirefoxAutoCertificateAndKeySourceTest extends AutoCertificateAndKe
 
     @Override
     protected WebDriverFactory buildHeadlessFactory() {
-        return FirefoxUnitTests.headlessWebDriverFactory();
+        return FirefoxUnitTests.headlessWebDriverFactory(true);
     }
 }

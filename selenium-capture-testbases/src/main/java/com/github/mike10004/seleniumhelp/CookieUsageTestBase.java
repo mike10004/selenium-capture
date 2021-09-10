@@ -1,14 +1,13 @@
 package com.github.mike10004.seleniumhelp;
 
+import com.browserup.harreader.model.Har;
+import com.browserup.harreader.model.HarEntry;
+import com.browserup.harreader.model.HarHeader;
 import com.github.mike10004.xvfbmanager.XvfbController;
 import com.github.mike10004.xvfbtesting.XvfbRule;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.net.HttpHeaders;
-import com.browserup.harreader.model.Har;
-import com.browserup.harreader.model.HarEntry;
-import com.browserup.harreader.model.HarHeader;
-import org.apache.commons.lang3.time.DateUtils;
 import org.junit.Rule;
 import org.openqa.selenium.WebDriverException;
 
@@ -18,7 +17,6 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -37,7 +35,8 @@ public abstract class CookieUsageTestBase {
 
     private List<DeserializableCookie> browseAndSetCookies(URL url, XvfbController xvfbController) throws IOException {
         WebDriverFactory factory = createCookielessWebDriverFactory(xvfbController);
-        HarPlus<Void> collection = HttpsTestTrafficCollector.build(factory).collect(driver -> {
+        HarPlus<Void> collection = TrafficCollector.builder(factory).collectHttps(TestCertificateAndKeySource.create())
+                .build().collect(driver -> {
             System.out.format("visiting: %s%n", url);
             driver.get(url.toString());
             return (Void) null;
@@ -83,7 +82,10 @@ public abstract class CookieUsageTestBase {
             cookiesSetByServer = browseAndSetCookies(cookieSetUrl, xvfbController);
             System.out.format("creating webdriver factory with %s%n", cookiesSetByServer);
             WebDriverFactory factory = createCookiefulWebDriverFactory(xvfbController, cookiesSetByServer);
-            har = HttpsTestTrafficCollector.build(factory).collect(driver -> {
+
+            har = TrafficCollector.builder(factory)
+                    .collectHttps(TestCertificateAndKeySource.create())
+                    .build().collect(driver -> {
                 driver.get("http://www.example.com/");
                 sleepQuietly(1000);
                 driver.get(cookieGetUrl.toString());

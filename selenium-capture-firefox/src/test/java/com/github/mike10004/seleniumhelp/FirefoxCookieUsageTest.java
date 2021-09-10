@@ -17,6 +17,8 @@ import java.net.URL;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static org.junit.Assert.assertEquals;
+
 public class FirefoxCookieUsageTest extends CookieUsageTestBase {
 
     @ClassRule
@@ -73,10 +75,10 @@ public class FirefoxCookieUsageTest extends CookieUsageTestBase {
 
     @Override
     protected void browsingFinished(Multimap<String, String> cookieHeaderValues, URL cookieGetUrl, Har har, List<DeserializableCookie> cookiesSetByServer) {
-        // In theory, FirefoxProfile.layoutOnDisk is only invoked once per FirefoxDriver instantiation.
-        // In practice it gets invoked once when cleaning the options object and once when starting
-        // the selenium wire session.
-        // assertEquals("num ProfileFolderTracker.perform invocations", 2, tracker.invocations.get());
+        // FirefoxProfile.layoutOnDisk should only be invoked once per FirefoxDriver instantiation.
+        // In Selenium 3.141.59, it gets invoked once when cleaning the options object and once when starting the selenium wire session.
+        // In Selenium 4.0.0-rc-1, it only gets invoked once
+        assertEquals("num ProfileFolderTracker.perform invocations", 2, tracker.invocations.get());
         super.browsingFinished(cookieHeaderValues, cookieGetUrl, har, cookiesSetByServer);
     }
 
