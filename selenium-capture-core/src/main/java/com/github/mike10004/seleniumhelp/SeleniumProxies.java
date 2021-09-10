@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-class SeleniumProxies {
+public class SeleniumProxies {
 
     /**
      * Defined by {@link org.openqa.selenium.Proxy#setNoProxy(String)}.

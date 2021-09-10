@@ -25,39 +25,6 @@ public abstract class EnvironmentWebDriverFactory implements WebDriverFactory {
         return environmentSupplier.get();
     }
 
-    private static class EmptyEnvironmentSupplier implements Supplier<Map<String, String>> {
-
-        public EmptyEnvironmentSupplier() {}
-
-        @Override
-        public Map<String, String> get() {
-            return ImmutableMap.of();
-        }
-
-        @Override
-        public String toString() {
-            return "EmptyEnvironment{}";
-        }
-    }
-
-    static Supplier<Map<String, String>> createEnvironmentSupplierForDisplay(@Nullable String display) {
-        if (display == null) {
-            return new EmptyEnvironmentSupplier();
-        } else {
-            return new Supplier<Map<String, String>>() {
-                @Override
-                public Map<String, String> get() {
-                    return ImmutableMap.of("DISPLAY", display);
-                }
-
-                @Override
-                public String toString() {
-                    return String.format("Environment{DISPLAY=%s}", StringUtils.abbreviate(display, 16));
-                }
-            };
-        }
-    }
-
     @SuppressWarnings({"unchecked", "rawtypes"})
     public static abstract class Builder<B extends Builder> {
 

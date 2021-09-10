@@ -7,7 +7,7 @@ import java.util.StringJoiner;
 import static com.google.common.base.Preconditions.checkArgument;
 import static java.util.Objects.requireNonNull;
 
-class StringExecutableConfig implements ExecutableConfig {
+public class StringExecutableConfig implements ExecutableConfig {
 
     private final String executableName;
     private final Whicher whicher;

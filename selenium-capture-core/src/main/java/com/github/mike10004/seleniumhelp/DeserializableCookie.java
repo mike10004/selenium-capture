@@ -37,16 +37,16 @@ import static java.util.Objects.requireNonNull;
  */
 public class DeserializableCookie implements ClientCookie {
 
-    static final String FIELD_ATTRIBUTES = "attribs";
-    static final String FIELD_DOMAIN = "cookieDomain";
-    static final String FIELD_PATH = "cookiePath";
-    static final String ATTR_DOMAIN = "Domain";
-    static final String ATTR_MAX_AGE = "max-age";
-    static final String FIELD_HTTP_ONLY = "httpOnly";
-    static final String FIELD_IS_SECURE = "isSecure";
-    static final String FIELD_LAST_ACCESSED = "lastAccessed";
-    static final String FIELD_CREATION_DATE = "creationDate";
-    static final String FIELD_EXPIRY_DATE = "cookieExpiryDate";
+    public static final String FIELD_ATTRIBUTES = "attribs";
+    public static final String FIELD_DOMAIN = "cookieDomain";
+    public static final String FIELD_PATH = "cookiePath";
+    public static final String ATTR_DOMAIN = "Domain";
+    public static final String ATTR_MAX_AGE = "max-age";
+    public static final String FIELD_HTTP_ONLY = "httpOnly";
+    public static final String FIELD_IS_SECURE = "isSecure";
+    public static final String FIELD_LAST_ACCESSED = "lastAccessed";
+    public static final String FIELD_CREATION_DATE = "creationDate";
+    public static final String FIELD_EXPIRY_DATE = "cookieExpiryDate";
     private static final int DEFAULT_COOKIE_VERSION = 0;
 
     @SuppressWarnings("unused") // for gson deserialization

@@ -1,13 +1,11 @@
 package com.github.mike10004.seleniumhelp;
 
 import javax.annotation.Nullable;
-import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import static java.util.Objects.requireNonNull;
 
-class MapUtils {
+public class MapUtils {
 
     private MapUtils() {}
 

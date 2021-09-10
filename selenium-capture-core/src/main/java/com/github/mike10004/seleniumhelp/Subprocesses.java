@@ -13,7 +13,10 @@ import javax.annotation.Nullable;
 import java.nio.charset.Charset;
 import java.sql.SQLException;
 
-class Subprocesses {
+/**
+ * For internal use only.
+ */
+public class Subprocesses {
 
     public static ProcessResult<String, String> executeAndWait(Subprocess subprocess, Charset charset, @Nullable ByteSource stdin) throws InterruptedException, SubprocessException {
         ProcessResult<String, String> result;
