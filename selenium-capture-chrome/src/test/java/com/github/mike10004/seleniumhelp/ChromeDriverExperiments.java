@@ -269,7 +269,7 @@ public class ChromeDriverExperiments {
     }
 
     private static <T> void main(Doer<T> doer) throws Exception {
-        UnitTests.setupRecommendedChromeDriver();
+        ChromeUnitTests.setupRecommendedChromeDriver();
         File tmpDir = new File(System.getProperty("user.dir"), "target");
         File userDataDir = Files.createTempDirectory(tmpDir.toPath(), "chrome").toFile();
         System.out.format("user data dir: %s%n", userDataDir);
