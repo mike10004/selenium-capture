@@ -1,6 +1,7 @@
 package com.github.mike10004.seleniumhelp;
 
 import com.browserup.harreader.model.Har;
+import com.github.mike10004.xvfbtesting.XvfbRule;
 import io.github.mike10004.nanochamp.server.NanoControl;
 import io.github.mike10004.nanochamp.server.NanoResponse;
 import io.github.mike10004.nanochamp.server.NanoServer;
@@ -41,10 +42,16 @@ import static org.junit.Assert.assertNull;
 
 public class FirefoxWebExtensionTest {
 
+    @ClassRule
+    public static final XvfbRule xvfb = UnitTests.xvfbRuleBuilder().build();
+
+    @ClassRule
+    public static WebDriverManagerRule webDriverManagerRule = WebDriverManagerRule.geckodriver();
+
     @Test
-    public void useWebExtensionsExtensionZip_handroll() throws Exception {
+    public void useWebExtensionsExtensionZip_unsigned() throws Exception {
         Supplier<FirefoxBinary> firefoxBinarySupplier = FirefoxUnitTests.createFirefoxBinarySupplier();
-        FirefoxUnitTests.requireEsrOrNightlyFirefoxBinary(firefoxBinarySupplier);
+        FirefoxUnitTests.requireEsrOrUnbrandedFirefoxBinary(firefoxBinarySupplier);
         File zipFile = prepareExtensionZipFile();
         List<String> targetTexts = new ArrayList<>();
         useWebExtensionsExtensionZip(zipFile, FirefoxWebDriverFactory.XpinstallSetting.SIGNATURE_REQUIRED_FALSE,
@@ -96,7 +103,7 @@ public class FirefoxWebExtensionTest {
         }
         String backgroundColor = (String) jsExecutor.executeScript(scriptThatReturnsComputedStyleOfElementById("main", "background-color"));
         MatcherAssert.assertThat("background-color", backgroundColor, Matchers.matchesPattern("^\\s*rgba?\\(0(,\\s*0){2,3}\\)\\s*$"));
-        String color = (String) jsExecutor.executeScript(scriptThatReturnsComputedStyleOfElementById("property-info", "color"));
+        String color = (String) jsExecutor.executeScript(scriptThatReturnsComputedStyleOfElementById("main", "color"));
         MatcherAssert.assertThat("color", color, Matchers.matchesPattern("^\\s*rgba?\\(255(,\\s*255){2,3}\\)\\s*$"));
     }
 
@@ -127,7 +134,8 @@ public class FirefoxWebExtensionTest {
                                              FirefoxWebDriverFactory.XpinstallSetting xpinstallSetting,
                                              Driveable driveable,
                                              Supplier<FirefoxBinary> firefoxBinarySupplier) throws Exception {
-        String display = CollectionTestBase.xvfb.getController().getDisplay();
+        String display = xvfb.getController().getDisplay();
+        FirefoxBinary ffb = firefoxBinarySupplier.get();
         WebDriverFactory webDriverFactory = FirefoxWebDriverFactory.builder()
                 .binary(firefoxBinarySupplier)
                 .environment(FirefoxWebDriverFactory.createEnvironmentSupplierForDisplay(display))

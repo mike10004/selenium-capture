@@ -186,8 +186,8 @@ public class FirefoxUnitTests {
                 .putPreferences(createFirefoxPreferences());
     }
 
-    public static void requireEsrOrNightlyFirefoxBinary(Supplier<FirefoxBinary> firefoxBinarySupplier) {
-        // TODO change from Assume to throwing an exception if not satisfied
+    public static void requireEsrOrUnbrandedFirefoxBinary(Supplier<FirefoxBinary> firefoxBinarySupplier) {
+        boolean allowSkipTestRequiringEsr = UnitTests.Settings.getTyped("esrRequired.allowSkip", Boolean::parseBoolean, Boolean.FALSE);
         FirefoxBinary b = firefoxBinarySupplier.get();
         File f = b.getFile();
         Subprocess subprocess = Subprocess.running(f)
@@ -196,7 +196,20 @@ public class FirefoxUnitTests {
         ProcessResult<String, String> result = Subprocesses.executeOrPropagateInterruption(subprocess, Charset.defaultCharset(), null);
         checkState(result.exitCode() == 0);
         String versionToken = Splitter.on(CharMatcher.whitespace()).splitToList(result.content().stdout()).get(2);
-        Assume.assumeTrue("expect suffix 'esr' on version", versionToken.endsWith("esr"));
+        boolean ok = versionToken.endsWith("esr");
+        if (allowSkipTestRequiringEsr) {
+            Assume.assumeTrue("expect suffix 'esr' on version", ok);
+        } else {
+            if (!ok) {
+                throw new FirefoxEsrOrDevBuildRequiredException(versionToken);
+            }
+        }
+    }
+
+    private static class FirefoxEsrOrDevBuildRequiredException extends RuntimeException {
+        public FirefoxEsrOrDevBuildRequiredException(String actualVersionToken) {
+            super("test requires Firefox ESR, Developer Edition, or unbranded build; actual version: " + actualVersionToken);
+        }
     }
 
     public static Map<String, Object> createFirefoxPreferences() {

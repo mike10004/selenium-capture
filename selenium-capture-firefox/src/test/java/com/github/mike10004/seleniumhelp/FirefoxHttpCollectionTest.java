@@ -8,7 +8,7 @@ import org.junit.Test;
 public class FirefoxHttpCollectionTest extends CollectionTestBase {
 
     public FirefoxHttpCollectionTest() {
-        super(new FirefoxTestParameter(), "http");
+        super(new FirefoxTestParameter(false), "http");
     }
 
     @Test
@@ -27,8 +27,8 @@ public class FirefoxHttpCollectionTest extends CollectionTestBase {
         }
         WebDriverFactory webDriverFactory = FirefoxWebDriverFactory.builder()
                 .binary(FirefoxUnitTests.createFirefoxBinarySupplier())
-                .configure(o -> o.setHeadless(true))
-                .environment(createEnvironmentSupplierForDisplay(true))
+                .configure(o -> o.setHeadless(headless))
+                .environment(createEnvironmentSupplierForDisplay(headless))
                 .build();
         testTrafficCollectorOnExampleDotCom(webDriverFactory);
     }

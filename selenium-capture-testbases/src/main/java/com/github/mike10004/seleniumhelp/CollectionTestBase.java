@@ -17,6 +17,7 @@ import org.apache.commons.validator.routines.InetAddressValidator;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
+import org.junit.Rule;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
@@ -47,22 +48,10 @@ public abstract class CollectionTestBase {
     @Nullable
     private final HostAndPort upstreamProxyHostAndPort;
 
-    protected final WebDriverTestParameter webDriverTestParameter;
-    protected final String protocol;
-
-    public CollectionTestBase(WebDriverTestParameter webDriverTestParameter, String protocol) {
-        this.webDriverTestParameter = webDriverTestParameter;
-        this.protocol = protocol;
-        upstreamProxyHostAndPort = upstreamProxyRule.getUpstreamProxyHostAndPort();
-        checkArgument("http".equals(protocol) || "https".equals(protocol), "protocol must be  http or https: %s", protocol);
-    }
-
     @Before
     public void setUpDriver() {
         webDriverTestParameter.doDriverManagerSetup();
     }
-
-    protected abstract boolean isHeadlessTestDisabled();
 
     @BeforeClass
     public static void checkClasspath() {
@@ -87,9 +76,18 @@ public abstract class CollectionTestBase {
         xvfb.getController().waitUntilReady();
     }
 
-//    protected abstract WebDriverFactory buildHeadlessFactoryForHttpCollection();
-//    protected abstract WebDriverFactory buildHeadlessFactoryForHttpsCollection();
-//
+    protected final WebDriverTestParameter webDriverTestParameter;
+    protected final String protocol;
+
+    public CollectionTestBase(WebDriverTestParameter webDriverTestParameter, String protocol) {
+        this.webDriverTestParameter = webDriverTestParameter;
+        this.protocol = protocol;
+        upstreamProxyHostAndPort = upstreamProxyRule.getUpstreamProxyHostAndPort();
+        checkArgument("http".equals(protocol) || "https".equals(protocol), "protocol must be  http or https: %s", protocol);
+    }
+
+    protected abstract boolean isHeadlessTestDisabled();
+
     /**
      * Gets the port used to build the URL to send a request to. Return -1
      * if you want to use the default port for the protocol.
@@ -116,12 +114,12 @@ public abstract class CollectionTestBase {
         }
     }
 
-    protected static Supplier<Map<String, String>> createEnvironmentSupplierForDisplay(boolean headless) {
+    protected Supplier<Map<String, String>> createEnvironmentSupplierForDisplay(boolean headless) {
         if (headless) {
             return HashMap::new;
         } else {
             return () -> {
-                String display = CollectionTestBase.xvfb.getController().getDisplay();
+                String display = xvfb.getController().getDisplay();
                 return EnvironmentWebDriverFactory.createEnvironmentForDisplay(display);
             };
         }

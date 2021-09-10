@@ -12,14 +12,14 @@ import java.util.List;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
-public abstract class CookieStorageTest {
+public abstract class CookieStorageTestBase {
 
     @Rule
     public XvfbRule xvfb = UnitTests.xvfbRuleBuilder().build();
 
     private final WebDriverTestParameter webDriverTestParameter;
 
-    public CookieStorageTest(WebDriverTestParameter webDriverTestParameter) {
+    public CookieStorageTestBase(WebDriverTestParameter webDriverTestParameter) {
         this.webDriverTestParameter = webDriverTestParameter;
     }
 
@@ -29,8 +29,10 @@ public abstract class CookieStorageTest {
         WebDriverFactory factory = webDriverTestParameter.createWebDriverFactory(xvfb);
         testWithDriverFactory(factory);
     }
+
     private void testWithDriverFactory(WebDriverFactory factory) throws IOException, MalformedCookieException {
-        HarPlus<Void> collection = TrafficCollector.builder(factory).collectHttps(TestCertificateAndKeySource.create()).build().collect(driver -> {
+        HarPlus<Void> collection = TrafficCollector.builder(factory)
+                .collectHttps(TestCertificateAndKeySource.create()).build().collect(driver -> {
             driver.get("https://httprequestecho.appspot.com/cookies/set");
             return (Void) null;
         });

@@ -1,23 +1,21 @@
 package com.github.mike10004.seleniumhelp;
 
-import com.github.mike10004.nativehelper.Platforms;
 import com.github.mike10004.xvfbtesting.XvfbRule;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
-import com.google.common.collect.ImmutableList;
-import io.github.bonigarcia.wdm.config.DriverManagerType;
+import io.github.mike10004.nitsick.LayeredSettingSet;
+import io.github.mike10004.nitsick.SettingLayer;
 import io.github.mike10004.nitsick.SettingSet;
 import org.apache.commons.lang3.time.DateUtils;
-import org.apache.commons.text.StringEscapeUtils;
 import org.jsoup.Jsoup;
 import org.openqa.selenium.JavascriptExecutor;
-import org.openqa.selenium.Platform;
 import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.os.ExecutableFinder;
 
 import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributeView;
@@ -25,17 +23,14 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
-import java.util.stream.Stream;
 
-import static java.util.stream.Collectors.toList;
-import static org.openqa.selenium.Platform.MAC;
-import static org.openqa.selenium.Platform.UNIX;
-import static org.openqa.selenium.Platform.WINDOWS;
+import static com.google.common.base.Preconditions.checkState;
 
 /**
  * Static constants and utility methods to assist with tests.
@@ -43,7 +38,7 @@ import static org.openqa.selenium.Platform.WINDOWS;
 public class UnitTests {
 
     private static final String PROPKEY_DOMAIN = "selenium-help.tests";
-    public static final SettingSet Settings = SettingSet.system(PROPKEY_DOMAIN);
+    public static final SettingSet Settings = buildSettings();
 
     private static final String SETTING_DEBUG_ENVIRONMENT = "environment.debug";
     private static final String SETTING_OPENSSL_TESTS_SKIP = "openssl.skip";
@@ -51,12 +46,12 @@ public class UnitTests {
 
     private UnitTests() {}
 
-    @SuppressWarnings("SameParameterValue")
-    private static void print(String key, @Nullable String value, PrintStream out) {
-        value = value == null ? "" : StringEscapeUtils.escapeJava(value);
-        out.format("%s=%s%n", key, value);
-    }
-
+//    @SuppressWarnings("SameParameterValue")
+//    private static void print(String key, @Nullable String value, PrintStream out) {
+//        value = value == null ? "" : StringEscapeUtils.escapeJava(value);
+//        out.format("%s=%s%n", key, value);
+//    }
+//
 //    static {
 //        if (Settings.get(SETTING_DEBUG_ENVIRONMENT, false)) {
 //            System.err.format("%s.%s=true; describing build environment...%n%n", PROPKEY_DOMAIN, SETTING_DEBUG_ENVIRONMENT);
@@ -87,6 +82,37 @@ public class UnitTests {
 //            System.err.println();
 //        }
 //    }
+
+    private static SettingSet buildSettings() {
+        SettingLayer configFileLayer = readConfigFileLayer();
+        return buildTestSettings(configFileLayer, SettingLayer.systemPropertiesLayer(), SettingLayer.environmentLayer());
+    }
+
+    private static SettingLayer readConfigFileLayer() {
+        return IniSettingLayer.fromFile(resolveRepoRoot().resolve("tests.ini").toFile(),
+                StandardCharsets.UTF_8, PROPKEY_DOMAIN, IniSettingLayer.GlobalSection.USE_FOR_DEFAULTS);
+    }
+
+    static Path resolveRepoRoot() {
+        File cwd = new File(System.getProperty("user.dir"));
+        // we expect current directory is either repo root or a child
+        if (new File(cwd, ".git").isDirectory()) {
+            return cwd.toPath();
+        } else {
+            File parent = cwd.getParentFile();
+            checkState(parent != null && parent.isDirectory(), "expect parent of " + cwd + " to exist");
+            if (!(new File(parent, "selenium-capture-core").isDirectory())) {
+                throw new IllegalStateException("expect selenium-capture-core directory in " + parent);
+            }
+            return parent.toPath();
+        }
+    }
+
+    @VisibleForTesting
+    static SettingSet buildTestSettings(SettingLayer configFileLayer, SettingLayer systemPropsLayer, SettingLayer environmentLayer) {
+        List<SettingLayer> layers = Arrays.asList(configFileLayer, systemPropsLayer, environmentLayer);
+        return new LayeredSettingSet(PROPKEY_DOMAIN, layers);
+    }
 
     /**
      * Gets an executable path.

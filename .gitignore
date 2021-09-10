@@ -17,3 +17,4 @@ buildNumber.properties
 /.project
 /.settings/
 /.vscode/
+/tests.ini

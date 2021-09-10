@@ -738,8 +738,10 @@ public class FirefoxWebDriverFactory extends CapableWebDriverFactory<FirefoxOpti
                     break;
                 case SIGNATURE_REQUIRED_FALSE:
                     profile.setPreference(PREF_KEY, false);
+                    break;
                 case SIGNATURE_REQUIRED_TRUE:
                     profile.setPreference(PREF_KEY, true);
+                    break;
             }
         }
 

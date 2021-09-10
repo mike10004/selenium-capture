@@ -4,8 +4,12 @@ import org.ini4j.Config;
 import org.ini4j.Ini;
 import org.junit.Test;
 
+import java.io.File;
 import java.io.StringReader;
+import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -31,5 +35,25 @@ public class UnitTestsTest {
         assertEquals("global foo", "bar", globalFoo);
         String sectionFoo = ini.get("section", "foo");
         assertEquals("section foo", "baz", sectionFoo);
+    }
+
+    @Test
+    public void resolveRepoRoot() throws Exception {
+        Path repoDir = UnitTests.resolveRepoRoot();
+        List<File> notFound = new ArrayList<>();
+        for (String childName : new String[] {
+                "selenium-capture-core",
+                "selenium-capture-firefox",
+                "selenium-capture-testing",
+                "README.md",
+                "LICENSE",
+                "pom.xml",
+        } ) {
+            File expectedFile = repoDir.resolve(childName).toFile();
+            if (!expectedFile.exists()) {
+                notFound.add(expectedFile);
+            }
+        }
+        assertEquals("expect children of repo root", Collections.emptyList(), notFound);
     }
 }
