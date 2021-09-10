@@ -1,7 +1,7 @@
 package io.github.mike10004.seleniumcapture.firefox;
 
-import com.github.mike10004.seleniumhelp.WebdrivingConfig;
-import com.github.mike10004.seleniumhelp.WebdrivingSession;
+import io.github.mike10004.seleniumcapture.WebdrivingConfig;
+import io.github.mike10004.seleniumcapture.WebdrivingSession;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.openqa.selenium.WebDriver;

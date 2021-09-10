@@ -1,6 +1,6 @@
 package io.github.mike10004.seleniumcapture.testbases;
 
-import com.github.mike10004.seleniumhelp.UriProxySpecification;
+import io.github.mike10004.seleniumcapture.UriProxySpecification;
 import com.google.common.base.Strings;
 import com.google.common.net.HostAndPort;
 import org.apache.http.client.utils.URIBuilder;

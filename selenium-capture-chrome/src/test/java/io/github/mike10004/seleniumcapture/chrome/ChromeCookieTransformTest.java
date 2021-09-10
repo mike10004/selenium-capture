@@ -1,8 +1,7 @@
 package io.github.mike10004.seleniumcapture.chrome;
 
 import com.github.mike10004.chromecookieimplant.ChromeCookie;
-import com.github.mike10004.seleniumhelp.DeserializableCookie;
-import io.github.mike10004.seleniumcapture.chrome.ChromeCookieTransform;
+import io.github.mike10004.seleniumcapture.DeserializableCookie;
 import org.junit.Test;
 
 import java.net.URL;

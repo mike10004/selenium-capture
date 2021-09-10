@@ -1,7 +1,7 @@
 package io.github.mike10004.seleniumcapture.firefox;
 
-import com.github.mike10004.seleniumhelp.DeserializableCookie;
-import com.github.mike10004.seleniumhelp.StandardCookieExploder;
+import io.github.mike10004.seleniumcapture.DeserializableCookie;
+import io.github.mike10004.seleniumcapture.StandardCookieExploder;
 import org.junit.Test;
 
 import java.time.Duration;

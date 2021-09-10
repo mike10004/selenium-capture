@@ -1,9 +1,9 @@
 package io.github.mike10004.seleniumcapture.firefox;
 
-import com.github.mike10004.seleniumhelp.AutoCertificateAndKeySource;
-import com.github.mike10004.seleniumhelp.HarPlus;
-import com.github.mike10004.seleniumhelp.TrafficCollector;
-import com.github.mike10004.seleniumhelp.TrafficGenerator;
+import io.github.mike10004.seleniumcapture.AutoCertificateAndKeySource;
+import io.github.mike10004.seleniumcapture.HarPlus;
+import io.github.mike10004.seleniumcapture.TrafficCollector;
+import io.github.mike10004.seleniumcapture.TrafficGenerator;
 import io.github.bonigarcia.wdm.WebDriverManager;
 import io.github.mike10004.seleniumcapture.BrowserUpHars;
 import org.apache.commons.io.FileUtils;

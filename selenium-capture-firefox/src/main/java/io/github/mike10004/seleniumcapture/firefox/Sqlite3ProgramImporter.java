@@ -1,6 +1,6 @@
 package io.github.mike10004.seleniumcapture.firefox;
 
-import com.github.mike10004.seleniumhelp.ExplodedCookieConverter;
+import io.github.mike10004.seleniumcapture.ExplodedCookieConverter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

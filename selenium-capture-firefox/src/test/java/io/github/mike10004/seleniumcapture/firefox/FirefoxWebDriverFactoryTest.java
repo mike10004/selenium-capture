@@ -1,10 +1,10 @@
 package io.github.mike10004.seleniumcapture.firefox;
 
-import com.github.mike10004.seleniumhelp.ImmutableHttpRequest;
-import com.github.mike10004.seleniumhelp.ImmutableHttpResponse;
-import com.github.mike10004.seleniumhelp.TrafficCollector;
-import com.github.mike10004.seleniumhelp.TrafficGenerator;
-import com.github.mike10004.seleniumhelp.TrafficMonitor;
+import io.github.mike10004.seleniumcapture.ImmutableHttpRequest;
+import io.github.mike10004.seleniumcapture.ImmutableHttpResponse;
+import io.github.mike10004.seleniumcapture.TrafficCollector;
+import io.github.mike10004.seleniumcapture.TrafficGenerator;
+import io.github.mike10004.seleniumcapture.TrafficMonitor;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import io.github.mike10004.seleniumcapture.testbases.HttpInteraction;

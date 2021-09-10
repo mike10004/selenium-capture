@@ -1,7 +1,7 @@
 package io.github.mike10004.seleniumcapture.firefox;
 
-import com.github.mike10004.seleniumhelp.DeserializableCookie;
-import com.github.mike10004.seleniumhelp.ExplodedCookieConverter;
+import io.github.mike10004.seleniumcapture.DeserializableCookie;
+import io.github.mike10004.seleniumcapture.ExplodedCookieConverter;
 import com.google.common.collect.Iterables;
 import io.github.mike10004.subprocess.ProcessResult;
 import io.github.mike10004.subprocess.Subprocess;
@@ -20,7 +20,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
-import static com.github.mike10004.seleniumhelp.Subprocesses.checkResult;
+import static io.github.mike10004.seleniumcapture.Subprocesses.checkResult;
 import static java.util.Objects.requireNonNull;
 
 public abstract class FirefoxCookieImporterBase implements FirefoxCookieImporter {

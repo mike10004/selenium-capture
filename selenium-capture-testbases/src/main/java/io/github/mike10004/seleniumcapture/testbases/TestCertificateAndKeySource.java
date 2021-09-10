@@ -1,6 +1,6 @@
 package io.github.mike10004.seleniumcapture.testbases;
 
-import com.github.mike10004.seleniumhelp.KeyStoreStreamCertificateSource;
+import io.github.mike10004.seleniumcapture.KeyStoreStreamCertificateSource;
 import com.google.common.io.ByteSource;
 import com.google.common.io.Resources;
 import com.browserup.bup.mitm.CertificateAndKeySource;

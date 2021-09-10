@@ -2,7 +2,7 @@ package io.github.mike10004.seleniumcapture.firefox;
 
 import com.github.mike10004.nativehelper.Platform;
 import com.github.mike10004.nativehelper.Platforms;
-import com.github.mike10004.seleniumhelp.Subprocesses;
+import io.github.mike10004.seleniumcapture.Subprocesses;
 import com.google.common.io.CharSource;
 import com.google.common.io.Files;
 import io.github.mike10004.subprocess.ProcessResult;

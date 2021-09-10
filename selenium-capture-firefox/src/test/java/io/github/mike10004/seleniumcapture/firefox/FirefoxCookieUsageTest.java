@@ -1,8 +1,8 @@
 package io.github.mike10004.seleniumcapture.firefox;
 
-import com.github.mike10004.seleniumhelp.DeserializableCookie;
+import io.github.mike10004.seleniumcapture.DeserializableCookie;
 import io.github.mike10004.seleniumcapture.firefox.FirefoxWebDriverFactory.FirefoxProfileFolderAction;
-import com.github.mike10004.seleniumhelp.WebDriverFactory;
+import io.github.mike10004.seleniumcapture.WebDriverFactory;
 import com.github.mike10004.xvfbmanager.XvfbController;
 import com.google.common.collect.Multimap;
 import com.google.gson.GsonBuilder;

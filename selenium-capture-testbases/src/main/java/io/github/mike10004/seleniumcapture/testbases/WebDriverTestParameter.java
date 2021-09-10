@@ -1,6 +1,6 @@
 package io.github.mike10004.seleniumcapture.testbases;
 
-import com.github.mike10004.seleniumhelp.WebDriverFactory;
+import io.github.mike10004.seleniumcapture.WebDriverFactory;
 import com.github.mike10004.xvfbtesting.XvfbRule;
 import io.github.bonigarcia.wdm.config.DriverManagerType;
 

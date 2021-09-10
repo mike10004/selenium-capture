@@ -2,7 +2,7 @@ package io.github.mike10004.seleniumcapture.chrome;
 
 import com.github.mike10004.chromecookieimplant.ChromeCookie;
 import com.github.mike10004.chromecookieimplant.ChromeCookieImplanter;
-import com.github.mike10004.seleniumhelp.DeserializableCookie;
+import io.github.mike10004.seleniumcapture.DeserializableCookie;
 import io.github.mike10004.seleniumcapture.chrome.ChromeWebDriverFactory.CookiePreparer;
 import org.openqa.selenium.WebDriverException;
 import org.openqa.selenium.chrome.ChromeDriver;

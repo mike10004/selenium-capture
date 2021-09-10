@@ -1,8 +1,8 @@
 package io.github.mike10004.seleniumcapture.firefox;
 
 import com.github.mike10004.nativehelper.Platforms;
-import com.github.mike10004.seleniumhelp.Subprocesses;
-import com.github.mike10004.seleniumhelp.WebDriverFactory;
+import io.github.mike10004.seleniumcapture.Subprocesses;
+import io.github.mike10004.seleniumcapture.WebDriverFactory;
 import com.google.common.base.CharMatcher;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;

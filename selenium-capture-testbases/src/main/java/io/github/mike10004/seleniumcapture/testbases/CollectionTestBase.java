@@ -1,10 +1,10 @@
 package io.github.mike10004.seleniumcapture.testbases;
 
-import com.github.mike10004.seleniumhelp.HarPlus;
-import com.github.mike10004.seleniumhelp.TrafficCollector;
-import com.github.mike10004.seleniumhelp.TrafficGenerator;
-import com.github.mike10004.seleniumhelp.UriProxySpecification;
-import com.github.mike10004.seleniumhelp.WebDriverFactory;
+import io.github.mike10004.seleniumcapture.HarPlus;
+import io.github.mike10004.seleniumcapture.TrafficCollector;
+import io.github.mike10004.seleniumcapture.TrafficGenerator;
+import io.github.mike10004.seleniumcapture.UriProxySpecification;
+import io.github.mike10004.seleniumcapture.WebDriverFactory;
 import com.github.mike10004.xvfbtesting.XvfbRule;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;

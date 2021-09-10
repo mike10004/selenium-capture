@@ -1,8 +1,8 @@
 package io.github.mike10004.seleniumcapture.firefox;
 
-import com.github.mike10004.seleniumhelp.Bys;
-import com.github.mike10004.seleniumhelp.WebdrivingConfig;
-import com.github.mike10004.seleniumhelp.WebdrivingSession;
+import io.github.mike10004.seleniumcapture.Bys;
+import io.github.mike10004.seleniumcapture.WebdrivingConfig;
+import io.github.mike10004.seleniumcapture.WebdrivingSession;
 import com.github.mike10004.xvfbtesting.XvfbRule;
 import com.google.common.base.Predicates;
 import com.google.common.collect.ImmutableList;

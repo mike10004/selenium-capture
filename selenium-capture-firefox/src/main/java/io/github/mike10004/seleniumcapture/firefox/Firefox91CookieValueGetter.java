@@ -1,7 +1,7 @@
 package io.github.mike10004.seleniumcapture.firefox;
 
-import com.github.mike10004.seleniumhelp.DeserializableCookie;
-import com.github.mike10004.seleniumhelp.MapUtils;
+import io.github.mike10004.seleniumcapture.DeserializableCookie;
+import io.github.mike10004.seleniumcapture.MapUtils;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableBiMap;
 import com.google.common.collect.ImmutableMap;

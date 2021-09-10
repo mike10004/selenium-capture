@@ -1,12 +1,12 @@
 package io.github.mike10004.seleniumcapture.chrome;
 
-import com.github.mike10004.seleniumhelp.CapableWebDriverFactory;
-import com.github.mike10004.seleniumhelp.CapableWebDriverFactoryBuilder;
-import com.github.mike10004.seleniumhelp.DeserializableCookie;
-import com.github.mike10004.seleniumhelp.ServiceWebdrivingSession;
-import com.github.mike10004.seleniumhelp.WebdrivingConfig;
-import com.github.mike10004.seleniumhelp.WebdrivingProxyDefinition;
-import com.github.mike10004.seleniumhelp.WebdrivingSession;
+import io.github.mike10004.seleniumcapture.CapableWebDriverFactory;
+import io.github.mike10004.seleniumcapture.CapableWebDriverFactoryBuilder;
+import io.github.mike10004.seleniumcapture.DeserializableCookie;
+import io.github.mike10004.seleniumcapture.ServiceWebdrivingSession;
+import io.github.mike10004.seleniumcapture.WebdrivingConfig;
+import io.github.mike10004.seleniumcapture.WebdrivingProxyDefinition;
+import io.github.mike10004.seleniumcapture.WebdrivingSession;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import org.openqa.selenium.WebDriverException;

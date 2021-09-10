@@ -1,8 +1,8 @@
 package io.github.mike10004.seleniumcapture.firefox;
 
 import com.browserup.harreader.model.Har;
-import com.github.mike10004.seleniumhelp.HarPlus;
-import com.github.mike10004.seleniumhelp.WebDriverFactory;
+import io.github.mike10004.seleniumcapture.HarPlus;
+import io.github.mike10004.seleniumcapture.WebDriverFactory;
 import com.github.mike10004.xvfbtesting.XvfbRule;
 import com.google.common.collect.ImmutableMap;
 import io.github.mike10004.nanochamp.server.NanoControl;

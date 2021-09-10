@@ -1,7 +1,7 @@
 package io.github.mike10004.seleniumcapture.chrome;
 
 import com.github.mike10004.chromecookieimplant.ChromeCookie;
-import com.github.mike10004.seleniumhelp.DeserializableCookie;
+import io.github.mike10004.seleniumcapture.DeserializableCookie;
 import com.google.common.base.CharMatcher;
 import com.google.common.base.Strings;
 import org.slf4j.LoggerFactory;

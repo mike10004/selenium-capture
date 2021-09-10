@@ -1,9 +1,9 @@
 package io.github.mike10004.seleniumcapture.firefox;
 
-import com.github.mike10004.seleniumhelp.ExecutableConfig;
-import com.github.mike10004.seleniumhelp.ProcessWaitingInterruptedException;
-import com.github.mike10004.seleniumhelp.StringExecutableConfig;
-import com.github.mike10004.seleniumhelp.Subprocesses;
+import io.github.mike10004.seleniumcapture.ExecutableConfig;
+import io.github.mike10004.seleniumcapture.ProcessWaitingInterruptedException;
+import io.github.mike10004.seleniumcapture.StringExecutableConfig;
+import io.github.mike10004.seleniumcapture.Subprocesses;
 import com.google.common.io.ByteSource;
 import com.google.common.io.CharSource;
 import io.github.mike10004.subprocess.ProcessResult;

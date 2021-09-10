@@ -1,7 +1,7 @@
 package io.github.mike10004.seleniumcapture.firefox;
 
-import com.github.mike10004.seleniumhelp.ExecutableConfig;
-import com.github.mike10004.seleniumhelp.Subprocesses;
+import io.github.mike10004.seleniumcapture.ExecutableConfig;
+import io.github.mike10004.seleniumcapture.Subprocesses;
 import com.google.common.collect.ImmutableMap;
 import io.github.mike10004.subprocess.ProcessResult;
 import io.github.mike10004.subprocess.Subprocess;

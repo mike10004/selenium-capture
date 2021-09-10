@@ -1,8 +1,8 @@
 package io.github.mike10004.seleniumcapture.firefox;
 
-import com.github.mike10004.seleniumhelp.DeserializableCookie;
-import com.github.mike10004.seleniumhelp.ExplodedCookieConverter;
-import com.github.mike10004.seleniumhelp.StandardCookieExploder;
+import io.github.mike10004.seleniumcapture.DeserializableCookie;
+import io.github.mike10004.seleniumcapture.ExplodedCookieConverter;
+import io.github.mike10004.seleniumcapture.StandardCookieExploder;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import io.github.mike10004.seleniumcapture.testing.MapMatcher;

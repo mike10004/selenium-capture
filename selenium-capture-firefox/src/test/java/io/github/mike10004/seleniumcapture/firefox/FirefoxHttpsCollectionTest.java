@@ -1,6 +1,6 @@
 package io.github.mike10004.seleniumcapture.firefox;
 
-import com.github.mike10004.seleniumhelp.WebDriverFactory;
+import io.github.mike10004.seleniumcapture.WebDriverFactory;
 import io.github.mike10004.seleniumcapture.testbases.CollectionTestBase;
 import org.junit.Assume;
 import org.junit.Test;

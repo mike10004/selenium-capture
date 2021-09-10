@@ -1,7 +1,7 @@
 package io.github.mike10004.seleniumcapture.testbases;
 
-import com.github.mike10004.seleniumhelp.ImmutableHttpRequest;
-import com.github.mike10004.seleniumhelp.ImmutableHttpResponse;
+import io.github.mike10004.seleniumcapture.ImmutableHttpRequest;
+import io.github.mike10004.seleniumcapture.ImmutableHttpResponse;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Suppliers;
 

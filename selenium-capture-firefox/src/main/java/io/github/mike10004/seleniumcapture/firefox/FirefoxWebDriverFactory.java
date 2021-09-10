@@ -1,13 +1,13 @@
 package io.github.mike10004.seleniumcapture.firefox;
 
-import com.github.mike10004.seleniumhelp.CapableWebDriverFactory;
-import com.github.mike10004.seleniumhelp.CapableWebDriverFactoryBuilder;
-import com.github.mike10004.seleniumhelp.DeserializableCookie;
-import com.github.mike10004.seleniumhelp.SeleniumProxies;
-import com.github.mike10004.seleniumhelp.ServiceWebdrivingSession;
-import com.github.mike10004.seleniumhelp.WebdrivingConfig;
-import com.github.mike10004.seleniumhelp.WebdrivingProxyDefinition;
-import com.github.mike10004.seleniumhelp.WebdrivingSession;
+import io.github.mike10004.seleniumcapture.CapableWebDriverFactory;
+import io.github.mike10004.seleniumcapture.CapableWebDriverFactoryBuilder;
+import io.github.mike10004.seleniumcapture.DeserializableCookie;
+import io.github.mike10004.seleniumcapture.SeleniumProxies;
+import io.github.mike10004.seleniumcapture.ServiceWebdrivingSession;
+import io.github.mike10004.seleniumcapture.WebdrivingConfig;
+import io.github.mike10004.seleniumcapture.WebdrivingProxyDefinition;
+import io.github.mike10004.seleniumcapture.WebdrivingSession;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.MoreObjects;
 import com.google.common.collect.ImmutableList;
