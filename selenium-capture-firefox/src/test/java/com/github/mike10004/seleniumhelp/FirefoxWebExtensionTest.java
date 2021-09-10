@@ -5,6 +5,7 @@ import com.github.mike10004.xvfbtesting.XvfbRule;
 import io.github.mike10004.nanochamp.server.NanoControl;
 import io.github.mike10004.nanochamp.server.NanoResponse;
 import io.github.mike10004.nanochamp.server.NanoServer;
+import io.github.mike10004.seleniumcapture.testing.UnitTests;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.text.StringEscapeUtils;
 import org.hamcrest.MatcherAssert;

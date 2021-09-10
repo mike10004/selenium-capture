@@ -6,6 +6,8 @@ import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import io.github.bonigarcia.wdm.config.DriverManagerType;
+import io.github.mike10004.seleniumcapture.testing.UnitTests;
+import io.github.mike10004.seleniumcapture.testing.WindowsUtils;
 import io.github.mike10004.subprocess.ProcessResult;
 import io.github.mike10004.subprocess.Subprocess;
 import org.junit.Assume;
@@ -25,7 +27,7 @@ import java.util.Map;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
-import static com.github.mike10004.seleniumhelp.UnitTests.isShowBrowserWindowEnabled;
+import static io.github.mike10004.seleniumcapture.testing.UnitTests.isShowBrowserWindowEnabled;
 import static com.google.common.base.Preconditions.checkState;
 import static java.util.stream.Collectors.toList;
 import static org.openqa.selenium.Platform.MAC;

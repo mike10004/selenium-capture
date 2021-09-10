@@ -1,5 +1,6 @@
-package com.github.mike10004.seleniumhelp;
+package io.github.mike10004.seleniumcapture.testing;
 
+import io.github.mike10004.seleniumcapture.testing.UnitTests;
 import org.ini4j.Config;
 import org.ini4j.Ini;
 import org.junit.Test;
@@ -8,10 +9,8 @@ import java.io.File;
 import java.io.StringReader;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Stream;
 
 import static org.junit.Assert.assertEquals;
 

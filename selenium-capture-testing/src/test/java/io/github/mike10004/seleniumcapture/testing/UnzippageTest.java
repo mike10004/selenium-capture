@@ -1,8 +1,9 @@
-package com.github.mike10004.seleniumhelp;
+package io.github.mike10004.seleniumcapture.testing;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import io.github.mike10004.seleniumcapture.testing.Unzippage;
 import org.junit.Test;
 
 import java.io.ByteArrayInputStream;

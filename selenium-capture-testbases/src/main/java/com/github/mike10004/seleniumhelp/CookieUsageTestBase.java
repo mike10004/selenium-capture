@@ -8,6 +8,7 @@ import com.github.mike10004.xvfbtesting.XvfbRule;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.net.HttpHeaders;
+import io.github.mike10004.seleniumcapture.testing.UnitTests;
 import org.junit.Rule;
 import org.openqa.selenium.WebDriverException;
 
@@ -15,8 +16,6 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.time.Duration;
-import java.time.Instant;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;

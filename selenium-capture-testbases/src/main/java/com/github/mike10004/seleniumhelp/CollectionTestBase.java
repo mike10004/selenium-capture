@@ -12,12 +12,12 @@ import com.browserup.harreader.model.HarContent;
 import com.browserup.harreader.model.HarEntry;
 import com.browserup.harreader.model.HarResponse;
 import com.browserup.bup.mitm.CertificateAndKeySource;
+import io.github.mike10004.seleniumcapture.testing.UnitTests;
 import org.apache.commons.text.StringEscapeUtils;
 import org.apache.commons.validator.routines.InetAddressValidator;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
-import org.junit.Rule;
 
 import javax.annotation.Nullable;
 import java.io.IOException;

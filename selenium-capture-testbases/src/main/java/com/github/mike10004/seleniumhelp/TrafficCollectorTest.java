@@ -14,6 +14,7 @@ import io.github.mike10004.nanochamp.server.NanoControl;
 import io.github.mike10004.nanochamp.server.NanoResponse;
 import io.github.mike10004.nanochamp.server.NanoServer;
 import io.github.mike10004.nitsick.junit.TimeoutRules;
+import io.github.mike10004.seleniumcapture.testing.UnitTests;
 import io.netty.handler.codec.http.DefaultFullHttpRequest;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpObject;

@@ -1,8 +1,9 @@
-package com.github.mike10004.seleniumhelp;
+package io.github.mike10004.seleniumcapture.testing;
 
 import io.github.mike10004.nitsick.LayeredSettingSet;
 import io.github.mike10004.nitsick.SettingLayer;
 import io.github.mike10004.nitsick.SettingSet;
+import io.github.mike10004.seleniumcapture.testing.IniSettingLayer;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;

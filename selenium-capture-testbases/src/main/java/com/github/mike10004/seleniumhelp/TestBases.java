@@ -2,6 +2,7 @@ package com.github.mike10004.seleniumhelp;
 
 import com.google.common.io.Resources;
 import io.github.bonigarcia.wdm.config.DriverManagerType;
+import io.github.mike10004.seleniumcapture.testing.UnitTests;
 
 import java.io.File;
 import java.io.IOException;

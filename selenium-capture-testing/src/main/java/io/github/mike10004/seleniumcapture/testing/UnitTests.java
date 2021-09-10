@@ -1,4 +1,4 @@
-package com.github.mike10004.seleniumhelp;
+package io.github.mike10004.seleniumcapture.testing;
 
 import com.github.mike10004.xvfbtesting.XvfbRule;
 import com.google.common.annotations.VisibleForTesting;

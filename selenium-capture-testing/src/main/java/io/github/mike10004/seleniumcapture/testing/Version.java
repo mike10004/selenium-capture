@@ -1,4 +1,4 @@
-package com.github.mike10004.seleniumhelp;
+package io.github.mike10004.seleniumcapture.testing;
 
 /*
  * Licensed to the Apache Software Foundation (ASF) under one

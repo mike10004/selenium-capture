@@ -1,7 +1,7 @@
 package io.github.mike10004.seleniumcapture.chrome;
 
 import com.github.mike10004.seleniumhelp.DriverManagerSetupCache;
-import com.github.mike10004.seleniumhelp.UnitTests;
+import io.github.mike10004.seleniumcapture.testing.UnitTests;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.CharMatcher;
 import com.google.common.base.Splitter;

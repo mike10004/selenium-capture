@@ -2,7 +2,7 @@ package io.github.mike10004.seleniumcapture.chrome;
 
 import com.github.mike10004.seleniumhelp.HarPlus;
 import com.github.mike10004.seleniumhelp.TrafficCollector;
-import com.github.mike10004.seleniumhelp.UnitTests;
+import io.github.mike10004.seleniumcapture.testing.UnitTests;
 import com.github.mike10004.seleniumhelp.WebDriverFactory;
 import com.github.mike10004.xvfbtesting.XvfbRule;
 import com.browserup.harreader.model.HarEntry;

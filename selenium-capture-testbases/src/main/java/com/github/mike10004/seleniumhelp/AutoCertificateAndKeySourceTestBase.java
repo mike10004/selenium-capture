@@ -5,6 +5,7 @@ import com.google.common.io.BaseEncoding;
 import com.google.common.io.Files;
 import com.browserup.harreader.model.HarEntry;
 import com.browserup.harreader.model.HarResponse;
+import io.github.mike10004.seleniumcapture.testing.UnitTests;
 import org.junit.Assume;
 import org.junit.Rule;
 import org.junit.Test;
@@ -15,7 +16,6 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Base64;
 import java.util.Random;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;

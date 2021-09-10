@@ -3,6 +3,7 @@ package com.github.mike10004.seleniumhelp;
 import com.github.mike10004.xvfbtesting.XvfbRule;
 import com.google.common.base.Predicates;
 import com.google.common.collect.ImmutableList;
+import io.github.mike10004.seleniumcapture.testing.UnitTests;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;

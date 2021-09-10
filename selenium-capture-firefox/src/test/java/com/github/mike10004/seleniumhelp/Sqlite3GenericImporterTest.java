@@ -3,6 +3,7 @@ package com.github.mike10004.seleniumhelp;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.io.CharSource;
+import io.github.mike10004.seleniumcapture.testing.MapMatcher;
 import org.hamcrest.MatcherAssert;
 import org.junit.Rule;
 import org.junit.Test;
