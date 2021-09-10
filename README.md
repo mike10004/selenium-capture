@@ -68,13 +68,9 @@ annoying snafus like
 * you can't export cookies with all of the original attributes like expiration
   date
 
-This library helps resolve the first two of these snafus for Firefox and 
-Chrome webdrivers with custom solutions for each browser.
-
-* For Firefox, the library provides a mechanism to generate the SQLite database
-  where the browser stores cookies in the user profile directory 
-* For Chrome, the browser is started with an extension that enables cookies
-  to be imported programatically
+This library helps resolve the first two of these snafus for Firefox by 
+providing a mechanism to generate the SQLite database where the browser stores 
+cookies in the user profile directory.
 
 To resolve the issue of cookie export, you can use the traffic capture to 
 gain access to all cookies that were sent during a browsing session.

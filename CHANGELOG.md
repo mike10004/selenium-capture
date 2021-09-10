@@ -1,6 +1,14 @@
 Changelog
 =========
 
+0.57
+----
+
+* disable support for Chrome
+* divide project into multiple modules; projects that declared
+  selenium-capture dependency should instead declare selenium-capture-firefox
+* support firefox 91 ESR
+
 0.56
 ----
 
