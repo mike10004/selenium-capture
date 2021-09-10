@@ -35,7 +35,7 @@ public class FirefoxCookieUsageTest extends CookieUsageTestBase {
     @Override
     protected WebDriverFactory createCookielessWebDriverFactory(XvfbController xvfbController) throws IOException {
         return FirefoxWebDriverFactory.builder()
-                .binary(UnitTests.createFirefoxBinarySupplier())
+                .binary(FirefoxUnitTests.createFirefoxBinarySupplier())
                 .environment(xvfbController::newEnvironment)
                 .profileFolderAction(tracker)
                 .configure(o -> o.setAcceptInsecureCerts(true))
@@ -46,7 +46,7 @@ public class FirefoxCookieUsageTest extends CookieUsageTestBase {
     protected WebDriverFactory createCookiefulWebDriverFactory(XvfbController xvfbController,
                                                                List<DeserializableCookie> cookiesSetByServer) throws IOException {
         return FirefoxWebDriverFactory.builder()
-                .binary(UnitTests.createFirefoxBinarySupplier())
+                .binary(FirefoxUnitTests.createFirefoxBinarySupplier())
                 .environment(xvfbController::newEnvironment)
                 .scratchDir(temporaryFolder.getRoot().toPath())
                 .cookies(cookiesSetByServer)

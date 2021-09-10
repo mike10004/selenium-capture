@@ -10,6 +10,7 @@ import com.github.mike10004.seleniumhelp.HarPlus;
 import com.github.mike10004.seleniumhelp.TrafficCollector;
 import com.github.mike10004.seleniumhelp.TrafficGenerator;
 import com.github.mike10004.seleniumhelp.WebDriverFactory;
+import com.github.mike10004.seleniumhelp.WebDriverTestParameter;
 import com.google.common.net.MediaType;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -38,13 +39,21 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-public class BrowserUpHarsTest {
+public abstract class BrowserUpHarsTest {
 
     private static final Charset HAR_CHARSET = StandardCharsets.UTF_8;
 
-    private static void setupWebdriver() {
-        WebDriverManager.firefoxdriver().setup();
+    private final WebDriverTestParameter webDriverTestParameter;
+
+    public BrowserUpHarsTest(WebDriverTestParameter webDriverTestParameter) {
+        this.webDriverTestParameter = webDriverTestParameter;
     }
+
+    protected void setupWebdriver() {
+        webDriverTestParameter.doDriverManagerSetup();
+    }
+
+    protected abstract WebDriverFactory buildHeadlessFactory();
 
     @ClassRule
     public static TemporaryFolder temporaryFolder = new TemporaryFolder();
@@ -99,7 +108,7 @@ public class BrowserUpHarsTest {
     public void readAndWriteRealHar() throws Exception {
         setupWebdriver();
         checkState(new Har().equals(new Har()));
-        Har har = captureHar(FirefoxWebDriverFactory.builder().configure(o -> o.setHeadless(true)).build());
+        Har har = captureHar(buildHeadlessFactory());
         checkState(!har.getLog().getEntries().isEmpty(), "expect nonempty har captured");
 
         File subdir = temporaryFolder.newFolder();

@@ -19,7 +19,7 @@ public class FirefoxWebDriverFactory_LogLevelTest {
 
     @BeforeClass
     public static void setupGeckodriver() {
-        UnitTests.setupRecommendedGeckoDriver();
+        FirefoxUnitTests.setupRecommendedGeckoDriver();
     }
 
     @Test

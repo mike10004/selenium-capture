@@ -14,18 +14,14 @@ import com.browserup.harreader.model.HarResponse;
 import com.browserup.bup.mitm.CertificateAndKeySource;
 import org.apache.commons.text.StringEscapeUtils;
 import org.apache.commons.validator.routines.InetAddressValidator;
-import org.apache.http.client.utils.URIBuilder;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
-import org.littleshoot.proxy.ChainedProxyType;
-import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -42,28 +38,31 @@ import static org.junit.Assert.fail;
 
 public abstract class CollectionTestBase {
 
-    public static final String SYSPROP_TEST_PROXY = "selenium-help.test.proxy.http";
-
-    private static HostAndPort upstreamProxyHostAndPort_ = null;
-    private static ChainedProxyType upstreamProxyType_ = null;
-
     @ClassRule
     public static final XvfbRule xvfb = UnitTests.xvfbRuleBuilder().build();
+
+    @ClassRule
+    public static final UpstreamProxyRule upstreamProxyRule = new UpstreamProxyRule();
 
     @Nullable
     private final HostAndPort upstreamProxyHostAndPort;
 
-    @Nullable
-    private final ChainedProxyType upstreamProxyType;
-
+    protected final WebDriverTestParameter webDriverTestParameter;
     protected final String protocol;
 
-    protected CollectionTestBase(String protocol) {
+    public CollectionTestBase(WebDriverTestParameter webDriverTestParameter, String protocol) {
+        this.webDriverTestParameter = webDriverTestParameter;
         this.protocol = protocol;
-        this.upstreamProxyHostAndPort = upstreamProxyHostAndPort_;
-        this.upstreamProxyType = upstreamProxyType_;
+        upstreamProxyHostAndPort = upstreamProxyRule.getUpstreamProxyHostAndPort();
         checkArgument("http".equals(protocol) || "https".equals(protocol), "protocol must be  http or https: %s", protocol);
     }
+
+    @Before
+    public void setUpDriver() {
+        webDriverTestParameter.doDriverManagerSetup();
+    }
+
+    protected abstract boolean isHeadlessTestDisabled();
 
     @BeforeClass
     public static void checkClasspath() {
@@ -83,28 +82,14 @@ public abstract class CollectionTestBase {
         }
     }
 
-    @BeforeClass
-    public static void setUpstreamProxy() {
-        String proxyValue = System.getProperty(SYSPROP_TEST_PROXY);
-        if (!Strings.isNullOrEmpty(proxyValue)) {
-            if (proxyValue.matches("^\\w+://.*$")) {
-                URI proxyUri = URI.create(proxyValue);
-                upstreamProxyType_ = ChainedProxyType.valueOf(proxyUri.getScheme().toUpperCase());
-                upstreamProxyHostAndPort_ = HostAndPort.fromParts(proxyUri.getHost(), proxyUri.getPort());
-            } else {
-                upstreamProxyHostAndPort_ = HostAndPort.fromString(proxyValue);
-                upstreamProxyType_ = ChainedProxyType.HTTP;
-            }
-        } else {
-            LoggerFactory.getLogger(CollectionTestBase.class).info("this test is much more valuable if you set system or maven property " + SYSPROP_TEST_PROXY + " to an available HTTP proxy that does not have the same external IP address as the JVM's network interface");
-        }
-    }
-
     @Before
     public void waitForDisplay() throws InterruptedException {
         xvfb.getController().waitUntilReady();
     }
 
+//    protected abstract WebDriverFactory buildHeadlessFactoryForHttpCollection();
+//    protected abstract WebDriverFactory buildHeadlessFactoryForHttpsCollection();
+//
     /**
      * Gets the port used to build the URL to send a request to. Return -1
      * if you want to use the default port for the protocol.
@@ -191,24 +176,6 @@ public abstract class CollectionTestBase {
         }
     }
 
-    protected class TestProxySupplier implements java.util.function.Supplier<URI> {
-
-        @Override
-        public URI get() {
-            if (upstreamProxyHostAndPort == null) {
-                return null;
-            }
-            try {
-                return new URIBuilder()
-                        .setScheme(UriProxySpecification.toScheme(upstreamProxyType))
-                        .setHost(upstreamProxyHostAndPort.getHost())
-                        .setPort(upstreamProxyHostAndPort.getPort())
-                        .build();
-            } catch (URISyntaxException e) {
-                throw new RuntimeException(e);
-            }
-        }
-    }
 
     protected HarResponse testTrafficCollector(WebDriverFactory webDriverFactory, final URL url) throws IOException {
         TrafficGenerator<String> urlTrafficGenerator = driver -> {
@@ -236,8 +203,12 @@ public abstract class CollectionTestBase {
     }
 
     protected <T> HarPlus<T> testTrafficCollector(WebDriverFactory webDriverFactory, TrafficGenerator<T> pageSourceTrafficGenerator) throws IOException {
+        return testTrafficCollector(webDriverFactory, pageSourceTrafficGenerator, protocol, upstreamProxyRule::getProxySpecificationUri);
+    }
+
+    public static <T> HarPlus<T> testTrafficCollector(WebDriverFactory webDriverFactory, TrafficGenerator<T> pageSourceTrafficGenerator, String protocol, Supplier<URI> proxySpecUriSupplier) throws IOException {
         TrafficCollectorImpl.Builder tcBuilder = TrafficCollector.builder(webDriverFactory);
-        URI upstreamProxy = new TestProxySupplier().get();
+        URI upstreamProxy = proxySpecUriSupplier.get();
         if (upstreamProxy != null) {
             tcBuilder.upstreamProxy(UriProxySpecification.of(upstreamProxy).toUpstreamProxyDefinition());
         }

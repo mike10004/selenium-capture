@@ -84,7 +84,7 @@ public abstract class FirefoxWebDriverFactoryTest {
         @Test
         public void disablesAutoPhoneHome() throws Exception {
             FirefoxWebDriverFactory factory = FirefoxWebDriverFactory.builder()
-                    .binary(UnitTests.createFirefoxBinarySupplier())
+                    .binary(FirefoxUnitTests.createFirefoxBinarySupplier())
                     .configure(o -> o.setHeadless(true))
                     .scratchDir(temporaryFolder.getRoot().toPath())
                     .acceptInsecureCerts()

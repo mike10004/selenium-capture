@@ -14,6 +14,21 @@
     <properties>
     </properties>
 
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.seleniumhq.selenium</groupId>
+                <artifactId>selenium-remote-driver</artifactId>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.seleniumhq.selenium</groupId>
+                        <artifactId>selenium-chrome-driver</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
     <dependencies>
         <dependency>
             <groupId>${project.groupId}</groupId>
@@ -43,10 +58,6 @@
             <groupId>com.github.mike10004</groupId>
             <artifactId>xvfb-testing</artifactId>
             <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.github.mike10004</groupId>
-            <artifactId>chrome-cookie-implant</artifactId>
         </dependency>
         <dependency>
             <groupId>com.github.mike10004</groupId>
