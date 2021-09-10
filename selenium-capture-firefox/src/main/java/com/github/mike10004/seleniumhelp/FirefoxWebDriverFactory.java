@@ -499,7 +499,7 @@ public class FirefoxWebDriverFactory extends CapableWebDriverFactory<FirefoxOpti
         private Supplier<FirefoxBinary> binarySupplier = FirefoxBinary::new;
         private Map<String, Object> profilePreferences = new LinkedHashMap<>();
         private final List<DeserializableCookie> cookies = new ArrayList<>();
-        private Path scratchDir = FileUtils.getTempDirectory().toPath();
+        private Path scratchDir = new File(System.getProperty("java.io.tmpdir")).toPath();
         private final List<FirefoxProfileAction> profileActions = new ArrayList<>();
         private final List<FirefoxProfileFolderAction> profileFolderActions = new ArrayList<>();
         private GeckoServiceConstructor geckoServiceConstructor = GeckoServiceConstructor.standard();
