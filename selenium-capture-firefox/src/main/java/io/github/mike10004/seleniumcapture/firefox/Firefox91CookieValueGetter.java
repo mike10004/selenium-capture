@@ -12,6 +12,9 @@ import java.util.function.Function;
 
 public class Firefox91CookieValueGetter implements FirefoxCookieValueGetter {
 
+    public Firefox91CookieValueGetter() {
+    }
+
     @Override
     public Object getValueBySqlColumnName(Map<String, Object> explodedCookie, String sqlColumnName) {
         Function<Map<String, Object>, Object> fn = VALUE_GETTER_MAP.get(sqlColumnName);

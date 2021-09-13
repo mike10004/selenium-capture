@@ -36,7 +36,6 @@ public class FirefoxCookieRowTransformBase implements FirefoxCookieRowTransform 
     public Map<String, String> apply(Map<String, Object> explodedCookie) {
         Map<String, String> sqlRowMap = new TreeMap<>();
         for (String sqlFieldName : columnNames) {
-            // sqlRowMap.put(sqlFieldName, "");
             Object value = cookieValueGetter.getValueBySqlColumnName(explodedCookie, sqlFieldName);
             if (value != null) {
                 String valueStr = stringifyCookieValue(value, sqlFieldName);

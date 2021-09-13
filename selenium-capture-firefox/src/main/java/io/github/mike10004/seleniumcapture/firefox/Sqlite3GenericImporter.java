@@ -19,7 +19,7 @@ import java.util.Map;
 
 import static java.util.Objects.requireNonNull;
 
-class Sqlite3GenericImporter {
+public class Sqlite3GenericImporter {
 
     private static final Logger log = LoggerFactory.getLogger(Sqlite3GenericImporter.class);
 
