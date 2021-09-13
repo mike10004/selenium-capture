@@ -1,11 +1,18 @@
 package io.github.mike10004.seleniumcapture.firefox;
 
-import io.github.mike10004.seleniumcapture.ExplodedCookieConverter;
+import com.google.common.io.Files;
+import com.google.common.io.Resources;
+import io.github.mike10004.seleniumcapture.CookieExploder;
 import io.github.mike10004.seleniumcapture.StandardCookieExploder;
 import com.google.common.collect.ImmutableList;
 
+import java.io.File;
+import java.io.IOException;
+import java.net.URL;
 import java.util.Collections;
 import java.util.List;
+
+import static java.util.Objects.requireNonNull;
 
 public class Firefox91CookieImporter extends FirefoxCookieImporterBase {
 
@@ -54,7 +61,7 @@ public class Firefox91CookieImporter extends FirefoxCookieImporterBase {
     public Firefox91CookieImporter(Sqlite3Runner sqliteRunner,
                                    Sqlite3GenericImporter genericImporter,
                                    Sqlite3ImportInfo importInfo,
-                                   ExplodedCookieConverter explodedCookieConverter,
+                                   CookieExploder explodedCookieConverter,
                                    FirefoxCookieRowTransform cookieRowTransform) {
         super(sqliteRunner, genericImporter, importInfo, explodedCookieConverter, cookieRowTransform);
     }
@@ -79,7 +86,14 @@ public class Firefox91CookieImporter extends FirefoxCookieImporterBase {
     }
 
     @Override
-    public String getEmptyDbResourcePath() {
+    public void createEmptyCookiesDb(File destinationSqliteDbFile) throws IOException {
+        String resourcePath = getEmptyDbResourcePath();
+        URL resource = getClass().getResource(resourcePath);
+        requireNonNull(resource, "not found: classpath:" + resourcePath);
+        Resources.asByteSource(resource).copyTo(Files.asByteSink(destinationSqliteDbFile));
+    }
+
+    private String getEmptyDbResourcePath() {
         return "/selenium-capture/firefox/empty-cookies-db-ff91.sqlite";
     }
 }

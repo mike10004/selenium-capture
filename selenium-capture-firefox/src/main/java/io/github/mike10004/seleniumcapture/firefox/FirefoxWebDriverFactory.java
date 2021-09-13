@@ -1,5 +1,12 @@
 package io.github.mike10004.seleniumcapture.firefox;
 
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.MoreObjects;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
+import com.google.common.primitives.Ints;
 import io.github.mike10004.seleniumcapture.CapableWebDriverFactory;
 import io.github.mike10004.seleniumcapture.CapableWebDriverFactoryBuilder;
 import io.github.mike10004.seleniumcapture.DeserializableCookie;
@@ -8,15 +15,7 @@ import io.github.mike10004.seleniumcapture.ServiceWebdrivingSession;
 import io.github.mike10004.seleniumcapture.WebdrivingConfig;
 import io.github.mike10004.seleniumcapture.WebdrivingProxyDefinition;
 import io.github.mike10004.seleniumcapture.WebdrivingSession;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.MoreObjects;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Iterables;
-import com.google.common.io.Files;
-import com.google.common.io.Resources;
-import com.google.common.primitives.Ints;
+import org.apache.commons.text.StringEscapeUtils;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.firefox.FirefoxBinary;
 import org.openqa.selenium.firefox.FirefoxDriver;
@@ -30,7 +29,6 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
-import java.net.URL;
 import java.nio.file.Path;
 import java.sql.SQLException;
 import java.time.Clock;
@@ -64,29 +62,12 @@ public class FirefoxWebDriverFactory extends CapableWebDriverFactory<FirefoxOpti
     private final GeckoServiceConstructor geckoServiceConstructor;
     private final FirefoxCookieImporter cookieDbImporter;
 
-    @Override
-    public String toString() {
-        return MoreObjects.toStringHelper(this)
-                .omitNullValues()
-                .add("binary", binarySupplier)
-                .add("profilePreferences.size", profilePreferences.size())
-                .add("profileActions.size", profileActions.size())
-                .add("profileActions", profileActions)
-                .add("profileFolderActions.size", profileFolderActions.size())
-                .add("profileFolderActions", profileFolderActions)
-                .add("cookies.size", cookies.size())
-                .add("scratchDir", scratchDir)
-                .add("webdriverLogLevel", webdriverLogLevel)
-                .add("environmentSupplier", environmentSupplier)
-                .toString();
-    }
-
     protected FirefoxWebDriverFactory(Builder builder) {
         super(builder);
         this.scratchDir = requireNonNull(builder.scratchDir);
         this.binarySupplier = requireNonNull(builder.binarySupplier);
         this.profilePreferences = ImmutableMap.copyOf(builder.profilePreferences);
-        checkPreferencesValues(this.profilePreferences.values());
+        checkPreferencesValues(this.profilePreferences.entrySet());
         this.cookies = ImmutableList.copyOf(builder.cookies);
         this.profileActions = ImmutableList.copyOf(builder.profileActions);
         this.profileFolderActions = ImmutableList.copyOf(builder.profileFolderActions);
@@ -367,11 +348,24 @@ public class FirefoxWebDriverFactory extends CapableWebDriverFactory<FirefoxOpti
     }
 
     @VisibleForTesting
-    static void checkPreferencesValues(Iterable<?> values) throws IllegalArgumentException {
-        for (Object value : values) {
+    static <T> void checkPreferencesValues(Iterable<Map.Entry<String, T>> preferences) throws IllegalArgumentException {
+        for (Map.Entry<String, T> pref : preferences) {
+            String key = pref.getKey();
+            T value = pref.getValue();
             if (!PREFERENCE_VALUE_CHECKER.test(value)) {
-                throw new IllegalArgumentException(String.format("preference value %s (%s) must have type that is one of %s", value, value == null ? "N/A" : value.getClass(), ALLOWED_PREFERENCE_TYPES));
+                throw new IllegalPreferenceValueException(key, value);
             }
+        }
+    }
+
+    static class IllegalPreferenceValueException extends IllegalArgumentException {
+
+        public IllegalPreferenceValueException(String key, Object value) {
+            super(String.format("\"%s\" preference value %s (%s) must have type that is one of %s", StringEscapeUtils.escapeJava(key), value, describeType(value), ALLOWED_PREFERENCE_TYPES));
+        }
+
+        private static String describeType(@Nullable Object value) {
+            return value == null ? "null" : value.getClass().getName();
         }
     }
 
@@ -418,10 +412,7 @@ public class FirefoxWebDriverFactory extends CapableWebDriverFactory<FirefoxOpti
         public void perform(File profileDir) {
             File sqliteDbFile = new File(profileDir, COOKIES_DB_FILENAME);
             try {
-                String resourcePath = cookieImporter.getEmptyDbResourcePath();
-                URL resource = getClass().getResource(resourcePath);
-                requireNonNull(resource, "not found: classpath:" + resourcePath);
-                Resources.asByteSource(resource).copyTo(Files.asByteSink(sqliteDbFile));
+                cookieImporter.createEmptyCookiesDb(sqliteDbFile);
                 cookieImporter.importCookies(cookies, sqliteDbFile, scratchDir);
                 log.debug("imported {} cookies into firefox profile sqlite database {}", cookies.size(), sqliteDbFile);
             } catch (SQLException | IOException e) {
@@ -730,26 +721,21 @@ public class FirefoxWebDriverFactory extends CapableWebDriverFactory<FirefoxOpti
         }
     }
 
-    public enum XpinstallSetting implements FirefoxProfileAction {
-        NOT_MODIFIED,
-        SIGNATURE_REQUIRED_TRUE,
-        SIGNATURE_REQUIRED_FALSE;
-
-        private static final String PREF_KEY = "xpinstall.signatures.required";
-
-        @Override
-        public void perform(FirefoxProfile profile) {
-            switch (this) {
-                case NOT_MODIFIED:
-                    break;
-                case SIGNATURE_REQUIRED_FALSE:
-                    profile.setPreference(PREF_KEY, false);
-                    break;
-                case SIGNATURE_REQUIRED_TRUE:
-                    profile.setPreference(PREF_KEY, true);
-                    break;
-            }
-        }
-
+    @Override
+    public String toString() {
+        return MoreObjects.toStringHelper(this)
+                .omitNullValues()
+                .add("binary", binarySupplier)
+                .add("profilePreferences.size", profilePreferences.size())
+                .add("profileActions.size", profileActions.size())
+                .add("profileActions", profileActions)
+                .add("profileFolderActions.size", profileFolderActions.size())
+                .add("profileFolderActions", profileFolderActions)
+                .add("cookies.size", cookies.size())
+                .add("scratchDir", scratchDir)
+                .add("webdriverLogLevel", webdriverLogLevel)
+                .add("environmentSupplier", environmentSupplier)
+                .toString();
     }
+
 }

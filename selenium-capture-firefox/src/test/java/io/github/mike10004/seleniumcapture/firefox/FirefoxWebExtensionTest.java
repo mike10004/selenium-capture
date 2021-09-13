@@ -64,7 +64,7 @@ public class FirefoxWebExtensionTest {
         FirefoxUnitTests.requireEsrOrUnbrandedFirefoxBinary(firefoxBinarySupplier);
         File zipFile = prepareExtensionZipFile();
         List<String> targetTexts = new ArrayList<>();
-        useWebExtensionsExtensionZip(zipFile, FirefoxWebDriverFactory.XpinstallSetting.SIGNATURE_REQUIRED_FALSE,
+        useWebExtensionsExtensionZip(zipFile, XpinstallSetting.SIGNATURE_REQUIRED_FALSE,
                 driver -> {
                     driver.get("https://www.example.com/");
                     WebElement element = new WebDriverWait(driver, Duration.ofSeconds(5))
@@ -82,7 +82,7 @@ public class FirefoxWebExtensionTest {
         NanoServer server = NanoServer.builder()
                 .getPath("/", session -> NanoResponse.status(200).htmlUtf8(smallPageHtml()))
                 .build();
-        useWebExtensionsExtensionZip(zipFile, FirefoxWebDriverFactory.XpinstallSetting.NOT_MODIFIED,
+        useWebExtensionsExtensionZip(zipFile, XpinstallSetting.NOT_MODIFIED,
                 driver -> {
                     try (NanoControl ctrl = server.startServer()) {
                         checkDarkReaderContent(driver, ctrl.baseUri());
@@ -134,14 +134,14 @@ public class FirefoxWebExtensionTest {
 
     @SuppressWarnings("UnusedReturnValue")
     private Har useWebExtensionsExtensionZip(File zipFile,
-                                             @SuppressWarnings("SameParameterValue") FirefoxWebDriverFactory.XpinstallSetting xpinstallSetting,
+                                             @SuppressWarnings("SameParameterValue") XpinstallSetting xpinstallSetting,
                                              Driveable driveable) throws Exception {
         return useWebExtensionsExtensionZip(zipFile, xpinstallSetting, driveable, FirefoxUnitTests.createFirefoxBinarySupplier());
     }
 
     @SuppressWarnings("UnusedReturnValue")
     private Har useWebExtensionsExtensionZip(File zipFile,
-                                             FirefoxWebDriverFactory.XpinstallSetting xpinstallSetting,
+                                             XpinstallSetting xpinstallSetting,
                                              Driveable driveable,
                                              Supplier<FirefoxBinary> firefoxBinarySupplier) throws Exception {
         String display = xvfb.getController().getDisplay();

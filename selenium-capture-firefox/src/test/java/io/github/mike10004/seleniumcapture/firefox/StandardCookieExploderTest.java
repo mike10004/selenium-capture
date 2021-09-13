@@ -1,7 +1,7 @@
 package io.github.mike10004.seleniumcapture.firefox;
 
 import io.github.mike10004.seleniumcapture.DeserializableCookie;
-import io.github.mike10004.seleniumcapture.ExplodedCookieConverter;
+import io.github.mike10004.seleniumcapture.CookieExploder;
 import io.github.mike10004.seleniumcapture.StandardCookieExploder;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -22,7 +22,7 @@ public class StandardCookieExploderTest {
 
     @Test
     public void explode() throws Exception {
-        ExplodedCookieConverter conv = new StandardCookieExploder();
+        CookieExploder conv = new StandardCookieExploder();
         DeserializableCookie c = ExampleCookieSource.asDeserializableCookie();
         Map<String, Object> exploded = conv.explode(c);
         assertNotNull(exploded);
@@ -33,7 +33,7 @@ public class StandardCookieExploderTest {
 
     @Test
     public void explode_almostEmpty() throws Exception {
-        ExplodedCookieConverter conv = new StandardCookieExploder();
+        CookieExploder conv = new StandardCookieExploder();
         DeserializableCookie cookie = DeserializableCookie.builder("x", null).build();
         Map<String, Object> exploded = conv.explode(cookie);
         assertNotNull(exploded);
@@ -43,7 +43,7 @@ public class StandardCookieExploderTest {
 
     @Test
     public void explode_cookieMissingSomeStuff() throws Exception {
-        ExplodedCookieConverter conv = new StandardCookieExploder();
+        CookieExploder conv = new StandardCookieExploder();
         DeserializableCookie cookie = DeserializableCookie.builder("foo", "bar").domain(".example.com").path("/").build();
         Map<String, Object> exploded = conv.explode(cookie);
         assertNotNull(exploded);
@@ -88,7 +88,7 @@ public class StandardCookieExploderTest {
 
     @Test
     public void retainNameAndValue() throws Exception {
-        ExplodedCookieConverter explodedCookieConverter = new StandardCookieExploder();
+        CookieExploder explodedCookieConverter = new StandardCookieExploder();
         DeserializableCookie cookie = DeserializableCookie.builder("foo", "bar").domain("example.com").expiry(Instant.now().plus(Duration.ofHours(24))).build();
         Map<String, Object> explosion = explodedCookieConverter.explode(cookie);
         assertNotNull(explosion);

@@ -15,6 +15,7 @@ import java.nio.charset.Charset;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -100,7 +101,7 @@ public class Sqlite3RunnerTest {
     private void populateSampleDb(Sqlite3GenericImporter importer, Map<Integer, String> idToValue, File sqliteDbFile) throws IOException, SQLException {
         List<Map<String, String>> rows = new ArrayList<>(idToValue.size());
         idToValue.forEach((id, value) -> rows.add(ImmutableMap.of("id", id.toString(), "value", value)));
-        Sqlite3ImportInfo importInfo = Sqlite3ImportInfo.create(SAMPLE_DB_TABLE_NAME, Arrays.asList("id", "value"), createTableSql);
+        Sqlite3ImportInfo importInfo = Sqlite3ImportInfo.create(SAMPLE_DB_TABLE_NAME, Arrays.asList("id", "value"), Collections.singletonList(createTableSql));
         importer.doImportRows(createRunner(), rows, importInfo, sqliteDbFile, tmp.getRoot().toPath());
     }
 }

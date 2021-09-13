@@ -13,7 +13,7 @@ import org.slf4j.LoggerFactory;
 import java.time.Instant;
 import java.util.Map;
 
-public class StandardCookieExploder implements ExplodedCookieConverter {
+public class StandardCookieExploder implements CookieExploder {
 
     private static final Logger log = LoggerFactory.getLogger(StandardCookieExploder.class);
 

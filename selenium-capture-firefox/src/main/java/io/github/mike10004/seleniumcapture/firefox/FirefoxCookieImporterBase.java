@@ -1,7 +1,7 @@
 package io.github.mike10004.seleniumcapture.firefox;
 
 import io.github.mike10004.seleniumcapture.DeserializableCookie;
-import io.github.mike10004.seleniumcapture.ExplodedCookieConverter;
+import io.github.mike10004.seleniumcapture.CookieExploder;
 import com.google.common.collect.Iterables;
 import io.github.mike10004.subprocess.ProcessResult;
 import io.github.mike10004.subprocess.Subprocess;
@@ -30,10 +30,14 @@ public abstract class FirefoxCookieImporterBase implements FirefoxCookieImporter
     private final Sqlite3Runner sqliteRunner;
     private final Sqlite3GenericImporter genericImporter;
     private final Sqlite3ImportInfo importInfo;
-    private final ExplodedCookieConverter explodedCookieConverter;
+    private final CookieExploder explodedCookieConverter;
     private final FirefoxCookieRowTransform cookieRowTransform;
 
-    public FirefoxCookieImporterBase(Sqlite3Runner sqliteRunner, Sqlite3GenericImporter genericImporter, Sqlite3ImportInfo importInfo, ExplodedCookieConverter explodedCookieConverter, FirefoxCookieRowTransform cookieRowTransform) {
+    public FirefoxCookieImporterBase(Sqlite3Runner sqliteRunner,
+                                     Sqlite3GenericImporter genericImporter,
+                                     Sqlite3ImportInfo importInfo,
+                                     CookieExploder explodedCookieConverter,
+                                     FirefoxCookieRowTransform cookieRowTransform) {
         this.genericImporter = requireNonNull(genericImporter);
         this.sqliteRunner = requireNonNull(sqliteRunner);
         this.importInfo = requireNonNull(importInfo);

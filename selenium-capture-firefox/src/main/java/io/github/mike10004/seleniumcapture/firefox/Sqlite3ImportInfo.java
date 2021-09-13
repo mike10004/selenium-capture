@@ -1,15 +1,34 @@
 package io.github.mike10004.seleniumcapture.firefox;
 
-import java.util.Collections;
+import com.google.common.base.MoreObjects;
+
 import java.util.List;
 
+import static java.util.Objects.requireNonNull;
+
+/**
+ * Interface of a value class that contains information
+ * used for import into a sqlite database.
+ */
 public interface Sqlite3ImportInfo {
 
-    static Sqlite3ImportInfo create(String tableName, List<String> columns, String createTableSql) {
-        return create(tableName, columns, Collections.singletonList(createTableSql));
-    }
-
+    /**
+     * Creates an instance.
+     * @param tableName table name
+     * @param columns columns list
+     * @param createTableSql sql statements to create table
+     * @return instance
+     */
     static Sqlite3ImportInfo create(String tableName, List<String> columns, List<String> createTableSql) {
+        requireNonNull(tableName, "tableName");
+        requireNonNull(columns, "columns");
+        requireNonNull(createTableSql, "createTableSql");
+        if (columns.isEmpty()) {
+            throw new IllegalArgumentException("columns list must be nonempty");
+        }
+        if (createTableSql.isEmpty()) {
+            throw new IllegalArgumentException("create table statements list must be nonempty");
+        }
         return new Sqlite3ImportInfo() {
             @Override
             public String tableName() {
@@ -25,6 +44,15 @@ public interface Sqlite3ImportInfo {
             public List<String> createTableSqlStatements() {
                 return createTableSql;
             }
+
+            @Override
+            public String toString() {
+                return MoreObjects.toStringHelper(Sqlite3ImportInfo.class)
+                        .add("tableName", tableName)
+                        .add("columns.size", columns.size())
+                        .add("createTableStatements.size", createTableSql.size())
+                        .toString();
+            }
         };
     }
 
@@ -37,4 +65,5 @@ public interface Sqlite3ImportInfo {
     default String defaultCellValue() {
         return "";
     }
+
 }

@@ -7,8 +7,13 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.sql.SQLException;
 
+/**
+ * Interface of a service that imports cookies into a Firefox cookies database file.
+ */
 public interface FirefoxCookieImporter {
+
     void importCookies(Iterable<DeserializableCookie> cookies, File sqliteDbFile, Path scratchDir) throws SQLException, IOException;
 
-    String getEmptyDbResourcePath();
+    void createEmptyCookiesDb(File destinationSqliteDbFile) throws IOException;
+
 }
