@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.58
+----
+
+* breaking change: packages and classes renamed
+
 0.57
 ----
 
