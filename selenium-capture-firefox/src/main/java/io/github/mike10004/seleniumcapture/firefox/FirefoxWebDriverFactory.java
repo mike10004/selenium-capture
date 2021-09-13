@@ -501,7 +501,7 @@ public class FirefoxWebDriverFactory extends CapableWebDriverFactory<FirefoxOpti
         private final List<FirefoxProfileFolderAction> profileFolderActions = new ArrayList<>();
         private GeckoServiceConstructor geckoServiceConstructor = GeckoServiceConstructor.standard();
         private java.util.logging.Level webdriverLogLevel = null;
-        private FirefoxCookieImporter cookieDbImporter = new Firefox91CookieImporter(Sqlite3Runner.createDefault(), new Sqlite3GenericImporter());
+        private FirefoxCookieImporter cookieDbImporter = new Firefox91CookieImporter(new Sqlite3GenericImporter(Sqlite3Runner.createDefault()));
 
         private Builder() {
         }

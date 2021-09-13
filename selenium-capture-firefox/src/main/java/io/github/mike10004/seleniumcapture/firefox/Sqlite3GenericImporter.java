@@ -11,19 +11,25 @@ import org.apache.commons.text.StringEscapeUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.sql.SQLException;
+import java.util.List;
 import java.util.Map;
 
+import static io.github.mike10004.seleniumcapture.Subprocesses.checkResult;
 import static java.util.Objects.requireNonNull;
 
 public class Sqlite3GenericImporter {
 
     private static final Logger log = LoggerFactory.getLogger(Sqlite3GenericImporter.class);
 
-    public Sqlite3GenericImporter() {
+    private final Sqlite3Runner sqliteRunner;
+
+    public Sqlite3GenericImporter(Sqlite3Runner sqliteRunner) {
+        this.sqliteRunner = requireNonNull(sqliteRunner);
     }
 
     protected static String escapeSqlite3Token(String token) {
@@ -34,8 +40,33 @@ public class Sqlite3GenericImporter {
         return Platforms.getPlatform();
     }
 
-    public void doImportRows(Sqlite3Runner sqliteRunner,
-                             Iterable<Map<String, String>> rows,
+    /**
+     *
+     * @param sqliteRunner
+     * @param importInfo
+     * @param sqliteDbFile
+     * @return max primary key value, if relevant
+     */
+    @Nullable
+    public Integer ensureTableCreated(Sqlite3ImportInfo importInfo,
+                                      File sqliteDbFile) throws SQLException, IOException {
+        List<String> tableNames = sqliteRunner.queryTableNames(sqliteDbFile);
+        final Integer maxIdValue;
+        if (!tableNames.contains(importInfo.tableName())) {
+            createTable(importInfo, sqliteDbFile);
+            maxIdValue = 0;
+        } else {
+            String idColumnName = importInfo.idColumnName();
+            if (idColumnName == null) {
+                maxIdValue = null;
+            } else {
+                maxIdValue = sqliteRunner.findMaxValue(sqliteDbFile, idColumnName, importInfo.tableName()).orElse(0);
+            }
+        }
+        return maxIdValue;
+    }
+
+    public void doImportRows(Iterable<Map<String, String>> rows,
                              Sqlite3ImportInfo importInfo,
                              File sqliteDbFile,
                              Path scratchDir) throws SQLException, IOException {
@@ -65,6 +96,20 @@ public class Sqlite3GenericImporter {
                     log.warn("failed to delete temporary input file {}", inputFile);
                 }
             }
+        }
+    }
+
+    private void createTable(Sqlite3ImportInfo importInfo, File sqliteDbFile) throws SQLException {
+        // sqlite3 3.11 allows multiple sql statement arguments, but
+        // version 3.8 requires executing once per statement argument
+        for (String stmt : importInfo.createTableSqlStatements()) {
+            Subprocess createTableProgram = sqliteRunner.getSqlite3Builder()
+                    .arg(sqliteDbFile.getAbsolutePath())
+                    .arg(stmt)
+                    .build();
+            ProcessResult<String, String> createTableResult =
+                    sqliteRunner.executeOrPropagateInterruption(createTableProgram);
+            checkResult(createTableResult);
         }
     }
 

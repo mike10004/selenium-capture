@@ -68,7 +68,7 @@ public class Sqlite3RunnerTest {
         for (String filename : filenames) {
             File sqliteDbFile = new File(folder, filename);
             createSampleDb(createRunner(), sqliteDbFile);
-            Sqlite3GenericImporter importer = new Sqlite3GenericImporter();
+            Sqlite3GenericImporter importer = new Sqlite3GenericImporter(createRunner());
             populateSampleDb(importer, idToValue, sqliteDbFile);
             Sqlite3GenericExporter exporter = new Sqlite3GenericExporter(createRunner());
             List<Map<String, String>> rows = exporter.dumpRows(SAMPLE_DB_TABLE_NAME, sqliteDbFile);
@@ -101,7 +101,7 @@ public class Sqlite3RunnerTest {
     private void populateSampleDb(Sqlite3GenericImporter importer, Map<Integer, String> idToValue, File sqliteDbFile) throws IOException, SQLException {
         List<Map<String, String>> rows = new ArrayList<>(idToValue.size());
         idToValue.forEach((id, value) -> rows.add(ImmutableMap.of("id", id.toString(), "value", value)));
-        Sqlite3ImportInfo importInfo = Sqlite3ImportInfo.create(SAMPLE_DB_TABLE_NAME, Arrays.asList("id", "value"), Collections.singletonList(createTableSql));
-        importer.doImportRows(createRunner(), rows, importInfo, sqliteDbFile, tmp.getRoot().toPath());
+        Sqlite3ImportInfo importInfo = Sqlite3ImportInfo.create(SAMPLE_DB_TABLE_NAME, Arrays.asList("id", "value"), Collections.singletonList(createTableSql), "id");
+        importer.doImportRows(rows, importInfo, sqliteDbFile, tmp.getRoot().toPath());
     }
 }

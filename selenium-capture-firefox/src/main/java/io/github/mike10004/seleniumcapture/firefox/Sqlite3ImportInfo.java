@@ -2,6 +2,7 @@ package io.github.mike10004.seleniumcapture.firefox;
 
 import com.google.common.base.MoreObjects;
 
+import javax.annotation.Nullable;
 import java.util.List;
 
 import static java.util.Objects.requireNonNull;
@@ -19,7 +20,10 @@ public interface Sqlite3ImportInfo {
      * @param createTableSql sql statements to create table
      * @return instance
      */
-    static Sqlite3ImportInfo create(String tableName, List<String> columns, List<String> createTableSql) {
+    static Sqlite3ImportInfo create(String tableName,
+                                    List<String> columns,
+                                    List<String> createTableSql,
+                                    @Nullable String idColumnName) {
         requireNonNull(tableName, "tableName");
         requireNonNull(columns, "columns");
         requireNonNull(createTableSql, "createTableSql");
@@ -46,10 +50,16 @@ public interface Sqlite3ImportInfo {
             }
 
             @Override
+            public String idColumnName() {
+                return idColumnName;
+            }
+
+            @Override
             public String toString() {
                 return MoreObjects.toStringHelper(Sqlite3ImportInfo.class)
                         .add("tableName", tableName)
                         .add("columns.size", columns.size())
+                        .add("idColumnName", idColumnName)
                         .add("createTableStatements.size", createTableSql.size())
                         .toString();
             }
@@ -61,6 +71,8 @@ public interface Sqlite3ImportInfo {
     List<String> columnNames();
 
     List<String> createTableSqlStatements();
+
+    String idColumnName();
 
     default String defaultCellValue() {
         return "";

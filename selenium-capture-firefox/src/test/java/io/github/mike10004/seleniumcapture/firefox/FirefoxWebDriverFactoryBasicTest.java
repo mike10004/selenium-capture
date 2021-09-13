@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import org.junit.Test;
 
+import java.util.AbstractMap;
 import java.util.Collections;
 import java.util.Map;
 
@@ -13,21 +14,21 @@ public class FirefoxWebDriverFactoryBasicTest {
 
     @Test
     public void checkPreferencesValues() {
-        FirefoxWebDriverFactory.checkPreferencesValues(ImmutableList.of()); // these are ok if no exception is thrown
-        FirefoxWebDriverFactory.checkPreferencesValues(ImmutableList.of(1));
-        FirefoxWebDriverFactory.checkPreferencesValues(ImmutableList.of("foo"));
-        FirefoxWebDriverFactory.checkPreferencesValues(ImmutableList.of(true));
-        FirefoxWebDriverFactory.checkPreferencesValues(ImmutableList.of(1, false, "bar"));
+        FirefoxWebDriverFactory.checkPreferencesValues(ImmutableMap.<String, Object>of().entrySet()); // these are ok if no exception is thrown
+        FirefoxWebDriverFactory.checkPreferencesValues(ImmutableMap.of("a", 1).entrySet());
+        FirefoxWebDriverFactory.checkPreferencesValues(ImmutableMap.of("b", "foo").entrySet());
+        FirefoxWebDriverFactory.checkPreferencesValues(ImmutableMap.of("c", true).entrySet());
+        FirefoxWebDriverFactory.checkPreferencesValues(ImmutableMap.of("d", 1, "e", false, "f", "bar").entrySet());
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void checkPreferencesValues_null() {
-        FirefoxWebDriverFactory.checkPreferencesValues(Collections.singletonList((String) null));
+        FirefoxWebDriverFactory.checkPreferencesValues(Collections.singletonList(new AbstractMap.SimpleImmutableEntry<>("a", null)));
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void checkPreferencesValues_object() {
-        FirefoxWebDriverFactory.checkPreferencesValues(Collections.singletonList(new Object()));
+        FirefoxWebDriverFactory.checkPreferencesValues(Collections.singletonList(new AbstractMap.SimpleImmutableEntry<>("a", new Object())));
     }
 
     private static class Widget {
@@ -35,12 +36,12 @@ public class FirefoxWebDriverFactoryBasicTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void checkPreferencesValues_widget() {
-        FirefoxWebDriverFactory.checkPreferencesValues(Collections.singletonList(new Widget()));
+        FirefoxWebDriverFactory.checkPreferencesValues(Collections.singletonList(new AbstractMap.SimpleImmutableEntry<>("a", new Widget())));
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void checkPreferencesValues_double() {
-        FirefoxWebDriverFactory.checkPreferencesValues(Collections.singletonList(1.5));
+        FirefoxWebDriverFactory.checkPreferencesValues(Collections.singletonList(new AbstractMap.SimpleImmutableEntry<>("a", 1.5)));
     }
 
     @Test

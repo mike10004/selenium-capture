@@ -43,10 +43,6 @@ public class Sqlite3Runner {
         }
     }
 
-    public ExecutableConfig getConfig() {
-        return config;
-    }
-
     public ProcessResult<String, String> executeOrPropagateInterruption(Subprocess subprocess) throws ProcessWaitingInterruptedException {
         return executeOrPropagateInterruption(subprocess, (ByteSource) null);
     }
@@ -61,7 +57,7 @@ public class Sqlite3Runner {
         return Subprocesses.executeOrPropagateInterruption(subprocess, config.getEncoding(), stdinSource == null ? null : stdinSource.asByteSource(config.getEncoding()));
     }
 
-    Subprocess.Builder getSqlite3Builder() {
+    public Subprocess.Builder getSqlite3Builder() {
         return Subprocess.running(config.getExecutableName());
     }
 

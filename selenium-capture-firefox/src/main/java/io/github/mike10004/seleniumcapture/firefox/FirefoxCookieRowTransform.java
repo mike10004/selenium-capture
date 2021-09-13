@@ -1,5 +1,7 @@
 package io.github.mike10004.seleniumcapture.firefox;
 
+import io.github.mike10004.seleniumcapture.DeserializableCookie;
+
 import java.util.Map;
 
 /**
@@ -9,11 +11,11 @@ import java.util.Map;
 public interface FirefoxCookieRowTransform {
 
     /**
-     * Transforms an exploded cookie into a map that represents a row in a sqlite database table.
-     * @param explodedCookie cookie
-     * @return row
+     * Transforms a cookie into a map that represents a record in a sqlite database table.
+     * @param cookie cookie
+     * @return record
      */
-    Map<String, String> apply(Map<String, Object> explodedCookie);
+    Map<String, String> apply(DeserializableCookie cookie);
 
 }
 

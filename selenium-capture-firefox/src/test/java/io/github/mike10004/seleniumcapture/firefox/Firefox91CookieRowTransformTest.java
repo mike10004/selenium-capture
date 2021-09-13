@@ -22,7 +22,7 @@ public class Firefox91CookieRowTransformTest {
                 .attribute("baz", "gaw")
                 .httpOnly(true)
                 .build();
-        Map<String, String> row = t.apply(new StandardCookieExploder().explode(c));
+        Map<String, String> row = t.apply(c);
         assertEquals("isHttpOnly", "1", row.get("isHttpOnly"));
     }
 }

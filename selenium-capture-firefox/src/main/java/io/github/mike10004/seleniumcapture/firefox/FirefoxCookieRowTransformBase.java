@@ -4,6 +4,8 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.CharMatcher;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
+import io.github.mike10004.seleniumcapture.CookieExploder;
+import io.github.mike10004.seleniumcapture.DeserializableCookie;
 
 import java.math.BigInteger;
 import java.time.Instant;
@@ -24,16 +26,19 @@ public class FirefoxCookieRowTransformBase implements FirefoxCookieRowTransform 
     @VisibleForTesting
     static Joiner.MapJoiner ATTRIB_JOINER = Joiner.on(';').withKeyValueSeparator('=');
 
+    private final CookieExploder cookieExploder;
     private final ImmutableList<String> columnNames;
     private final FirefoxCookieValueGetter cookieValueGetter;
 
-    public FirefoxCookieRowTransformBase(List<String> columnNames, FirefoxCookieValueGetter cookieValueGetter) {
+    public FirefoxCookieRowTransformBase(CookieExploder cookieExploder, List<String> columnNames, FirefoxCookieValueGetter cookieValueGetter) {
         this.columnNames = ImmutableList.copyOf(columnNames);
+        this.cookieExploder = requireNonNull(cookieExploder);
         this.cookieValueGetter = requireNonNull(cookieValueGetter);
     }
 
     @Override
-    public Map<String, String> apply(Map<String, Object> explodedCookie) {
+    public Map<String, String> apply(DeserializableCookie cookie) {
+        Map<String, Object> explodedCookie = cookieExploder.explode(cookie);
         Map<String, String> sqlRowMap = new TreeMap<>();
         for (String sqlFieldName : columnNames) {
             Object value = cookieValueGetter.getValueBySqlColumnName(explodedCookie, sqlFieldName);

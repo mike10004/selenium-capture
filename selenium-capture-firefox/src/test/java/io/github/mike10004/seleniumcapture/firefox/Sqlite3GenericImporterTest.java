@@ -30,9 +30,9 @@ public class Sqlite3GenericImporterTest {
 
     private Map<String, String> importAndCheck(Sqlite3ImportInfo importInfo, Map<String, String> cookieFieldMap) throws IOException, SQLException {
         ExecutableConfig config = Sqlite3Runner.createDefaultSqlite3Config();
-        Sqlite3GenericImporter importer = new Sqlite3GenericImporter();
+        Sqlite3GenericImporter importer = new Sqlite3GenericImporter(new Sqlite3Runner(config));
         File dbFile = tmp.newFile();
-        importer.doImportRows(new Sqlite3Runner(config), ImmutableList.of(cookieFieldMap), importInfo, dbFile, tmp.getRoot().toPath());
+        importer.doImportRows(ImmutableList.of(cookieFieldMap), importInfo, dbFile, tmp.getRoot().toPath());
         Map<String, String> exportedCookieFieldMap = Iterables.getOnlyElement(
                 new Sqlite3GenericExporter(new Sqlite3Runner(config)).dumpRows("moz_cookies", dbFile));
         MatcherAssert.assertThat("field map", exportedCookieFieldMap, new MapMatcher<String, String>(cookieFieldMap) {

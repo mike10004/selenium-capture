@@ -1,16 +1,13 @@
 package io.github.mike10004.seleniumcapture.firefox;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.io.Files;
 import com.google.common.io.Resources;
-import io.github.mike10004.seleniumcapture.CookieExploder;
-import io.github.mike10004.seleniumcapture.StandardCookieExploder;
-import com.google.common.collect.ImmutableList;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.util.Collections;
-import java.util.List;
 
 import static java.util.Objects.requireNonNull;
 
@@ -54,35 +51,19 @@ public class Firefox91CookieImporter extends FirefoxCookieImporterBase {
             "schemeMap"
             );
 
-    public Firefox91CookieImporter(Sqlite3Runner sqliteRunner, Sqlite3GenericImporter genericImporter) {
-        this(sqliteRunner, genericImporter, getImportInfo(), new StandardCookieExploder(), new Firefox91CookieRowTransform());
+    public Firefox91CookieImporter(Sqlite3GenericImporter genericImporter) {
+        this(genericImporter, getImportInfo(), new Firefox91CookieRowTransform());
     }
 
-    public Firefox91CookieImporter(Sqlite3Runner sqliteRunner,
-                                   Sqlite3GenericImporter genericImporter,
+    public Firefox91CookieImporter(Sqlite3GenericImporter genericImporter,
                                    Sqlite3ImportInfo importInfo,
-                                   CookieExploder explodedCookieConverter,
                                    FirefoxCookieRowTransform cookieRowTransform) {
-        super(sqliteRunner, genericImporter, importInfo, explodedCookieConverter, cookieRowTransform);
+        super(genericImporter, importInfo, cookieRowTransform);
     }
 
     public static Sqlite3ImportInfo getImportInfo() {
-        return new Sqlite3ImportInfo() {
-            @Override
-            public String tableName() {
-                return "moz_cookies";
-            }
-
-            @Override
-            public List<String> columnNames() {
-                return columnNames;
-            }
-
-            @Override
-            public List<String> createTableSqlStatements() {
-                return Collections.singletonList(createTableStmt);
-            }
-        };
+        return Sqlite3ImportInfo.create("moz_cookies",
+                columnNames, Collections.singletonList(createTableStmt), "id");
     }
 
     @Override
