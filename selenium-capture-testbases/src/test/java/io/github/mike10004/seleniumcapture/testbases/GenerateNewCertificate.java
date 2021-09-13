@@ -150,7 +150,7 @@ public class GenerateNewCertificate {
             }
             System.out.println(responseText);
             checkState(responseText != null, "response text null");
-            JsonObject responseObj = new JsonParser().parse(responseText).getAsJsonObject();
+            JsonObject responseObj = JsonParser.parseString(responseText).getAsJsonObject();
             JsonElement headers = responseObj.get("headers");
             checkState(headers != null, "headers not present in %s", responseObj);
             JsonElement customHeaderEl = headers.getAsJsonObject().get(HEADER_NAME);

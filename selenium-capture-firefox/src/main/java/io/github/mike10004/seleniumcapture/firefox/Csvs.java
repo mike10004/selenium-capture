@@ -24,7 +24,8 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
-public class Csvs {
+@SuppressWarnings("unused")
+class Csvs {
 
     private Csvs() {}
 
@@ -53,7 +54,7 @@ public class Csvs {
         checkNotNull(headers);
         return new HeaderStrategy() {
             @Override
-            public String[] produceHeaders(CSVReader readerBeforeFirstRead) throws IOException {
+            public String[] produceHeaders(CSVReader readerBeforeFirstRead) {
                 return Iterables.toArray(headers, String.class);
             }
         };
@@ -161,7 +162,7 @@ public class Csvs {
         }
 
         @Override
-        public Writer openStream() throws IOException {
+        public Writer openStream() {
             return sw;
         }
 

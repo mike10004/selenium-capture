@@ -78,7 +78,7 @@ public class ExampleCookieSource {
                 .put("isSecure", "0")
                 .put("isHttpOnly", "1")
                 .put("inBrowserElement", "")
-                .put("sameSite", "0")
+                .put(Firefox91CookieImporter.COL_SAMESITE, "0")
                 .put("rawSameSite", "")
                 .put("schemeMap", "")
                 .build();

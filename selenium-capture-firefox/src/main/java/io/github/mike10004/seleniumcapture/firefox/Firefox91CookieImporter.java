@@ -34,19 +34,25 @@ public class Firefox91CookieImporter extends FirefoxCookieImporterBase {
             "  PRIMARY KEY(\"id\")\n" +
             ")";
 
+    public static final String COL_NAME = "name";
+    public static final String COL_SAMESITE = "sameSite";
+    public static final String COL_EXPIRY = "expiry";
+    public static final String COL_HOST = "host";
+    public static final String COL_IS_HTTP_ONLY = "isHttpOnly";
+
     private static final ImmutableList<String> columnNames = ImmutableList.of("id",
             "originAttributes",
-            "name",
+            COL_NAME,
             "value",
-            "host",
+            COL_HOST,
             "path",
-            "expiry",
+            COL_EXPIRY,
             "lastAccessed",
             "creationTime",
             "isSecure",
-            "isHttpOnly",
+            COL_IS_HTTP_ONLY,
             "inBrowserElement",
-            "sameSite",
+            COL_SAMESITE,
             "rawSameSite",
             "schemeMap"
             );

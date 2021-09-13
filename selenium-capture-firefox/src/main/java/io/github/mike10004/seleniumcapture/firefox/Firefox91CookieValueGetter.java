@@ -36,9 +36,7 @@ public class Firefox91CookieValueGetter implements FirefoxCookieValueGetter {
             .put("originAttributes", FirefoxCookieRowTransformBase.valueByKey(DeserializableCookie.FIELD_ATTRIBUTES))
             .put("isHttpOnly", FirefoxCookieRowTransformBase.valueByKey(DeserializableCookie.FIELD_HTTP_ONLY))
             .put("host", Firefox91CookieValueGetter::getHost)
-            // TODO we have to pin down how firefox transforms SameSite=(None|Strict|Lax) into an integer value
-            .put("sameSite", Firefox91CookieValueGetter::getSameSite)
-            // TODO figure out what firefox means by "rawSameSite"
+            .put(Firefox91CookieImporter.COL_SAMESITE, Firefox91CookieValueGetter::getSameSite)
             .put("rawSameSite", Firefox91CookieValueGetter::getSameSite)
             .build();
 
@@ -71,10 +69,11 @@ public class Firefox91CookieValueGetter implements FirefoxCookieValueGetter {
         return 0;
     }
 
+    // These values are confirmed by the FirefoxCookieStorageDbTest
     private static final ImmutableMap<String, Integer> SAME_SITE_MAP = ImmutableMap.<String, Integer>builder()
             .put("None", 0)
-            .put("Strict", 1)
-            .put("Lax", 2)
+            .put("Strict", 2)
+            .put("Lax", 1)
             .build();
 
 }

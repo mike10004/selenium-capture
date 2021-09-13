@@ -21,12 +21,15 @@ public     class FirefoxTestParameter implements WebDriverTestParameter {
 
     @Override
     public WebDriverFactory createWebDriverFactory(XvfbRule xvfb) {
+        return buildWebDriverFactory(xvfb).build();
+    }
+
+    public FirefoxWebDriverFactory.Builder buildWebDriverFactory(XvfbRule xvfb) {
         return FirefoxWebDriverFactory.builder()
                 .binary(FirefoxUnitTests.createFirefoxBinarySupplier())
                 .putPreferences(FirefoxUnitTests.createFirefoxPreferences())
                 .acceptInsecureCerts(acceptInsecureCerts)
-                .environment(xvfb.getController().newEnvironment())
-                .build();
+                .environment(xvfb.getController().newEnvironment());
     }
 
     /**

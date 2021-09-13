@@ -1,5 +1,6 @@
 package io.github.mike10004.seleniumcapture.testbases;
 
+import io.github.mike10004.nanochamp.server.HostAddress;
 import io.github.mike10004.seleniumcapture.FullSocketAddress;
 import io.github.mike10004.seleniumcapture.ProxyDefinitionBuilder;
 import io.github.mike10004.seleniumcapture.WebdrivingConfig;
@@ -111,8 +112,8 @@ public abstract class ProxyBypassTest {
             int proxyPort = proxy.getPort();
             try (NanoControl ctrl1 = server1.startServer();
                 NanoControl ctrl2 = server2.startServer()) {
-                HostAndPort targetSocketAddress1 = ctrl1.getSocketAddress();
-                HostAndPort targetSocketAddress2 = ctrl2.getSocketAddress();
+                HostAddress targetSocketAddress1 = ctrl1.getSocketAddress();
+                HostAddress targetSocketAddress2 = ctrl2.getSocketAddress();
                 List<String> bypasses = Stream.of(targetSocketAddress1, targetSocketAddress2)
                         .map(Object::toString)
                         .filter(bypassFilter)

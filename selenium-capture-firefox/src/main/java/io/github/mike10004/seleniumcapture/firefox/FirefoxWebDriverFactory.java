@@ -38,6 +38,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
@@ -59,7 +60,7 @@ public class FirefoxWebDriverFactory extends CapableWebDriverFactory<FirefoxOpti
     private final ImmutableList<DeserializableCookie> cookies;
     private final Path scratchDir;
     private final java.util.logging.Level webdriverLogLevel;
-    private final GeckoServiceConstructor geckoServiceConstructor;
+    private final GeckoDriverService.Builder geckoServiceBuilder;
     private final FirefoxCookieImporter cookieDbImporter;
 
     protected FirefoxWebDriverFactory(Builder builder) {
@@ -72,7 +73,7 @@ public class FirefoxWebDriverFactory extends CapableWebDriverFactory<FirefoxOpti
         this.profileActions = ImmutableList.copyOf(builder.profileActions);
         this.profileFolderActions = ImmutableList.copyOf(builder.profileFolderActions);
         this.webdriverLogLevel = builder.webdriverLogLevel;
-        this.geckoServiceConstructor = builder.geckoServiceConstructor;
+        this.geckoServiceBuilder = builder.geckoServiceBuider;
         this.cookieDbImporter = builder.cookieDbImporter;
     }
 
@@ -93,37 +94,12 @@ public class FirefoxWebDriverFactory extends CapableWebDriverFactory<FirefoxOpti
         FirefoxOptions options = populateOptions(config);
         FirefoxBinary binary = binarySupplier.get();
         Map<String, String> environment = environmentSupplier.get();
-        GeckoDriverService service = geckoServiceConstructor.build(environment, binary);
+        GeckoDriverService service = geckoServiceBuilder
+                .usingFirefoxBinary(binary)
+                .withEnvironment(environment)
+                .build();
         WebDriver driver = new FirefoxDriver(service, options);
         return new ServiceWebdrivingSession(driver, service);
-    }
-
-    /**
-     * Interface that provides a method to construct a Firefox driver service.
-     */
-    public interface GeckoServiceConstructor {
-
-        /**
-         * Builds a Firefox driver service instance.
-         * @param env environment to be provided to web browser process
-         * @param binary Firefox executable
-         * @return a driver service instance
-         * @throws IOException on I/O error
-         */
-        GeckoDriverService build(Map<String, String> env, FirefoxBinary binary) throws IOException;
-
-        /**
-         * Returns a constructor that produces a standard driver service.
-         * @return a standard constructor
-         */
-        static GeckoServiceConstructor standard() {
-            return (env, binary) -> {
-                return new GeckoDriverService.Builder()
-                        .withEnvironment(env)
-                        .usingFirefoxBinary(binary)
-                        .build();
-            };
-        }
     }
 
     @VisibleForTesting
@@ -499,7 +475,7 @@ public class FirefoxWebDriverFactory extends CapableWebDriverFactory<FirefoxOpti
         private Path scratchDir = new File(System.getProperty("java.io.tmpdir")).toPath();
         private final List<FirefoxProfileAction> profileActions = new ArrayList<>();
         private final List<FirefoxProfileFolderAction> profileFolderActions = new ArrayList<>();
-        private GeckoServiceConstructor geckoServiceConstructor = GeckoServiceConstructor.standard();
+        private GeckoDriverService.Builder geckoServiceBuider = new GeckoDriverService.Builder();
         private java.util.logging.Level webdriverLogLevel = null;
         private FirefoxCookieImporter cookieDbImporter = new Firefox91CookieImporter(new Sqlite3GenericImporter(Sqlite3Runner.createDefault()));
 
@@ -527,6 +503,7 @@ public class FirefoxWebDriverFactory extends CapableWebDriverFactory<FirefoxOpti
         /**
          * @deprecated use {@code configure(o -> o.setHeadless(true))}
          */
+        @Deprecated
         public Builder headless() {
             return headless(true);
         }
@@ -675,8 +652,21 @@ public class FirefoxWebDriverFactory extends CapableWebDriverFactory<FirefoxOpti
          * @param ctor constructor
          * @return this builder
          */
-        public Builder geckoServiceConstructor(GeckoServiceConstructor ctor) {
-            this.geckoServiceConstructor = requireNonNull(ctor);
+        public Builder geckoServiceBuilder(GeckoDriverService.Builder ctor) {
+            this.geckoServiceBuider = requireNonNull(ctor);
+            return this;
+        }
+
+        /**
+         * Configures the gecko service builder. Note that the
+         * environment and firefox binary will be overwritten with the values
+         * from this builder. To avoid this behavior, provide your own custom
+         * {@link GeckoDriverService.Builder} that ignores the overwrite.
+         * @param builderModifier consumer that accepts a gecko service builder instance
+         * @return this builder
+         */
+        public Builder configureGeckoService(Consumer<? super GeckoDriverService.Builder> builderModifier) {
+            builderModifier.accept(this.geckoServiceBuider);
             return this;
         }
 
@@ -696,6 +686,10 @@ public class FirefoxWebDriverFactory extends CapableWebDriverFactory<FirefoxOpti
          */
         public FirefoxWebDriverFactory build() {
             return new FirefoxWebDriverFactory(this);
+        }
+
+        public Builder usingDriverExecutable(File driverExecutable) {
+            return configureGeckoService(gsb -> gsb.usingDriverExecutable(driverExecutable));
         }
 
         public Builder disableTrackingProtection() {

@@ -18,7 +18,7 @@ public class IsoFormatInstantTypeAdapterTest {
     public void write() throws Exception {
         Instant now = Instant.now();
         String nowJson = gson().toJson(now);
-        String nowStr = new JsonParser().parse(nowJson).getAsString();
+        String nowStr = JsonParser.parseString(nowJson).getAsString();
         System.out.println("write: " + nowStr);
         Instant deserialized = Instant.from(IsoFormatInstantTypeAdapter.getDefaultOutputFormatter().parse(nowStr));
         assertEquals("deserialized", now, deserialized);

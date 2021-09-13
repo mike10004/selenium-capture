@@ -1,5 +1,6 @@
 package io.github.mike10004.seleniumcapture;
 
+import org.openqa.selenium.NoSuchSessionException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.remote.service.DriverService;
 import org.slf4j.Logger;
@@ -46,8 +47,12 @@ public class SimpleWebdrivingSession implements WebdrivingSession {
 
     @Override
     public void close() {
-        LoggerFactory.getLogger(WebdrivingSession.class).trace("webdriver quitting");
-        driver.quit();
+        log.trace("webdriver quitting");
+        try {
+            driver.quit();
+        } catch (NoSuchSessionException e) {
+            log.debug("tried to quit but no session exists; we consider this ignorable");
+        }
     }
 
     @Override
