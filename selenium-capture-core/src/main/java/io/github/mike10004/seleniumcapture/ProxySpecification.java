@@ -8,7 +8,11 @@ public interface ProxySpecification {
 
     static ProxySpecification fromUri(URI uri) {
         requireNonNull(uri, "uri");
-        return new UriProxySpecification(uri);
+        return UriProxySpecification.of(uri);
     }
+
+    UpstreamProxyDefinition asUpstream();
+
+    WebdrivingProxyDefinition asWebdriving();
 
 }

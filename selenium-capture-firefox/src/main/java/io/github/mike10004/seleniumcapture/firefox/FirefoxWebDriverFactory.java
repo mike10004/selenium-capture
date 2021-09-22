@@ -161,8 +161,9 @@ public class FirefoxWebDriverFactory extends CapableWebDriverFactory<FirefoxOpti
                  * As of 2018-09-17, if you don't override this setting, Firefox defaults to
                  * bypassing the proxy for loopback addresses (or anyway, that's the behavior
                  * it exhibits). In theory, the org.openqa.selenium.Proxy object is configured
-                 * to use the correct list of bypasses, but here we set it *again* in the
-                 * preferences.
+                 * to use the correct list of bypasses, but here we copy those bypasses
+                 * to the Firefox profile preferences, and we set a preference value that
+                 * allows for localhost hijacking.
                  */
                 List<String> proxyBypasses = SeleniumProxies.getProxyBypasses(seleniumProxy);
                 overrideProxyBypasses(proxyBypasses, profile);
@@ -189,7 +190,7 @@ public class FirefoxWebDriverFactory extends CapableWebDriverFactory<FirefoxOpti
              * * https://superuser.com/a/1469276/278576
              * * https://bugzilla.mozilla.org/show_bug.cgi?id=1535581
              *
-             * TODO: decide whether to refrain from setting this if our bypass list actually does include any loopback address
+             * TODO: decide whether to refrain from setting this if our bypass list doesn't contain any loopback address
              */
             profile.setPreference("network.proxy.allow_hijacking_localhost", true);
 

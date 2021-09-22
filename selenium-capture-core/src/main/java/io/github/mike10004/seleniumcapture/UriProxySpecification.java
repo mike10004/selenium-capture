@@ -23,7 +23,7 @@ class UriProxySpecification implements ProxySpecification {
 
     private final URI uri;
 
-    protected UriProxySpecification(URI uri) {
+    private UriProxySpecification(URI uri) {
         this.uri = requireNonNull(uri);
     }
 
@@ -42,12 +42,22 @@ class UriProxySpecification implements ProxySpecification {
         return new UriProxySpecification(uri);
     }
 
-    public WebdrivingProxyDefinition toWebdrivingProxyDefinition() {
+    private WebdrivingProxyDefinition toWebdrivingProxyDefinition() {
         return new WebdrivingProxyProvider();
     }
 
-    public UpstreamProxyDefinition toUpstreamProxyDefinition() {
+    @Override
+    public WebdrivingProxyDefinition asWebdriving() {
+        return toWebdrivingProxyDefinition();
+    }
+
+    private UpstreamProxyDefinition toUpstreamProxyDefinition() {
         return new UpstreamProxyProvider();
+    }
+
+    @Override
+    public UpstreamProxyDefinition asUpstream() {
+        return toUpstreamProxyDefinition();
     }
 
     private static String[] getCredentials(@Nullable URI uri) {
@@ -81,18 +91,16 @@ class UriProxySpecification implements ProxySpecification {
 
     private class UpstreamProxyProvider implements UpstreamProxyDefinition {
 
+        private final UpstreamProxy.HostBypassPredicate hostBypassPredicate;
+
         public UpstreamProxyProvider() {
+            hostBypassPredicate = new ListHostBypassPredicate(getProxyBypasses(uri));
         }
 
         @Override
         public String toString() {
             String token = uri == null ? "ABSENT" : uri.toString();
             return "UpstreamProxyDefinition{uri=" + token + "}";
-        }
-
-        @Override
-        public List<String> getProxyBypassList() {
-            return getProxyBypasses(uri);
         }
 
         @Override
@@ -111,7 +119,7 @@ class UriProxySpecification implements ProxySpecification {
                 }
             }
             String username = getUsername(uri), password = getPassword(uri);
-            return new UpstreamProxy(type, uri.getHost(), uri.getPort(), username, password);
+            return new UpstreamProxy(type, uri.getHost(), uri.getPort(), username, password, hostBypassPredicate);
         }
     }
 
@@ -192,14 +200,6 @@ class UriProxySpecification implements ProxySpecification {
             return 5;
         }
         return null;
-    }
-
-    @Nullable
-    public static String toScheme(@Nullable ChainedProxyType upstreamProxyType) {
-        if (upstreamProxyType == null) {
-            return null;
-        }
-        return upstreamProxyType.name().toLowerCase();
     }
 
     @Override

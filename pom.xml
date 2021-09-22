@@ -52,10 +52,7 @@
         <antiprint.version>0.16</antiprint.version>
         <common-helper.version>10.0.0</common-helper.version>
 
-        <!-- keep these in sync -->
         <browserup-proxy.version>2.1.2</browserup-proxy.version>
-        <littleproxy.version>2.0.1</littleproxy.version>
-        <netty.version>4.1.50.Final</netty.version>
 
         <!--suppress CheckTagEmptyBody -->
         <proxy.http></proxy.http>

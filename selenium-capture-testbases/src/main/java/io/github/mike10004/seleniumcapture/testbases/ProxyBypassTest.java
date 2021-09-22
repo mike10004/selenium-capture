@@ -4,6 +4,7 @@ import io.github.mike10004.nanochamp.server.HostAddress;
 import io.github.mike10004.seleniumcapture.FullSocketAddress;
 import io.github.mike10004.seleniumcapture.ProxyDefinitionBuilder;
 import io.github.mike10004.seleniumcapture.WebdrivingConfig;
+import io.github.mike10004.seleniumcapture.WebdrivingProxyDefinition;
 import io.github.mike10004.seleniumcapture.WebdrivingSession;
 import com.github.mike10004.xvfbtesting.XvfbRule;
 import com.google.common.base.Strings;
@@ -47,11 +48,13 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static com.google.common.base.Preconditions.checkState;
 import static org.junit.Assert.assertEquals;
 
 public abstract class ProxyBypassTest {
@@ -75,19 +78,19 @@ public abstract class ProxyBypassTest {
      * to bypass the proxy for certain addresses.
      */
     @Test
-    public void bypassLocalhost() throws Exception {
+    public void webdrivingProxy_bypassLocalhost() throws Exception {
         System.out.format("bypass: testing with %s%n", testParameter.getClass().getSimpleName());
         Map<URI, String> bodyTexts = testBypass(host -> true);
         assertEquals("expect to be bypassed", Collections.singleton(MESSAGE_NOT_INTERCEPTED), new HashSet<>(bodyTexts.values()));
     }
 
     /**
-     * Makes sure we're not getting a false positive on the {@link #bypassLocalhost()} test.
+     * Makes sure we're not getting a false positive on the {@link #webdrivingProxy_bypassLocalhost()} test.
      * This exercises the webdriver with an intercepting proxy and no bypasses, and it makes sure that we get only
      * what the proxy serves.
      */
     @Test
-    public void nobypass() throws Exception {
+    public void webdrivingProxy_nobypass() throws Exception {
         System.out.format("nobypass: testing with %s%n", testParameter.getClass().getSimpleName());
         Map<URI, String> bodyTexts = testBypass(host -> false);
         assertEquals("expect no bypass", Collections.singleton(MESSAGE_INTERCEPTED), new HashSet<>(bodyTexts.values()));
@@ -106,47 +109,60 @@ public abstract class ProxyBypassTest {
         BrowserUpProxy proxy = new BrowserUpProxyServer();
         proxy.addLastHttpFilterFactory(new InterceptingFiltersSource());
         ExecutorService executorService = (Executors.newSingleThreadExecutor());
-        proxy.start();
         try {
-            String proxyHost = "127.0.0.1";
-            int proxyPort = proxy.getPort();
-            try (NanoControl ctrl1 = server1.startServer();
-                NanoControl ctrl2 = server2.startServer()) {
-                HostAddress targetSocketAddress1 = ctrl1.getSocketAddress();
-                HostAddress targetSocketAddress2 = ctrl2.getSocketAddress();
-                List<String> bypasses = Stream.of(targetSocketAddress1, targetSocketAddress2)
-                        .map(Object::toString)
-                        .filter(bypassFilter)
-                        .collect(Collectors.toList());
-                WebdrivingConfig config = WebdrivingConfig.builder()
-                        .proxy(ProxyDefinitionBuilder.through(FullSocketAddress.define(proxyHost, proxyPort)).addProxyBypasses(bypasses).buildWebdrivingProxyDefinition())
-                        .build();
-                URI[] urls = {
-                        URI.create(String.format("http://%s/", targetSocketAddress1)),
-                        URI.create(String.format("http://%s/", targetSocketAddress2)),
-                };
-                Map<URI, String> texts = new LinkedHashMap<>();
-                try (WebdrivingSession session = testParameter.createWebDriverFactory(xvfbRule).startWebdriving(config)) {
-                    WebDriver driver = session.getWebDriver();
-                    for (URI url : urls) {
-                        try {
-                            Future<String> promise = executorService.submit(new BodyTextFetcher(driver, url));
-                            System.out.format("waiting 5 seconds for response...");
-                            String value = promise.get(5, TimeUnit.SECONDS);
-                            System.out.format("returned \"%s\"%n", value);
-                            texts.put(url, value.trim());
-                        } catch (java.util.concurrent.TimeoutException e) {
-                            System.out.format("no response from %s due to timeout%n", url);
-                            texts.put(url, "");
+            proxy.start();
+            try {
+                String proxyHost = "127.0.0.1";
+                int proxyPort = proxy.getPort();
+                try (NanoControl ctrl1 = server1.startServer();
+                     NanoControl ctrl2 = server2.startServer()) {
+                    HostAddress targetSocketAddress1 = ctrl1.getSocketAddress();
+                    HostAddress targetSocketAddress2 = ctrl2.getSocketAddress();
+                    List<String> bypasses = Stream.of(targetSocketAddress1, targetSocketAddress2)
+                            .map(Object::toString)
+                            .filter(bypassFilter)
+                            .collect(Collectors.toList());
+                    WebdrivingProxyDefinition webdrivingProxyDefinition = ProxyDefinitionBuilder
+                            .through(FullSocketAddress.define(proxyHost, proxyPort))
+                            .addProxyBypasses(bypasses)
+                            .build().asWebdriving();
+                    WebdrivingConfig config = WebdrivingConfig.builder()
+                            .proxy(webdrivingProxyDefinition)
+                            .build();
+                    URI[] urls = {
+                            URI.create(String.format("http://%s/", targetSocketAddress1)),
+                            URI.create(String.format("http://%s/", targetSocketAddress2)),
+                    };
+                    Map<URI, String> texts = new LinkedHashMap<>();
+                    try (WebdrivingSession session = testParameter.createWebDriverFactory(xvfbRule).startWebdriving(config)) {
+                        WebDriver driver = session.getWebDriver();
+                        for (URI url : urls) {
+                            Future<String> promise;
+                            System.out.println("waiting 5 seconds for response...");
+                            List<Future<String>> promises = executorService.invokeAll(Collections.singleton(new BodyTextFetcher(driver, url)), 5, TimeUnit.SECONDS);
+                            assertEquals("num promises", 1, promises.size());
+                            promise = promises.get(0);
+                            if (!promise.isCancelled()) {
+                                String value = promise.get();
+                                System.out.format("returned \"%s\"%n", value);
+                                texts.put(url, value.trim());
+                            } else {
+                                System.out.format("no response from %s due to timeout%n", url);
+                                texts.put(url, "");
+                            }
                         }
+                        executorService.shutdown(); // no more tasks to be submitted
+                    } finally {
+                        System.out.format("webdriving session closing%n");
                     }
-                } finally {
-                    System.out.format("webdriving session closing%n");
+                    return texts;
                 }
-                return texts;
+            } finally {
+                proxy.stop();
             }
         } finally {
-            proxy.stop();
+            boolean executorServiceStopped = executorService.awaitTermination(10, TimeUnit.SECONDS);
+            checkState(executorServiceStopped, "executorServiceStopped");
         }
     }
 

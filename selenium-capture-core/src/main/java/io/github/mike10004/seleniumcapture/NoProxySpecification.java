@@ -1,8 +1,6 @@
 package io.github.mike10004.seleniumcapture;
 
 import javax.annotation.Nullable;
-import java.util.Collections;
-import java.util.List;
 
 final class NoProxySpecification {
 
@@ -22,11 +20,6 @@ final class NoProxySpecification {
         @Override
         public UpstreamProxy createUpstreamProxy() {
             return null;
-        }
-
-        @Override
-        public List<String> getProxyBypassList() {
-            return Collections.emptyList();
         }
 
         @Override

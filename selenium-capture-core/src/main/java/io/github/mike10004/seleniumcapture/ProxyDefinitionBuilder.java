@@ -69,8 +69,7 @@ public class ProxyDefinitionBuilder {
         return this;
     }
 
-    @VisibleForTesting
-    UriProxySpecification buildUriSpec() {
+    private ProxySpecification buildUriSpec() {
         try {
             URIBuilder b = new URIBuilder();
             if (proxyProtocol != null) {
@@ -81,17 +80,13 @@ public class ProxyDefinitionBuilder {
             for (String bypass : proxyBypasses) {
                 b.addParameter(UriProxySpecification.PARAM_BYPASS, bypass);
             }
-            return new UriProxySpecification(b.build());
+            return UriProxySpecification.of(b.build());
         } catch (URISyntaxException e) {
             throw new IllegalArgumentException(e);
         }
     }
 
-    public WebdrivingProxyDefinition buildWebdrivingProxyDefinition() {
-        return buildUriSpec().toWebdrivingProxyDefinition();
-    }
-
-    public UpstreamProxyDefinition buildUpstreamProxyDefinition() {
-        return buildUriSpec().toUpstreamProxyDefinition();
+    public ProxySpecification build() {
+        return buildUriSpec();
     }
 }

@@ -34,8 +34,7 @@ class BasicInterceptedWebdrivingConfigurator implements InterceptedWebdrivingCon
     @Override
     public WebdrivingConfig createWebdrivingConfig(BrowserUpProxy bup, @Nullable CertificateAndKeySource certificateAndKeySource) {
         WebdrivingProxyDefinition proxy = ProxyDefinitionBuilder.through(BrowserUps.resolveSocketAddress(bup))
-                .addProxyBypasses(upstreamProxyDefinition.getProxyBypassList())
-                .buildWebdrivingProxyDefinition();
+                .build().asWebdriving();
         return WebdrivingConfig.builder()
                 .proxy(proxy)
                 .certificateAndKeySource(certificateAndKeySource)

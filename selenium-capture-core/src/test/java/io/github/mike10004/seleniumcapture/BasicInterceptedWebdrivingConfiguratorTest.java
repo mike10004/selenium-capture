@@ -17,12 +17,12 @@ public class BasicInterceptedWebdrivingConfiguratorTest {
 
     @Test
     public void createWebdrivingConfig_upstreamBypassNotSupported() {
-        UriProxySpecification upstream =
+        ProxySpecification upstream =
                 ProxyDefinitionBuilder.through("127.0.0.1", 39944)
                         .addProxyBypass("localhost")
                         .addProxyBypass("127.0.0.1")
-                        .socks5().buildUriSpec();
-        InterceptedWebdrivingConfigurator c = InterceptedWebdrivingConfigurator.usingUpstreamProxy(upstream.toUpstreamProxyDefinition());
+                        .socks5().build();
+        InterceptedWebdrivingConfigurator c = InterceptedWebdrivingConfigurator.usingUpstreamProxy(upstream.asUpstream());
         List<ChainedProxyManager> invokedSetChainedProxyManagers = new ArrayList<>();
         List<String> incorrectInvocations = new ArrayList<>();
         BrowserUpProxyServer bup = new BrowserUpProxyServer() {

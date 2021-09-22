@@ -1,10 +1,9 @@
 package io.github.mike10004.seleniumcapture.testbases;
 
-import io.github.mike10004.seleniumcapture.HarPlus;
-import io.github.mike10004.seleniumcapture.TrafficCollector;
-import io.github.mike10004.seleniumcapture.TrafficGenerator;
-import io.github.mike10004.seleniumcapture.UriProxySpecification;
-import io.github.mike10004.seleniumcapture.WebDriverFactory;
+import com.browserup.bup.mitm.CertificateAndKeySource;
+import com.browserup.harreader.model.HarContent;
+import com.browserup.harreader.model.HarEntry;
+import com.browserup.harreader.model.HarResponse;
 import com.github.mike10004.xvfbtesting.XvfbRule;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
@@ -13,10 +12,11 @@ import com.google.common.net.HostAndPort;
 import com.google.common.net.MediaType;
 import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
-import com.browserup.harreader.model.HarContent;
-import com.browserup.harreader.model.HarEntry;
-import com.browserup.harreader.model.HarResponse;
-import com.browserup.bup.mitm.CertificateAndKeySource;
+import io.github.mike10004.seleniumcapture.HarPlus;
+import io.github.mike10004.seleniumcapture.ProxySpecification;
+import io.github.mike10004.seleniumcapture.TrafficCollector;
+import io.github.mike10004.seleniumcapture.TrafficGenerator;
+import io.github.mike10004.seleniumcapture.WebDriverFactory;
 import io.github.mike10004.seleniumcapture.testing.UnitTests;
 import org.apache.commons.text.StringEscapeUtils;
 import org.apache.commons.validator.routines.InetAddressValidator;
@@ -225,7 +225,7 @@ public abstract class CollectionTestBase {
         TrafficCollector.Builder tcBuilder = TrafficCollector.builder(webDriverFactory);
         URI upstreamProxy = proxySpecUriSupplier.get();
         if (upstreamProxy != null) {
-            tcBuilder.upstreamProxy(UriProxySpecification.of(upstreamProxy).toUpstreamProxyDefinition());
+            tcBuilder.upstreamProxy(ProxySpecification.fromUri(upstreamProxy).asUpstream());
         }
         if ("https".equals(protocol)) {
             CertificateAndKeySource certificateAndKeySource = TestCertificateAndKeySource.create();

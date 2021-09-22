@@ -1,6 +1,5 @@
 package io.github.mike10004.seleniumcapture.testbases;
 
-import io.github.mike10004.seleniumcapture.UriProxySpecification;
 import com.google.common.base.Strings;
 import com.google.common.net.HostAndPort;
 import org.apache.http.client.utils.URIBuilder;
@@ -12,7 +11,10 @@ import javax.annotation.Nullable;
 import java.net.URI;
 import java.net.URISyntaxException;
 
+import static java.util.Objects.requireNonNull;
+
 public class UpstreamProxyRule extends ExternalResource {
+
     public static final String SYSPROP_TEST_PROXY = "selenium-help.test.proxy.http";
 
     @Nullable
@@ -37,6 +39,18 @@ public class UpstreamProxyRule extends ExternalResource {
         }
     }
 
+    private static String toScheme(ChainedProxyType proxyType) {
+        switch (proxyType) {
+            case HTTP:
+                return "http";
+            case SOCKS4:
+                return "socks4";
+            case SOCKS5:
+                return "socks5";
+        }
+        throw new IllegalArgumentException("not supported: " + proxyType);
+    }
+
     @Nullable
     public URI getProxySpecificationUri() {
         if (upstreamProxyHostAndPort == null) {
@@ -44,7 +58,7 @@ public class UpstreamProxyRule extends ExternalResource {
         }
         try {
             return new URIBuilder()
-                    .setScheme(UriProxySpecification.toScheme(upstreamProxyType))
+                    .setScheme(toScheme(requireNonNull(upstreamProxyType, "upstream proxy type not set; should be set in @Before")))
                     .setHost(upstreamProxyHostAndPort.getHost())
                     .setPort(upstreamProxyHostAndPort.getPort())
                     .build();
