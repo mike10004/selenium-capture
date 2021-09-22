@@ -91,7 +91,7 @@ class UriProxySpecification implements ProxySpecification {
 
     private class UpstreamProxyProvider implements UpstreamProxyDefinition {
 
-        private final UpstreamProxy.HostBypassPredicate hostBypassPredicate;
+        private final UpstreamProxyManager.HostBypassPredicate hostBypassPredicate;
 
         public UpstreamProxyProvider() {
             hostBypassPredicate = new ListHostBypassPredicate(getProxyBypasses(uri));
@@ -105,7 +105,7 @@ class UriProxySpecification implements ProxySpecification {
 
         @Override
         @Nullable
-        public UpstreamProxy createUpstreamProxy() {
+        public UpstreamProxyManager createUpstreamProxy() {
             if (uri == null) {
                 return null;
             }
@@ -119,7 +119,7 @@ class UriProxySpecification implements ProxySpecification {
                 }
             }
             String username = getUsername(uri), password = getPassword(uri);
-            return new UpstreamProxy(type, uri.getHost(), uri.getPort(), username, password, hostBypassPredicate);
+            return new UpstreamProxyManager(type, uri.getHost(), uri.getPort(), username, password, hostBypassPredicate);
         }
     }
 

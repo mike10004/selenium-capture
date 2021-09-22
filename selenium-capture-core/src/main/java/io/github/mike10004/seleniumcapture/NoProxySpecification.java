@@ -18,7 +18,7 @@ final class NoProxySpecification {
 
         @Nullable
         @Override
-        public UpstreamProxy createUpstreamProxy() {
+        public UpstreamProxyManager createUpstreamProxy() {
             return null;
         }
 

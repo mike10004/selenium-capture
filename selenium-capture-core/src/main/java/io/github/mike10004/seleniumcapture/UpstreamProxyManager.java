@@ -16,7 +16,7 @@ import static java.util.Objects.requireNonNull;
 /**
  * @author https://gist.github.com/jbaldassari/a13f9032999e82711a282d0c7a4b452c
  */
-class UpstreamProxy implements ChainedProxyManager {
+class UpstreamProxyManager implements ChainedProxyManager {
 
     private final ChainedProxyType proxyType;
     private final String host;
@@ -24,10 +24,14 @@ class UpstreamProxy implements ChainedProxyManager {
     private final HostBypassPredicate hostBypassPredicate;
     private final ChainedProxy chainedProxy;
 
-    public UpstreamProxy(final ChainedProxyType proxyType, final String host, final int port,
-                  final String username, final String password, HostBypassPredicate hostBypassPredicate) {
-        this.proxyType = proxyType;
-        this.host = host;
+    public UpstreamProxyManager(ChainedProxyType proxyType,
+                                String host,
+                                int port,
+                                String username,
+                                String password,
+                                HostBypassPredicate hostBypassPredicate) {
+        this.proxyType = requireNonNull(proxyType);
+        this.host = requireNonNull(host);
         this.port = port;
         this.hostBypassPredicate = requireNonNull(hostBypassPredicate);
         this.chainedProxy = new ChainedProxyAdapter() {

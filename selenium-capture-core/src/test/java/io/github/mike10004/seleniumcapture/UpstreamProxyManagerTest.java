@@ -11,23 +11,22 @@ import org.littleshoot.proxy.impl.ClientDetails;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import static org.junit.Assert.*;
 
-public class UpstreamProxyTest {
+public class UpstreamProxyManagerTest {
 
     @Test
     public void lookupChainedProxies_noBypass() {
-        UpstreamProxy proxyManager = new UpstreamProxy(ChainedProxyType.HTTP, "127.0.0.1", 12345, null, null, UpstreamProxy.HostBypassPredicate.noBypass());
+        UpstreamProxyManager proxyManager = new UpstreamProxyManager(ChainedProxyType.HTTP, "127.0.0.1", 12345, null, null, UpstreamProxyManager.HostBypassPredicate.noBypass());
         testLookup(proxyManager, "example.com", Expectation.USE_CHAINED_PROXY);
     }
 
     @Test
     public void lookupChainedProxies_withBypassList() {
         List<String> bypassList = List.of("example.com", "localhost:59999");
-        UpstreamProxy proxyManager = new UpstreamProxy(ChainedProxyType.HTTP, "127.0.0.1", 12345, null, null, new ListHostBypassPredicate(bypassList));
+        UpstreamProxyManager proxyManager = new UpstreamProxyManager(ChainedProxyType.HTTP, "127.0.0.1", 12345, null, null, new ListHostBypassPredicate(bypassList));
         testLookup(proxyManager, "example.com", Expectation.BYPASS_AND_FALLBACK_TO_DIRECT);
         testLookup(proxyManager, "localhost:59999", Expectation.BYPASS_AND_FALLBACK_TO_DIRECT);
         testLookup(proxyManager, "localhost:54321", Expectation.USE_CHAINED_PROXY);
@@ -41,7 +40,7 @@ public class UpstreamProxyTest {
         USE_CHAINED_PROXY,
         BYPASS_AND_FALLBACK_TO_DIRECT;
 
-        public List<ChainedProxy> getExpectedList(UpstreamProxy proxyManager) {
+        public List<ChainedProxy> getExpectedList(UpstreamProxyManager proxyManager) {
             switch (this) {
                 case USE_CHAINED_PROXY:
                     return List.of(proxyManager.getChainedProxy());
@@ -52,7 +51,7 @@ public class UpstreamProxyTest {
         }
     }
 
-    private void testLookup(UpstreamProxy proxyManager, String hostAndPort, Expectation expectation) {
+    private void testLookup(UpstreamProxyManager proxyManager, String hostAndPort, Expectation expectation) {
         DefaultFullHttpRequest httpRequest = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, "https://" + hostAndPort + "/");
         ArrayDeque<ChainedProxy> chainedProxies = new ArrayDeque<>();
         proxyManager.lookupChainedProxies(httpRequest, chainedProxies, new ClientDetails());

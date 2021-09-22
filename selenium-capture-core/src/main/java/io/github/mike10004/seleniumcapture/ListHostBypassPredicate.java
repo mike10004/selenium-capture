@@ -8,7 +8,7 @@ import java.net.URISyntaxException;
 import java.util.List;
 import java.util.stream.Collectors;
 
-class ListHostBypassPredicate implements UpstreamProxy.HostBypassPredicate {
+class ListHostBypassPredicate implements UpstreamProxyManager.HostBypassPredicate {
 
     private final List<HostAndPort> bypassedHosts;
 
