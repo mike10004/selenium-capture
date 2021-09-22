@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
 
 import static java.util.Objects.requireNonNull;
 
-public class UriProxySpecification {
+class UriProxySpecification implements ProxySpecification {
 
     static final String PARAM_BYPASS = "bypass";
 
@@ -26,6 +26,7 @@ public class UriProxySpecification {
     protected UriProxySpecification(URI uri) {
         this.uri = requireNonNull(uri);
     }
+
 
     /**
      * Creates a specification from a URI. The proxy host and port
@@ -46,7 +47,7 @@ public class UriProxySpecification {
     }
 
     public UpstreamProxyDefinition toUpstreamProxyDefinition() {
-        return new WebdrivingProxyProvider();
+        return new UpstreamProxyProvider();
     }
 
     private static String[] getCredentials(@Nullable URI uri) {
@@ -60,10 +61,70 @@ public class UriProxySpecification {
         return new String[]{null, null};
     }
 
+    @Nullable
+    private static String getUsername(@Nullable URI uri) {
+        return getCredentials(uri)[0];
+    }
+
+    @Nullable
+    private static String getPassword(@Nullable URI uri) {
+        return getCredentials(uri)[1];
+    }
+
+    private static boolean isSocks(@Nullable URI uri) {
+        if (uri == null) {
+            return false;
+        }
+        String scheme = uri.getScheme();
+        return "socks".equalsIgnoreCase(scheme) || "socks4".equalsIgnoreCase(scheme) || "socks5".equalsIgnoreCase(scheme);
+    }
+
+    private class UpstreamProxyProvider implements UpstreamProxyDefinition {
+
+        public UpstreamProxyProvider() {
+        }
+
+        @Override
+        public String toString() {
+            String token = uri == null ? "ABSENT" : uri.toString();
+            return "UpstreamProxyDefinition{uri=" + token + "}";
+        }
+
+        @Override
+        public List<String> getProxyBypassList() {
+            return getProxyBypasses(uri);
+        }
+
+        @Override
+        @Nullable
+        public UpstreamProxy createUpstreamProxy() {
+            if (uri == null) {
+                return null;
+            }
+            ChainedProxyType type = ChainedProxyType.HTTP;
+            if (isSocks(uri)) {
+                @Nullable Integer socksVersion = parseSocksVersionFromUriScheme(uri);
+                if (Integer.valueOf(4).equals(socksVersion)) {
+                    type = ChainedProxyType.SOCKS4;
+                } else {
+                    type = ChainedProxyType.SOCKS5;
+                }
+            }
+            String username = getUsername(uri), password = getPassword(uri);
+            return new UpstreamProxy(type, uri.getHost(), uri.getPort(), username, password);
+        }
+    }
+
     private class WebdrivingProxyProvider extends SeleniumProxyCreationAssistant
-            implements WebdrivingProxyDefinition, UpstreamProxyDefinition {
+            implements WebdrivingProxyDefinition{
 
         public WebdrivingProxyProvider() {
+        }
+
+        @Override
+        public String toString() {
+            String token = uri == null ? "ABSENT" : uri.toString();
+            return "WebdrivingProxyDefinition{uri=" + token + "}";
         }
 
         @Nullable
@@ -74,33 +135,22 @@ public class UriProxySpecification {
 
         @Override
         public String getUsername() {
-            return getCredentials(uri)[0];
+            return UriProxySpecification.getUsername(uri);
         }
 
         @Override
         public String getPassword() {
-            return getCredentials(uri)[1];
+            return UriProxySpecification.getPassword(uri);
         }
 
         @Override
         public List<String> getProxyBypasses() {
-            if (uri != null) {
-                List<NameValuePair> queryParams = URLEncodedUtils.parse(uri, StandardCharsets.UTF_8);
-                return queryParams.stream()
-                        .filter(param -> PARAM_BYPASS.equalsIgnoreCase(param.getName()))
-                        .map(NameValuePair::getValue)
-                        .collect(Collectors.toList());
-            }
-            return Collections.emptyList();
+            return UriProxySpecification.getProxyBypasses(uri);
         }
 
         @Override
         public boolean isSocks() {
-            if (uri == null) {
-                return false;
-            }
-            String scheme = uri.getScheme();
-            return "socks".equalsIgnoreCase(scheme) || "socks4".equalsIgnoreCase(scheme) || "socks5".equalsIgnoreCase(scheme);
+            return UriProxySpecification.isSocks(uri);
         }
 
         @Nullable
@@ -118,24 +168,17 @@ public class UriProxySpecification {
             return FullSocketAddress.define(uri.getHost(), uri.getPort());
         }
 
-        @Override
-        @Nullable
-        public UpstreamProxy createUpstreamProxy() {
-            if (uri == null) {
-                return null;
-            }
-            ChainedProxyType type = ChainedProxyType.HTTP;
-            if (isSocks()) {
-                @Nullable Integer socksVersion = parseSocksVersionFromUriScheme(uri);
-                if (Integer.valueOf(4).equals(socksVersion)) {
-                    type = ChainedProxyType.SOCKS4;
-                } else {
-                    type = ChainedProxyType.SOCKS5;
-                }
-            }
-            String username = getUsername(), password = getPassword();
-            return new UpstreamProxy(type, uri.getHost(), uri.getPort(), username, password);
+    }
+
+    private static List<String> getProxyBypasses(URI uri) {
+        if (uri != null) {
+            List<NameValuePair> queryParams = URLEncodedUtils.parse(uri, StandardCharsets.UTF_8);
+            return queryParams.stream()
+                    .filter(param -> PARAM_BYPASS.equalsIgnoreCase(param.getName()))
+                    .map(NameValuePair::getValue)
+                    .collect(Collectors.toList());
         }
+        return Collections.emptyList();
     }
 
     @VisibleForTesting
@@ -161,7 +204,7 @@ public class UriProxySpecification {
 
     @Override
     public String toString() {
-        return uri == null ? "AbsentProxySpecification{}" : uri.toString();
+        return uri == null ? "UriProxySpecification{ABSENT}" : "UriProxySpecification{uri=" + uri + "}";
     }
 
     public URI getUri() {

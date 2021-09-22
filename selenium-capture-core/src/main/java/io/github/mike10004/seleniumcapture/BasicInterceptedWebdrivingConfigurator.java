@@ -10,11 +10,11 @@ import javax.annotation.Nullable;
 
 import static java.util.Objects.requireNonNull;
 
-class BasicBmpConfigurator implements BmpConfigurator {
+class BasicInterceptedWebdrivingConfigurator implements InterceptedWebdrivingConfigurator {
 
     private final UpstreamProxyDefinition upstreamProxyDefinition;
 
-    public BasicBmpConfigurator(UpstreamProxyDefinition upstreamProxyDefinition) {
+    public BasicInterceptedWebdrivingConfigurator(UpstreamProxyDefinition upstreamProxyDefinition) {
         this.upstreamProxyDefinition = requireNonNull(upstreamProxyDefinition, "upstreamProxyDefinition");
     }
 
@@ -32,8 +32,9 @@ class BasicBmpConfigurator implements BmpConfigurator {
     }
 
     @Override
-    public WebdrivingConfig createWebdrivingConfig(BrowserUpProxy bmp, @Nullable CertificateAndKeySource certificateAndKeySource) {
-        WebdrivingProxyDefinition proxy = ProxyDefinitionBuilder.through(BrowserMobs.resolveSocketAddress(bmp))
+    public WebdrivingConfig createWebdrivingConfig(BrowserUpProxy bup, @Nullable CertificateAndKeySource certificateAndKeySource) {
+        WebdrivingProxyDefinition proxy = ProxyDefinitionBuilder.through(BrowserUps.resolveSocketAddress(bup))
+                .addProxyBypasses(upstreamProxyDefinition.getProxyBypassList())
                 .buildWebdrivingProxyDefinition();
         return WebdrivingConfig.builder()
                 .proxy(proxy)

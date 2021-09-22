@@ -1,6 +1,7 @@
 package io.github.mike10004.seleniumcapture;
 
 import com.browserup.bup.mitm.CertificateAndKeySource;
+import org.openqa.selenium.Proxy;
 
 import javax.annotation.Nullable;
 
@@ -8,11 +9,32 @@ class WebdrivingConfigs {
 
     private WebdrivingConfigs() {}
 
+    private static class NoWebdrivingProxyDefinition implements WebdrivingProxyDefinition {
+
+        public NoWebdrivingProxyDefinition( ){}
+
+        @Nullable
+        @Override
+        public Proxy createWebdrivingProxy() {
+            return new org.openqa.selenium.Proxy().setProxyType(org.openqa.selenium.Proxy.ProxyType.DIRECT);
+        }
+
+        @Override
+        public String toString() {
+            return "WebdrivingProxyDefinition{DIRECT}";
+        }
+    }
+
+    static WebdrivingProxyDefinition noWebdrivingProxyDefinition() {
+        return new NoWebdrivingProxyDefinition();
+    }
+
     private static final WebdrivingConfig EMPTY = new WebdrivingConfig() {
+
 
         @Override
         public WebdrivingProxyDefinition getProxySpecification() {
-            return NoProxySpecification.getInstance().asWebdrivingProxyDefinition();
+            return noWebdrivingProxyDefinition();
         }
 
         @Nullable

@@ -15,11 +15,11 @@ import java.net.InetAddress;
 import static java.util.Objects.requireNonNull;
 
 /**
- * Static utility methods relating to the Browsermob Proxy library.
+ * Static utility methods relating to the Browserup Proxy library.
  */
-public class BrowserMobs {
+public class BrowserUps {
 
-    private BrowserMobs() {
+    private BrowserUps() {
     }
 
     /**
@@ -60,14 +60,6 @@ public class BrowserMobs {
         p.setName(name);
         p.setValue(value);
         return p;
-    }
-
-    static HarResponse newHarResponse(int statusCode, String statusReasonPhrase, String httpProtocolVersion) {
-        HarResponse harResponse = new HarResponse();
-        harResponse.setStatus(statusCode);
-        harResponse.setStatusText(statusReasonPhrase);
-        harResponse.setHttpVersion(httpProtocolVersion);
-        return harResponse;
     }
 
     static HarHeader newHarHeader(String name, String value) {

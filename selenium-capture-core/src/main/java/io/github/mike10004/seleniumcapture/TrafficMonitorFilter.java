@@ -257,7 +257,7 @@ public class TrafficMonitorFilter extends HttpsAwareFiltersAdapter {
      * @param httpRequest HTTP request on which the HarRequest will be based
      */
     private void populateHarRequestFromHttpRequest(HttpRequest httpRequest, HarRequest harRequest) {
-        harRequest.setMethod(BrowserMobs.toHarHttpMethod(httpRequest.method()));
+        harRequest.setMethod(BrowserUps.toHarHttpMethod(httpRequest.method()));
         harRequest.setUrl(getFullUrl(httpRequest));
         harRequest.setHttpVersion(httpRequest.protocolVersion().text());
         // the HAR spec defines the request.url field as:
@@ -274,7 +274,7 @@ public class TrafficMonitorFilter extends HttpsAwareFiltersAdapter {
         try {
             for (Map.Entry<String, List<String>> entry : queryStringDecoder.parameters().entrySet()) {
                 for (String value : entry.getValue()) {
-                    harRequest.getQueryString().add(BrowserMobs.newHarQueryParam(entry.getKey(), value));
+                    harRequest.getQueryString().add(BrowserUps.newHarQueryParam(entry.getKey(), value));
                 }
             }
         } catch (IllegalArgumentException e) {
@@ -296,7 +296,7 @@ public class TrafficMonitorFilter extends HttpsAwareFiltersAdapter {
 
     protected void captureHeaders(HttpHeaders headers, HarRequest harRequest) {
         for (Map.Entry<String, String> header : headers.entries()) {
-            harRequest.getHeaders().add(BrowserMobs.newHarHeader(header.getKey(), header.getValue()));
+            harRequest.getHeaders().add(BrowserUps.newHarHeader(header.getKey(), header.getValue()));
         }
     }
 
@@ -341,7 +341,7 @@ public class TrafficMonitorFilter extends HttpsAwareFiltersAdapter {
 
             for (Map.Entry<String, List<String>> entry : queryStringDecoder.parameters().entrySet()) {
                 for (String value : entry.getValue()) {
-                    paramBuilder.add(BrowserMobs.newHarPostDataParam(entry.getKey(), value));
+                    paramBuilder.add(BrowserUps.newHarPostDataParam(entry.getKey(), value));
                 }
             }
 
@@ -430,7 +430,7 @@ public class TrafficMonitorFilter extends HttpsAwareFiltersAdapter {
         for (Map.Entry<String, String> header : headers.entries()) {
             String name = header.getKey();
             String value = header.getValue();
-            harResponse.getHeaders().add(BrowserMobs.newHarHeader(name, value));
+            harResponse.getHeaders().add(BrowserUps.newHarHeader(name, value));
         }
     }
 
@@ -485,7 +485,7 @@ public class TrafficMonitorFilter extends HttpsAwareFiltersAdapter {
     @Override
     public void proxyToServerResolutionFailed(String hostAndPort) {
         HarResponse response = HarCaptureUtil.createHarResponseForFailure();
-        BrowserMobs.setHarResponseError(response, HarCaptureUtil.getResolutionFailedErrorMessage(hostAndPort));
+        BrowserUps.setHarResponseError(response, HarCaptureUtil.getResolutionFailedErrorMessage(hostAndPort));
         sendResponseNotification(response);
     }
 
@@ -493,7 +493,7 @@ public class TrafficMonitorFilter extends HttpsAwareFiltersAdapter {
     @Override
     public void proxyToServerConnectionFailed() {
         HarResponse response = HarCaptureUtil.createHarResponseForFailure();
-        BrowserMobs.setHarResponseError(response, HarCaptureUtil.getConnectionFailedErrorMessage());
+        BrowserUps.setHarResponseError(response, HarCaptureUtil.getConnectionFailedErrorMessage());
         sendResponseNotification(response);
     }
 
@@ -501,7 +501,7 @@ public class TrafficMonitorFilter extends HttpsAwareFiltersAdapter {
     public void serverToProxyResponseTimedOut() {
         // replace any existing HarResponse that was created if the server sent a partial response
         HarResponse response = HarCaptureUtil.createHarResponseForFailure();
-        BrowserMobs.setHarResponseError(response, HarCaptureUtil.getResponseTimedOutErrorMessage());
+        BrowserUps.setHarResponseError(response, HarCaptureUtil.getResponseTimedOutErrorMessage());
         sendResponseNotification(response);
     }
 

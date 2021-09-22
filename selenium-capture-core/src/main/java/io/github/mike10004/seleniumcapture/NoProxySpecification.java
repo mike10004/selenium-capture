@@ -1,56 +1,32 @@
 package io.github.mike10004.seleniumcapture;
 
-import org.openqa.selenium.Proxy;
-
 import javax.annotation.Nullable;
+import java.util.Collections;
+import java.util.List;
 
 final class NoProxySpecification {
 
-    private static final NoProxySpecification INSTANCE = new NoProxySpecification();
-
-    private final WebdrivingProxyDefinition webdriving = new NoWebdrivingProxyDefinition();
-
-    private final UpstreamProxyDefinition upstream = new NoUpstreamProxyDefinition();
+    private static final UpstreamProxyDefinition upstream = new NoUpstreamProxyDefinition();
 
     private NoProxySpecification() {}
 
-    public static NoProxySpecification getInstance() {
-        return INSTANCE;
-    }
-
-    public WebdrivingProxyDefinition asWebdrivingProxyDefinition() {
-        return webdriving;
-    }
-
-    public UpstreamProxyDefinition asUpstreamProxyDefinition() {
+    public static UpstreamProxyDefinition noUpstreamProxyDefinition() {
         return upstream;
     }
 
-    @Override
-    public String toString() {
-        return "NoProxySpecification{}";
-    }
-
-    private static class NoWebdrivingProxyDefinition implements WebdrivingProxyDefinition {
-
-        @Nullable
-        @Override
-        public Proxy createWebdrivingProxy() {
-            return new org.openqa.selenium.Proxy().setProxyType(org.openqa.selenium.Proxy.ProxyType.DIRECT);
-        }
-
-        @Override
-        public String toString() {
-            return "WebdrivingProxyDefinition{DIRECT}";
-        }
-    }
-
     private static class NoUpstreamProxyDefinition implements UpstreamProxyDefinition {
+
+        public NoUpstreamProxyDefinition() {}
 
         @Nullable
         @Override
         public UpstreamProxy createUpstreamProxy() {
             return null;
+        }
+
+        @Override
+        public List<String> getProxyBypassList() {
+            return Collections.emptyList();
         }
 
         @Override

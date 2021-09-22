@@ -1,12 +1,9 @@
 package io.github.mike10004.seleniumcapture;
 
-import com.google.common.base.MoreObjects;
-import com.google.common.net.HostAndPort;
 import com.browserup.bup.mitm.CertificateAndKeySource;
+import com.google.common.base.MoreObjects;
 
 import javax.annotation.Nullable;
-import java.util.Collections;
-import java.util.List;
 
 import static java.util.Objects.requireNonNull;
 
@@ -21,7 +18,6 @@ public interface WebdrivingConfig {
      * which the webdriven browser shall be configured to send network requests.
      * @return  proxy specification
      */
-    @Nullable
     WebdrivingProxyDefinition getProxySpecification();
 
     /**
@@ -77,6 +73,7 @@ public interface WebdrivingConfig {
         private CertificateAndKeySource certificateAndKeySource;
 
         private Builder() {
+            proxySpecification = WebdrivingProxyDefinition.direct();
         }
 
         /**
@@ -87,27 +84,8 @@ public interface WebdrivingConfig {
          * @return this builder instance
          */
         public Builder proxy(WebdrivingProxyDefinition proxySpecification) {
-            this.proxySpecification = proxySpecification;
+            this.proxySpecification = requireNonNull(proxySpecification);
             return this;
-        }
-
-        /**
-         * @deprecated use {@link ProxyDefinitionBuilder#through(FullSocketAddress)} and {@link #proxy(ProxySpecification)}
-         */
-        @Deprecated
-        public Builder proxy(HostAndPort proxyAddress) {
-            return proxy(proxyAddress, Collections.emptyList());
-        }
-
-        /**
-         * @deprecated use {@link ProxyDefinitionBuilder#through(FullSocketAddress)} and {@link #proxy(ProxySpecification)}
-         */
-        @Deprecated
-        public Builder proxy(HostAndPort proxyAddress, List<String> proxyBypasses) {
-            WebdrivingProxyDefinition ps = ProxyDefinitionBuilder.through(FullSocketAddress.fromHostAndPort(proxyAddress))
-                    .addProxyBypasses(proxyBypasses)
-                    .buildWebdrivingProxyDefinition();
-            return proxy(ps);
         }
 
         /**

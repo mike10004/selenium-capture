@@ -84,7 +84,7 @@ public interface TrafficCollector {
         private final WebDriverFactory webDriverFactory;
         private CertificateAndKeySource certificateAndKeySource = null;
         private final List<HttpFiltersSource> httpFiltersSources = new ArrayList<>();
-        private BmpConfigurator upstreamConfigurator = BmpConfigurator.noUpstreamProxy();
+        private InterceptedWebdrivingConfigurator upstreamConfigurator = InterceptedWebdrivingConfigurator.noUpstreamProxy();
         private Supplier<? extends BrowserUpProxy> interceptingProxyInstantiator = BrowserUpProxyServer::new;
         private final List<HarPostProcessor> harPostProcessors = new ArrayList<>();
         private ExceptionReactor exceptionReactor = ExceptionReactor.PROPAGATE;
@@ -164,32 +164,24 @@ public interface TrafficCollector {
          * @return this builder instance
          */
         public Builder noUpstreamProxy() {
-            return upstreamProxy(BmpConfigurator.noUpstreamProxy());
+            return upstreamProxy(InterceptedWebdrivingConfigurator.noUpstreamProxy());
         }
 
-        private Builder upstreamProxy(BmpConfigurator configurator) {
+        private Builder upstreamProxy(InterceptedWebdrivingConfigurator configurator) {
             this.upstreamConfigurator = requireNonNull(configurator);
             return this;
         }
 
         /**
-         * @deprecated use {@link #upstreamProxy(UpstreamProxyDefinition)}
-         * @see UriProxySpecification#toUpstreamProxyDefinition()
-         */
-        @Deprecated
-        public Builder upstreamProxy(URI proxySpecification) {
-            requireNonNull(proxySpecification, "proxySpecification");
-            return upstreamProxy(UriProxySpecification.of(proxySpecification).toUpstreamProxyDefinition());
-        }
-
-        /**
-         * Configures the collector to use an upstream proxy specified by a URI. The URI components
+         * Configures the collector to use an upstream proxy. The URI components
          * must be as described in {@link WebdrivingConfig#getProxySpecification()}.
          * @param proxySpecification
          * @return this builder instance
          */
+        @SuppressWarnings("UnusedReturnValue")
         public Builder upstreamProxy(UpstreamProxyDefinition proxySpecification) {
-            this.upstreamConfigurator = BmpConfigurator.usingUpstreamProxy(proxySpecification);
+            requireNonNull(proxySpecification);
+            this.upstreamConfigurator = InterceptedWebdrivingConfigurator.usingUpstreamProxy(proxySpecification);
             return this;
         }
 

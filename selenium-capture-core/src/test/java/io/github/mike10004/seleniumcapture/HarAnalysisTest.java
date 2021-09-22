@@ -78,7 +78,7 @@ public class HarAnalysisTest {
         entry.setResponse(response);
         List<HarHeader> headers = response.getHeaders();
         cookieNamesAndValues.forEach((name, value) -> {
-            headers.add(BrowserMobs.newHarHeader(HttpHeaders.SET_COOKIE, String.format("%s=%s", name, value)));
+            headers.add(BrowserUps.newHarHeader(HttpHeaders.SET_COOKIE, String.format("%s=%s", name, value)));
         });
         return entry;
     }

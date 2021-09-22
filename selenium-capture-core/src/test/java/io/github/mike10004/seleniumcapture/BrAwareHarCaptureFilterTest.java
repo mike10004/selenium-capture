@@ -15,7 +15,7 @@ public class BrAwareHarCaptureFilterTest {
             io.netty.handler.codec.http.HttpMethod nm = io.netty.handler.codec.http.HttpMethod.valueOf(methodName);
             io.netty.handler.codec.http.HttpMethod nmAgain = io.netty.handler.codec.http.HttpMethod.valueOf(methodName);
             assertSame("expect netty method object to be drawn from cache", nm, nmAgain);
-            com.browserup.harreader.model.HttpMethod harHttpMethod = BrowserMobs.toHarHttpMethod(nm);
+            com.browserup.harreader.model.HttpMethod harHttpMethod = BrowserUps.toHarHttpMethod(nm);
             assertNotNull("har model http method", harHttpMethod);
         }
     }
