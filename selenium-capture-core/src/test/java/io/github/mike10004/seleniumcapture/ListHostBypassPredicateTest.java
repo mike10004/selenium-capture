@@ -4,6 +4,8 @@ import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.junit.Assert.*;
 
@@ -12,7 +14,10 @@ public class ListHostBypassPredicateTest {
     @Test
     public void isBypass() {
 
-        List<String> bypassedHosts = Arrays.asList("localhost", "example.com", "127.0.0.1");
+        HostBypassRuleFactory hostBypassRuleFactory = HostBypassRuleFactory.createDefault();
+        List<HostBypassRule> bypassedHosts = Stream.of("localhost", "example.com", "127.0.0.1")
+                .map(hostBypassRuleFactory::fromSpec)
+                .collect(Collectors.toList());
 
         ListHostBypassPredicate predicate = new ListHostBypassPredicate(bypassedHosts);
 
@@ -30,31 +35,6 @@ public class ListHostBypassPredicateTest {
                 u("localhost.localdomain"),
                 u("127.0.5.1"),
                 u("cyberbiz.net"),
-        }) {
-            assertFalse(noBypassUri, predicate.isBypass(noBypassUri));
-        }
-
-
-    }
-
-    @Test
-    public void isBypass_portSpecified() {
-
-        List<String> bypassedHosts = List.of("localhost:12345");
-
-        ListHostBypassPredicate predicate = new ListHostBypassPredicate(bypassedHosts);
-
-        for (String doBypassUri : new String[] {
-                u("localhost:12345"),
-        }) {
-            assertTrue(doBypassUri, predicate.isBypass(doBypassUri));
-        }
-
-        for (String noBypassUri : new String[] {
-                u("localhost"),
-                u("example.com:12345"),
-                u("localhost:80"),
-                u("localhost:54321"),
         }) {
             assertFalse(noBypassUri, predicate.isBypass(noBypassUri));
         }

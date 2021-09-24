@@ -1,10 +1,12 @@
 package io.github.mike10004.seleniumcapture;
 
-import javax.annotation.Nullable;
+import com.browserup.bup.BrowserUpProxy;
 
 public interface UpstreamProxyDefinition {
 
-    @Nullable
-    UpstreamProxyManager createUpstreamProxy();
+    void configureUpstreamProxy(BrowserUpProxy browserUpProxy, HostBypassRuleFactory bypassRuleFactory);
 
+    static UpstreamProxyDefinition direct() {
+        return NoProxyDefinition.noUpstreamProxy();
+    }
 }

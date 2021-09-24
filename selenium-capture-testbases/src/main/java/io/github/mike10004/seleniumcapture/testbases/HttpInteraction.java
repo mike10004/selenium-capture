@@ -1,11 +1,15 @@
 package io.github.mike10004.seleniumcapture.testbases;
 
-import io.github.mike10004.seleniumcapture.ImmutableHttpRequest;
-import io.github.mike10004.seleniumcapture.ImmutableHttpResponse;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Suppliers;
+import io.github.mike10004.seleniumcapture.ImmutableHttpRequest;
+import io.github.mike10004.seleniumcapture.ImmutableHttpResponse;
+import io.github.mike10004.seleniumcapture.TrafficMonitor;
 
+import java.util.function.Consumer;
 import java.util.function.Supplier;
+
+import static java.util.Objects.requireNonNull;
 
 public class HttpInteraction {
 
@@ -32,5 +36,20 @@ public class HttpInteraction {
     @Override
     public String toString() {
         return stringRepresentation.get();
+    }
+
+    public static TrafficMonitor monitor(Consumer<? super HttpInteraction> interactionConsumer) {
+        requireNonNull(interactionConsumer, "interactionConsumer");
+        return new TrafficMonitor() {
+            @Override
+            public void responseReceived(ImmutableHttpRequest httpRequest, ImmutableHttpResponse httpResponse) {
+                interactionConsumer.accept(new HttpInteraction(httpRequest, httpResponse));
+            }
+
+            @Override
+            public String toString() {
+                return "HttpInteractionMonitor{consumer=" + interactionConsumer + "}";
+            }
+        };
     }
 }

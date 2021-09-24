@@ -229,7 +229,6 @@
         <dependency>
             <groupId>commons-validator</groupId>
             <artifactId>commons-validator</artifactId>
-            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>com.github.mike10004</groupId>
@@ -260,6 +259,10 @@
             <artifactId>selenium-capture-testing</artifactId>
             <version>${project.version}</version>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.github.seancfoley</groupId>
+            <artifactId>ipaddress</artifactId>
         </dependency>
     </dependencies>
 </project>

@@ -8,9 +8,9 @@ import org.openqa.selenium.WebDriverException;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Supplier;
 
@@ -84,7 +84,7 @@ public interface TrafficCollector {
         private final WebDriverFactory webDriverFactory;
         private CertificateAndKeySource certificateAndKeySource = null;
         private final List<HttpFiltersSource> httpFiltersSources = new ArrayList<>();
-        private InterceptedWebdrivingConfigurator upstreamConfigurator = InterceptedWebdrivingConfigurator.noUpstreamProxy();
+        private InterceptedWebdrivingConfigurator upstreamConfigurator = defaultInterceptedWebdrivingConfigurator();
         private Supplier<? extends BrowserUpProxy> interceptingProxyInstantiator = BrowserUpProxyServer::new;
         private final List<HarPostProcessor> harPostProcessors = new ArrayList<>();
         private ExceptionReactor exceptionReactor = ExceptionReactor.PROPAGATE;
@@ -103,6 +103,10 @@ public interface TrafficCollector {
         public Builder onException(ExceptionReactor exceptionReactor) {
             this.exceptionReactor = requireNonNull(exceptionReactor);
             return this;
+        }
+
+        private static InterceptedWebdrivingConfigurator defaultInterceptedWebdrivingConfigurator() {
+            return new BasicInterceptedWebdrivingConfigurator(NoProxyDefinition.noUpstreamProxy(), HostBypassRuleFactory.createDefault(), Collections.emptyList());
         }
 
         /**
@@ -163,8 +167,8 @@ public interface TrafficCollector {
          * This is the default.
          * @return this builder instance
          */
-        public Builder noUpstreamProxy() {
-            return upstreamProxy(InterceptedWebdrivingConfigurator.noUpstreamProxy());
+        public Builder noUpstreamProxy(List<String> webdrivingBypassList) {
+            return upstreamProxy(new BasicInterceptedWebdrivingConfigurator(NoProxyDefinition.noUpstreamProxy(), HostBypassRuleFactory.createDefault(), webdrivingBypassList));
         }
 
         private Builder upstreamProxy(InterceptedWebdrivingConfigurator configurator) {
@@ -173,15 +177,21 @@ public interface TrafficCollector {
         }
 
         /**
-         * Configures the collector to use an upstream proxy. The URI components
-         * must be as described in {@link WebdrivingConfig#getProxySpecification()}.
+         * Configures the collector to use an upstream proxy.
          * @param proxySpecification
          * @return this builder instance
          */
         @SuppressWarnings("UnusedReturnValue")
-        public Builder upstreamProxy(UpstreamProxyDefinition proxySpecification) {
+        public Builder upstreamProxy(UpstreamProxyDefinition proxySpecification,
+                                     List<String> webdrivingProxyBypassList) {
+            return upstreamProxy(proxySpecification, HostBypassRuleFactory.createDefault(), webdrivingProxyBypassList);
+        }
+
+        public Builder upstreamProxy(UpstreamProxyDefinition proxySpecification,
+                                     HostBypassRuleFactory hostBypassRuleFactory,
+                                     List<String> webdrivingProxyBypassList) {
             requireNonNull(proxySpecification);
-            this.upstreamConfigurator = InterceptedWebdrivingConfigurator.usingUpstreamProxy(proxySpecification);
+            this.upstreamConfigurator = new BasicInterceptedWebdrivingConfigurator(proxySpecification, hostBypassRuleFactory, webdrivingProxyBypassList);
             return this;
         }
 

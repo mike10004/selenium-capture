@@ -41,6 +41,7 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static java.util.Objects.requireNonNull;
@@ -152,6 +153,18 @@ public class FirefoxWebDriverFactory extends CapableWebDriverFactory<FirefoxOpti
     @VisibleForTesting
     static class FirefoxOptionsProxyConfigurator {
 
+        private String toFirefoxBypassToken(String seleniumBypassToken) {
+            return seleniumBypassToken;
+        }
+
+        private String transformProxyBypassList(List<String> bypasses) {
+            return bypasses.stream()
+                    .map(this::toFirefoxBypassToken)
+                    .map(String::trim)
+                    .filter(s -> !s.isEmpty())
+                    .collect(Collectors.joining(FIREFOX_PROXY_BYPASS_RULE_DELIM));
+        }
+
         public void configureProxy(FirefoxOptions options,
                                    FirefoxProfile profile,
                                    @Nullable WebdrivingProxyDefinition proxySpecification) {
@@ -173,22 +186,24 @@ public class FirefoxWebDriverFactory extends CapableWebDriverFactory<FirefoxOpti
             }
         }
 
+
+
         /**
          * Sets the Firefox preference to bypass only proxies specified in the given list.
          */
         private void overrideProxyBypasses(List<String> bypasses, FirefoxProfile profile) {
-            String value;
-            if (bypasses.isEmpty()) {
-                value = "";
-            } else {
-                value = String.join(FIREFOX_PROXY_BYPASS_RULE_DELIM, bypasses);
-            }
+            String value = transformProxyBypassList(bypasses);
             profile.setPreference("network.proxy.no_proxies_on", value);
             /*
              * Some protected issue in the Firefox bugzilla was resolved by requiring this
              * additional preference be set. See:
              * * https://superuser.com/a/1469276/278576
              * * https://bugzilla.mozilla.org/show_bug.cgi?id=1535581
+             *
+             * We assume that the user has specified the proxy decision intentionally and explicitly,
+             * meaning no defaults are assumed. For example, if the user did not specify that
+             * connections to localhost should bypass the proxy, then connections to localhost
+             * indeed go through the proxy. (That is something Firefox by default does *not* do.)
              *
              * TODO: decide whether to refrain from setting this if our bypass list doesn't contain any loopback address
              */

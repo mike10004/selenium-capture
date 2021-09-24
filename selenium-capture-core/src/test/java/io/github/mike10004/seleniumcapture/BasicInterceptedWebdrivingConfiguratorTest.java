@@ -1,8 +1,10 @@
 package io.github.mike10004.seleniumcapture;
 
+import com.browserup.bup.BrowserUpProxy;
 import com.browserup.bup.BrowserUpProxyServer;
 import org.junit.Test;
 import org.littleshoot.proxy.ChainedProxyManager;
+import org.openqa.selenium.Proxy;
 
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
@@ -16,16 +18,16 @@ import static org.junit.Assert.assertNull;
 public class BasicInterceptedWebdrivingConfiguratorTest {
 
     @Test
-    public void createWebdrivingConfig_upstreamBypassNotSupported() {
-        ProxySpecification upstream =
-                ProxyDefinitionBuilder.through("127.0.0.1", 39944)
+    public void configurator() {
+        UpstreamProxyDefinition upstreamProxy =
+                ProxyDefinitionBuilder.through("1.1.1.1", 3128)
                         .addProxyBypass("localhost")
                         .addProxyBypass("127.0.0.1")
-                        .socks5().build();
-        InterceptedWebdrivingConfigurator c = InterceptedWebdrivingConfigurator.usingUpstreamProxy(upstream.asUpstream());
+                        .socks5();
+        InterceptedWebdrivingConfigurator interceptedWebdrivingConfigurator = new BasicInterceptedWebdrivingConfigurator(upstreamProxy, HostBypassRuleFactory.createDefault(), Collections.emptyList());
         List<ChainedProxyManager> invokedSetChainedProxyManagers = new ArrayList<>();
         List<String> incorrectInvocations = new ArrayList<>();
-        BrowserUpProxyServer bup = new BrowserUpProxyServer() {
+        BrowserUpProxy bup = new BrowserUpProxyServer() {
             @Override
             public void setChainedProxy(InetSocketAddress chainedProxyAddress) {
                 super.setChainedProxy(chainedProxyAddress);
@@ -56,10 +58,12 @@ public class BasicInterceptedWebdrivingConfiguratorTest {
             }
         };
 
-        WebdrivingConfig wdcfg = c.createWebdrivingConfig(bup, null);
-        org.openqa.selenium.Proxy proxy = wdcfg.getProxySpecification().createWebdrivingProxy();
-        assertEquals("proxy bypass spec", "localhost,127.0.0.1", proxy.getNoProxy());
-        c.configureUpstream(bup);
+        WebdrivingConfig webdrivingConfig = interceptedWebdrivingConfigurator.createWebdrivingConfig(bup, null);
+        org.openqa.selenium.Proxy proxy = webdrivingConfig.getProxySpecification().createWebdrivingProxy();
+        assertEquals("proxyType", Proxy.ProxyType.MANUAL, proxy.getProxyType());
+        assertEquals("proxy address", "127.0.1.1:12345", proxy.getHttpProxy());
+        assertNull("bypass", proxy.getNoProxy());
+        interceptedWebdrivingConfigurator.configureUpstream(bup);
         assertNull("deprecated ChainedProxy should not be used; instead, configurator should set a ChainedProxyManager", bup.getChainedProxy());
         assertEquals("setChainedProxyManager invoked once", 1, invokedSetChainedProxyManagers.size());
         assertNotNull("chainedProxyManager", invokedSetChainedProxyManagers.get(0));

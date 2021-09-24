@@ -20,7 +20,6 @@ public class CookieKey {
     }
 
     public static CookieKey from(@Nullable String domain, @Nullable String name, @Nullable String path) {
-        //noinspection ConstantConditions
         return new CookieKey(Strings.nullToEmpty(domain), Strings.nullToEmpty(name), MoreObjects.firstNonNull(path, "/"));
     }
 

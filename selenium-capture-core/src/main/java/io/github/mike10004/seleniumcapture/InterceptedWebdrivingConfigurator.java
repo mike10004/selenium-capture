@@ -5,8 +5,6 @@ import com.browserup.bup.mitm.CertificateAndKeySource;
 
 import javax.annotation.Nullable;
 
-import static java.util.Objects.requireNonNull;
-
 /**
  * Interface of a service class that provides configuration data for
  * webdrivers and optionally performs configuration on Browserup proxy server
@@ -36,24 +34,5 @@ interface InterceptedWebdrivingConfigurator {
      */
     WebdrivingConfig createWebdrivingConfig(BrowserUpProxy bup,
                                             @Nullable CertificateAndKeySource certificateAndKeySource);
-
-    /**
-     * Returns a configurator that configures a direct connection upstream, meaning no upstream proxy is to be used.
-     * @return a configurator
-     */
-    static InterceptedWebdrivingConfigurator noUpstreamProxy() {
-        return usingUpstreamProxy(NoProxySpecification.noUpstreamProxyDefinition());
-    }
-
-    /**
-     * Returns a configurator that configures a Browsermob proxy instance to use an upstream proxy.
-     * @param upstreamProxyDefinition upstream proxy definition
-     * @return a configurator instance
-     * @see UriProxySpecification#toUpstreamProxyDefinition()
-     */
-    static InterceptedWebdrivingConfigurator usingUpstreamProxy(UpstreamProxyDefinition upstreamProxyDefinition) {
-        requireNonNull(upstreamProxyDefinition);
-        return new BasicInterceptedWebdrivingConfigurator(upstreamProxyDefinition);
-    }
 
 }

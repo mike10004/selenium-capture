@@ -1,40 +1,38 @@
 package io.github.mike10004.seleniumcapture;
 
-import com.google.common.base.MoreObjects;
 import com.browserup.bup.BrowserUpProxy;
-import com.browserup.bup.BrowserUpProxyServer;
 import com.browserup.bup.mitm.CertificateAndKeySource;
-import org.littleshoot.proxy.ChainedProxyManager;
+import com.google.common.base.MoreObjects;
 
 import javax.annotation.Nullable;
+
+import java.util.List;
 
 import static java.util.Objects.requireNonNull;
 
 class BasicInterceptedWebdrivingConfigurator implements InterceptedWebdrivingConfigurator {
 
     private final UpstreamProxyDefinition upstreamProxyDefinition;
+    private final HostBypassRuleFactory upstreamHostBypassRuleFactory;
+    private final List<String> webdrivingProxyBypassList;
 
-    public BasicInterceptedWebdrivingConfigurator(UpstreamProxyDefinition upstreamProxyDefinition) {
+    public BasicInterceptedWebdrivingConfigurator(UpstreamProxyDefinition upstreamProxyDefinition, HostBypassRuleFactory upstreamHostBypassRuleFactory, List<String> webdrivingProxyBypassList) {
         this.upstreamProxyDefinition = requireNonNull(upstreamProxyDefinition, "upstreamProxyDefinition");
+        this.webdrivingProxyBypassList = List.copyOf(webdrivingProxyBypassList);
+        this.upstreamHostBypassRuleFactory = requireNonNull(upstreamHostBypassRuleFactory);
     }
 
     @Override
     public void configureUpstream(BrowserUpProxy bmp) {
-        if (upstreamProxyDefinition == null) {
-            bmp.setChainedProxy(null);
-            if (bmp instanceof BrowserUpProxyServer) {
-                ((BrowserUpProxyServer) bmp).setChainedProxyManager(null);
-            }
-        } else {
-            ChainedProxyManager chainedProxyManager = upstreamProxyDefinition.createUpstreamProxy();
-            ((BrowserUpProxyServer)bmp).setChainedProxyManager(chainedProxyManager);
-        }
+        upstreamProxyDefinition.configureUpstreamProxy(bmp, upstreamHostBypassRuleFactory);
     }
 
     @Override
-    public WebdrivingConfig createWebdrivingConfig(BrowserUpProxy bup, @Nullable CertificateAndKeySource certificateAndKeySource) {
+    public WebdrivingConfig createWebdrivingConfig(BrowserUpProxy bup,
+                                                   @Nullable CertificateAndKeySource certificateAndKeySource) {
         WebdrivingProxyDefinition proxy = ProxyDefinitionBuilder.through(BrowserUps.resolveSocketAddress(bup))
-                .build().asWebdriving();
+                .addProxyBypasses(webdrivingProxyBypassList)
+                .http();
         return WebdrivingConfig.builder()
                 .proxy(proxy)
                 .certificateAndKeySource(certificateAndKeySource)
@@ -47,4 +45,5 @@ class BasicInterceptedWebdrivingConfigurator implements InterceptedWebdrivingCon
         h.add("upstreamProxyDefinition", upstreamProxyDefinition);
         return h.toString();
     }
+
 }

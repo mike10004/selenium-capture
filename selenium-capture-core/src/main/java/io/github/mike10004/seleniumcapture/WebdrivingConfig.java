@@ -13,10 +13,10 @@ import static java.util.Objects.requireNonNull;
 public interface WebdrivingConfig {
 
     /**
-     * Gets the proxy specifiation, or null if no proxy is to be used. If HTTP traffic is to
+     * Gets the proxy definition. If HTTP traffic is to
      * be captured, then this must return the definition of the intercepting proxy through
      * which the webdriven browser shall be configured to send network requests.
-     * @return  proxy specification
+     * @return proxy definition
      */
     WebdrivingProxyDefinition getProxySpecification();
 
@@ -73,7 +73,7 @@ public interface WebdrivingConfig {
         private CertificateAndKeySource certificateAndKeySource;
 
         private Builder() {
-            proxySpecification = WebdrivingProxyDefinition.direct();
+            proxySpecification = ProxyDefinition.direct();
         }
 
         /**
@@ -119,8 +119,8 @@ public interface WebdrivingConfig {
             }
 
             /**
-             * Gets the proxy socket address. Null means do not use a proxy.
-             * @return the socket address of the proxy
+             * Gets the proxy definition.
+             * @return proxy definition
              */
             @Override
             public WebdrivingProxyDefinition getProxySpecification() {

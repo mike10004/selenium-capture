@@ -25,7 +25,7 @@ public class UpstreamProxyManagerTest {
 
     @Test
     public void lookupChainedProxies_withBypassList() {
-        List<String> bypassList = List.of("example.com", "localhost:59999");
+        List<HostBypassRule> bypassList = HostBypassRuleFactory.createDefault().fromSpecs(List.of("example.com", "localhost:59999"));
         UpstreamProxyManager proxyManager = new UpstreamProxyManager(ChainedProxyType.HTTP, "127.0.0.1", 12345, null, null, new ListHostBypassPredicate(bypassList));
         testLookup(proxyManager, "example.com", Expectation.BYPASS_AND_FALLBACK_TO_DIRECT);
         testLookup(proxyManager, "localhost:59999", Expectation.BYPASS_AND_FALLBACK_TO_DIRECT);

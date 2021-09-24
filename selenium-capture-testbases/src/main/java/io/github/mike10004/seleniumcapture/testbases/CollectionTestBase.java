@@ -13,7 +13,7 @@ import com.google.common.net.MediaType;
 import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
 import io.github.mike10004.seleniumcapture.HarPlus;
-import io.github.mike10004.seleniumcapture.ProxySpecification;
+import io.github.mike10004.seleniumcapture.ProxyDefinition;
 import io.github.mike10004.seleniumcapture.TrafficCollector;
 import io.github.mike10004.seleniumcapture.TrafficGenerator;
 import io.github.mike10004.seleniumcapture.WebDriverFactory;
@@ -31,6 +31,7 @@ import java.net.URI;
 import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -225,7 +226,7 @@ public abstract class CollectionTestBase {
         TrafficCollector.Builder tcBuilder = TrafficCollector.builder(webDriverFactory);
         URI upstreamProxy = proxySpecUriSupplier.get();
         if (upstreamProxy != null) {
-            tcBuilder.upstreamProxy(ProxySpecification.fromUri(upstreamProxy).asUpstream());
+            tcBuilder.upstreamProxy(ProxyDefinition.fromUri(upstreamProxy), Collections.emptyList());
         }
         if ("https".equals(protocol)) {
             CertificateAndKeySource certificateAndKeySource = TestCertificateAndKeySource.create();
