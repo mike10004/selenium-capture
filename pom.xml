@@ -48,7 +48,7 @@
         <test.log.level>info</test.log.level>
         <selenium.version>4.0.0-rc-1</selenium.version>
         <chrome-cookie-implant.version>1.5.16</chrome-cookie-implant.version>
-        <guava.version>28.2-jre</guava.version>
+        <guava.version>29.0-jre</guava.version>
         <antiprint.version>0.16</antiprint.version>
         <common-helper.version>10.0.0</common-helper.version>
 
