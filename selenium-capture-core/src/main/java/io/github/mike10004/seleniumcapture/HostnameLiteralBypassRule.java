@@ -1,9 +1,13 @@
 package io.github.mike10004.seleniumcapture;
 
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
 import com.google.common.net.HostAndPort;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.validator.routines.InetAddressValidator;
 
 import java.net.URI;
+import java.net.URISyntaxException;
 
 import static java.util.Objects.requireNonNull;
 
@@ -28,7 +32,13 @@ class HostnameLiteralBypassRule implements HostBypassRule {
         String uriHost = uri.getHost();
         if (uriHost != null) {
             uriHost = uriHost.toLowerCase();
-            boolean hostsEqual = Objects.equal(uriHost, hostSpec.getHost());
+            String hostSpecHost = hostSpec.getHost();
+            // HostAndPort always strips [] from IPv6 host
+            // URI always adds/retains [] from IPv6 host
+            if (InetAddressValidator.getInstance().isValidInet6Address(hostSpecHost)) {
+                hostSpecHost = "[" + hostSpecHost + "]";
+            }
+            boolean hostsEqual = Objects.equal(uriHost, hostSpecHost);
             if (hostsEqual) {
                 if (hostSpec.hasPort()) {
                     int bypassPort = hostSpec.getPort();
@@ -43,5 +53,12 @@ class HostnameLiteralBypassRule implements HostBypassRule {
             }
         }
         return false;
+    }
+
+    @Override
+    public String toString() {
+        return MoreObjects.toStringHelper(this)
+                .add("hostSpec", hostSpec)
+                .toString();
     }
 }

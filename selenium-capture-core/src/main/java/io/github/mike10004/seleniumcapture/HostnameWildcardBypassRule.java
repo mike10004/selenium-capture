@@ -3,6 +3,7 @@ package io.github.mike10004.seleniumcapture;
 import com.google.common.base.MoreObjects;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOCase;
+import org.apache.commons.lang3.StringUtils;
 
 import java.net.URI;
 
@@ -26,7 +27,7 @@ class HostnameWildcardBypassRule implements HostBypassRule {
     @Override
     public String toString() {
         return MoreObjects.toStringHelper(this)
-                .add("pattern", pattern)
+                .add("pattern", StringUtils.abbreviate(pattern, 512))
                 .toString();
     }
 }

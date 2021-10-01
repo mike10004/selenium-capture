@@ -4,6 +4,7 @@ import com.google.common.base.CharMatcher;
 import com.google.common.base.MoreObjects;
 import com.google.common.net.HostAndPort;
 import com.google.common.net.InternetDomainName;
+import inet.ipaddr.AddressStringException;
 import inet.ipaddr.IPAddress;
 import inet.ipaddr.IPAddressSeqRange;
 import inet.ipaddr.IPAddressString;
@@ -37,7 +38,12 @@ class DefaultHostBypassRuleFactory implements HostBypassRuleFactory {
             return new HostnameLiteralBypassRule(HostAndPort.fromString(bypassSpec));
         }
         if (isIpv4CidrBlock(bypassSpec)) {
-            return new CidrBlockBypassRule(bypassSpec);
+            try {
+                return new CidrBlockBypassRule(new IPAddressString(bypassSpec).toSequentialRange());
+            } catch (AddressStringException e) {
+                // isIpv4CidrBlock should prevent this
+                throw new IllegalArgumentException(e);
+            }
         }
         if (isHostPattern(bypassSpec)) {
             return new HostnameWildcardBypassRule(bypassSpec);
@@ -96,10 +102,10 @@ class DefaultHostBypassRuleFactory implements HostBypassRuleFactory {
             return false;
         }
         try {
-            IPAddressSeqRange range = new IPAddressString(hostPattern).getSequentialRange();
+            IPAddressSeqRange range = new IPAddressString(hostPattern).toSequentialRange();
             IPAddress prefixBlock = range.coverWithPrefixBlock();
             return range.getCount().equals(prefixBlock.getCount());
-        } catch (RuntimeException ignore) {
+        } catch (AddressStringException | RuntimeException ignore) {
         }
         return false;
     }
